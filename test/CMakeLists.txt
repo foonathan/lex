@@ -15,7 +15,8 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
 endif()
 
 set(tests
-        detail/constexpr_vector.cpp)
+        detail/constexpr_vector.cpp
+        detail/trie.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp

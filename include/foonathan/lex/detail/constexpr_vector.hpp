@@ -71,10 +71,11 @@ namespace foonathan
                 }
 
                 //=== modifiers ===//
-                constexpr void push_back(T element) noexcept
+                constexpr iterator push_back(T element) noexcept
                 {
                     array_[size_] = element;
                     ++size_;
+                    return array_ + size_ - 1;
                 }
 
                 constexpr void pop_back() noexcept
@@ -82,7 +83,7 @@ namespace foonathan
                     --size_;
                 }
 
-                constexpr void insert(const_iterator pos, T element) noexcept
+                constexpr iterator insert(const_iterator pos, T element) noexcept
                 {
                     push_back(T{});
 
@@ -92,13 +93,17 @@ namespace foonathan
                         *const_cast<T*>(cur) = element;
                         element              = save;
                     }
+
+                    return const_cast<T*>(pos);
                 }
 
-                constexpr void erase(const_iterator pos) noexcept
+                constexpr iterator erase(const_iterator pos) noexcept
                 {
                     for (auto cur = pos; cur != end() - 1; ++cur)
                         *const_cast<T*>(cur) = *(cur + 1);
                     --size_;
+
+                    return const_cast<T*>(pos);
                 }
 
             private:

@@ -1,0 +1,150 @@
+// Copyright (C) 2018 Jonathan Müller <jonathanmueller.dev@gmail.com>
+// This file is subject to the license terms in the LICENSE file
+// found in the top-level directory of this distribution.
+
+#ifndef FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED
+#define FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED
+
+#include <foonathan/lex/detail/constexpr_vector.hpp>
+
+namespace foonathan
+{
+    namespace lex
+    {
+        namespace detail
+        {
+            /// A simple constexpr trie datastructure associating strings with `UserData`.
+            /// It can contain at most `MaxNodes` nodes.
+            template <typename UserData, std::size_t MaxNodes>
+            class trie
+            {
+                static_assert(std::is_default_constructible<UserData>::value,
+                              "user data must be default constructible");
+
+                struct node
+                {
+                    static constexpr auto invalid = std::size_t(-1);
+
+                    UserData data;
+
+                    // this maintains a linked list of children
+                    std::size_t first_child;
+                    std::size_t next_child_of_parent;
+
+                    char character; // '\0' for root node
+                    bool has_data;
+
+                    constexpr node() noexcept : node('\0') {}
+
+                    constexpr explicit node(char c) noexcept
+                    : data{},
+                      first_child(invalid),
+                      next_child_of_parent(invalid),
+                      character(c),
+                      has_data(false)
+                    {
+                    }
+
+                    constexpr bool set_data(UserData data) noexcept
+                    {
+                        if (has_data)
+                            return false;
+
+                        this->data = data;
+                        has_data   = true;
+                        return true;
+                    }
+
+                    constexpr const UserData* get_data() const noexcept
+                    {
+                        return has_data ? &data : nullptr;
+                    }
+                };
+
+            public:
+                constexpr trie() noexcept
+                {
+                    nodes_.push_back(node{});
+                }
+
+                /// Inserts the given string and user data.
+                /// Returns whether or not this is a duplicate.
+                constexpr bool insert(const char* str, UserData data) noexcept
+                {
+                    auto cur_node = root_node();
+                    while (auto c = *str++)
+                    {
+                        auto child = find_child(cur_node, c);
+                        if (!child)
+                            // need to add a new child for the current character
+                            child = create_child(cur_node, node(c));
+
+                        cur_node = child;
+                    }
+
+                    return const_cast<node*>(cur_node)->set_data(data);
+                }
+
+                /// Returns the user data of the longest matching prefix
+                /// or `nullptr` if there isn't any prefix.
+                constexpr const UserData* lookup_prefix(const char* str) const noexcept
+                {
+                    auto cur_node = root_node();
+                    auto data     = cur_node->get_data();
+                    while (auto c = *str++)
+                    {
+                        auto child = find_child(cur_node, c);
+                        if (!child)
+                            // we can no longer extend the prefix
+                            break;
+
+                        cur_node = child;
+                        if (auto new_data = cur_node->get_data())
+                            data = new_data;
+                    }
+
+                    // return the last valid data, i.e. the longest prefix
+                    return data;
+                }
+
+            private:
+                constexpr const node* root_node() const noexcept
+                {
+                    return &nodes_[0];
+                }
+
+                constexpr node* create_child(const node* parent_, node child) noexcept
+                {
+                    auto parent   = const_cast<node*>(parent_);
+                    auto new_node = nodes_.push_back(child);
+
+                    // insert as first child
+                    auto old_first                 = parent->first_child;
+                    parent->first_child            = nodes_.size() - 1;
+                    new_node->next_child_of_parent = old_first;
+
+                    return new_node;
+                }
+
+                constexpr const node* find_child(const node* cur, char c) const noexcept
+                {
+                    auto cur_child = cur->first_child;
+                    while (cur_child != node::invalid)
+                    {
+                        auto& n = nodes_[cur_child];
+                        if (n.character == c)
+                            return &n;
+                        else
+                            cur_child = n.next_child_of_parent;
+                    }
+
+                    return nullptr;
+                }
+
+                constexpr_vector<node, MaxNodes> nodes_;
+            };
+        } // namespace detail
+    }     // namespace lex
+} // namespace foonathan
+
+#endif // FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED

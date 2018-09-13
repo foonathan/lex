@@ -6,7 +6,9 @@ cmake_minimum_required(VERSION 3.1)
 project(foonathan_lex)
 
 set(detail_header_files
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/constexpr_vector.hpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/constexpr_vector.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
+    )
 set(header_files)
 add_library(foonathan_lex INTERFACE)
 target_sources(foonathan_lex INTERFACE ${detail_header_files} ${header_files})
