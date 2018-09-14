@@ -82,6 +82,19 @@ namespace foonathan
             std::uint32_t id_;
         };
 
+        namespace detail
+        {
+            template <template <class, class> class Kind, class Token>
+            struct is_token_impl
+            {
+                template <class TokenSpec>
+                static std::true_type  test(const Kind<Token, TokenSpec>&);
+                static std::false_type test(...);
+
+                using value = decltype(test(std::declval<Token>()));
+            };
+        } // namespace detail
+
         template <class TokenSpec>
         class token
         {

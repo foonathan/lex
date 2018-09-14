@@ -52,7 +52,7 @@ namespace foonathan
             template <class TokenSpec>
             constexpr match_result<TokenSpec> try_parse(const char* str, const char* end) noexcept
             {
-                return try_parse<TokenSpec>(TokenSpec{}, str, end);
+                return try_parse<TokenSpec>(remove_if<TokenSpec, is_null_token>{}, str, end);
             }
         } // namespace detail
 

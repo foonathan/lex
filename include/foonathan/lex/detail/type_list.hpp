@@ -19,6 +19,31 @@ namespace foonathan
                 static constexpr auto size = sizeof...(Types);
             };
 
+            //=== cat ===//
+            template <class List, typename... Ts>
+            struct cat_impl;
+
+            template <typename... Ts>
+            struct cat_impl<type_list<Ts...>>
+            {
+                using type = type_list<Ts...>;
+            };
+
+            template <typename... Ts, typename T, typename... Tail>
+            struct cat_impl<type_list<Ts...>, T, Tail...>
+            {
+                using type = typename cat_impl<type_list<Ts..., T>, Tail...>::type;
+            };
+
+            template <typename... Ts, typename... OtherTs, typename... Tail>
+            struct cat_impl<type_list<Ts...>, type_list<OtherTs...>, Tail...>
+            {
+                using type = typename cat_impl<type_list<Ts..., OtherTs...>, Tail...>::type;
+            };
+
+            template <class List, typename... Ts>
+            using concat = typename cat_impl<List, Ts...>::type;
+
             //=== index_of ===//
             template <class List, typename T>
             struct index_of_impl;
@@ -44,6 +69,39 @@ namespace foonathan
 
             template <class List, typename T>
             using contains = std::integral_constant<bool, (index_of<List, T>::value < List::size)>;
+
+            //=== filter ===//
+            template <class List, template <typename> class Predicate>
+            struct filter_impl;
+
+            template <template <typename> class Predicate>
+            struct filter_impl<type_list<>, Predicate>
+            {
+                using positive = type_list<>;
+                using negative = type_list<>;
+            };
+
+            template <typename Head, typename... Tail, template <typename> class Predicate>
+            struct filter_impl<type_list<Head, Tail...>, Predicate>
+            {
+                using tail          = filter_impl<type_list<Tail...>, Predicate>;
+                using tail_positive = typename tail::positive;
+                using tail_negative = typename tail::negative;
+
+                using head_positive = Predicate<Head>;
+
+                using positive =
+                    std::conditional_t<head_positive::value, concat<type_list<Head>, tail_positive>,
+                                       tail_positive>;
+                using negative = std::conditional_t<head_positive::value, tail_negative,
+                                                    concat<type_list<Head>, tail_negative>>;
+            };
+
+            template <class List, template <typename> class Predicate>
+            using keep_if = typename filter_impl<List, Predicate>::positive;
+
+            template <class List, template <typename> class Predicate>
+            using remove_if = typename filter_impl<List, Predicate>::negative;
         } // namespace detail
     }     // namespace lex
 } // namespace foonathan

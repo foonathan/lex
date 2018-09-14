@@ -11,7 +11,7 @@ namespace lex = foonathan::lex;
 
 namespace
 {
-    using test_spec = lex::token_spec<struct token_a, struct token_bc>;
+    using test_spec = lex::token_spec<struct token_a, struct token_c, struct token_bc>;
 
     // token_a: an even number of 'a'
     struct token_a : lex::rule_token<token_a, test_spec>
@@ -33,6 +33,11 @@ namespace
         }
     };
 
+    // token_c: 'c'
+    struct token_c : lex::null_token<token_c, test_spec>
+    {
+    };
+
     // token_bc: 'bc'
     struct token_bc : lex::rule_token<token_bc, test_spec>
     {
@@ -40,6 +45,8 @@ namespace
         {
             if (*str == 'b' & str + 1 != end && str[1] == 'c')
                 return ok(2);
+            else if (*str == 'c')
+                return ok<token_c>(1);
             else
                 return unmatched();
         }
@@ -86,18 +93,22 @@ TEST_CASE("rule_token")
     }
     SECTION("token_bc")
     {
-        static constexpr const char array[] = "bcbc";
+        static constexpr const char array[] = "bccbc";
         constexpr auto              result  = tokenize(array);
 
-        REQUIRE(result.size() == 2);
+        REQUIRE(result.size() == 3);
 
         REQUIRE(result[0].is(token_bc{}));
         REQUIRE(result[0].spelling() == "bc");
         REQUIRE(result[0].offset() == 0);
 
-        REQUIRE(result[1].is(token_bc{}));
-        REQUIRE(result[1].spelling() == "bc");
+        REQUIRE(result[1].is(token_c{}));
+        REQUIRE(result[1].spelling() == "c");
         REQUIRE(result[1].offset() == 2);
+
+        REQUIRE(result[2].is(token_bc{}));
+        REQUIRE(result[2].spelling() == "bc");
+        REQUIRE(result[2].offset() == 3);
     }
     SECTION("token_bc error")
     {
