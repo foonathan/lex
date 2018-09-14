@@ -15,7 +15,7 @@ namespace
 
     void verify(const test_trie& trie, const char* str, const char* prefix)
     {
-        auto result = trie.lookup_prefix(str);
+        auto result = trie.lookup_prefix(str, std::strlen(str));
         REQUIRE(result);
         REQUIRE(std::strcmp(*result, prefix) == 0);
     }
@@ -43,21 +43,21 @@ namespace
 
     constexpr const char* test_lookup(const test_trie& trie)
     {
-        return *trie.lookup_prefix("a");
+        return *trie.lookup_prefix("a", 1);
     }
 } // namespace
 
 TEST_CASE("detail::trie")
 {
     constexpr auto trie0 = test_trie();
-    REQUIRE(!trie0.lookup_prefix("a"));
+    REQUIRE(!trie0.lookup_prefix("a", 1));
 
     constexpr auto trie1 = insert_single(trie0);
     verify(trie1, "a", "a");
     verify(trie1, "b", "b");
     verify(trie1, "c", "c");
     verify(trie1, "ab", "a");
-    REQUIRE(!trie1.lookup_prefix("d"));
+    REQUIRE(!trie1.lookup_prefix("d", 1));
 
     constexpr auto trie2 = insert_multiple(trie1);
     verify(trie2, "a", "a");
@@ -69,7 +69,7 @@ TEST_CASE("detail::trie")
     verify(trie2, "bcd", "bc");
     verify(trie2, "c", "c");
     verify(trie2, "cd", "c");
-    REQUIRE(!trie2.lookup_prefix("d"));
+    REQUIRE(!trie2.lookup_prefix("d", 1));
 
     constexpr auto result = test_lookup(trie2);
     REQUIRE(std::strcmp(result, "a") == 0);

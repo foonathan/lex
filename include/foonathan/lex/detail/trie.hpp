@@ -25,25 +25,18 @@ namespace foonathan
                 {
                     static constexpr auto invalid = std::size_t(-1);
 
-                    UserData data;
+                    UserData data{};
 
                     // this maintains a linked list of children
-                    std::size_t first_child;
-                    std::size_t next_child_of_parent;
+                    std::size_t first_child          = invalid;
+                    std::size_t next_child_of_parent = invalid;
 
-                    char character; // '\0' for root node
-                    bool has_data;
+                    char character = '\0'; // '\0' for root node
+                    bool has_data  = false;
 
-                    constexpr node() noexcept : node('\0') {}
+                    constexpr node() noexcept = default;
 
-                    constexpr explicit node(char c) noexcept
-                    : data{},
-                      first_child(invalid),
-                      next_child_of_parent(invalid),
-                      character(c),
-                      has_data(false)
-                    {
-                    }
+                    constexpr explicit node(char c) noexcept : character(c) {}
 
                     constexpr bool set_data(UserData data) noexcept
                     {
@@ -87,13 +80,14 @@ namespace foonathan
 
                 /// Returns the user data of the longest matching prefix
                 /// or `nullptr` if there isn't any prefix.
-                constexpr const UserData* lookup_prefix(const char* str) const noexcept
+                constexpr const UserData* lookup_prefix(const char* str, std::size_t length) const
+                    noexcept
                 {
                     auto cur_node = root_node();
                     auto data     = cur_node->get_data();
-                    while (auto c = *str++)
+                    for (auto end = str + length; str != end; ++str)
                     {
-                        auto child = find_child(cur_node, c);
+                        auto child = find_child(cur_node, *str);
                         if (!child)
                             // we can no longer extend the prefix
                             break;
