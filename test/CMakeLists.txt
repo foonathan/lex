@@ -16,7 +16,8 @@ endif()
 
 set(tests
         detail/constexpr_vector.cpp
-        detail/trie.cpp)
+        detail/trie.cpp
+        rule_token.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp
