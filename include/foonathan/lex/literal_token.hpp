@@ -13,6 +13,10 @@ namespace foonathan
 {
     namespace lex
     {
+        /// A literal token.
+        ///
+        /// It matches the given sequence of characters.
+        /// If there are multiple literal tokens with a common prefix the longest matching will be selected.
         template <char... Literal>
         struct literal_token
         {
@@ -23,11 +27,11 @@ namespace foonathan
 
         namespace detail
         {
-            template <class Token>
+            template <template <char...> class Kind, class Token>
             struct is_literal_token_impl
             {
                 template <char... Literal>
-                static std::true_type  test(const literal_token<Literal...>&);
+                static std::true_type  test(const Kind<Literal...>&);
                 static std::false_type test(...);
 
                 using value = decltype(test(std::declval<Token>()));
@@ -36,7 +40,7 @@ namespace foonathan
 
         /// Whether or not the token is a literal token.
         template <class Token>
-        struct is_literal_token : detail::is_literal_token_impl<Token>::value
+        struct is_literal_token : detail::is_literal_token_impl<literal_token, Token>::value
         {
         };
 

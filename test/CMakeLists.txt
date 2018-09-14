@@ -17,6 +17,7 @@ endif()
 set(tests
         detail/constexpr_vector.cpp
         detail/trie.cpp
+        identifier.cpp
         literal_token.cpp
         rule_token.cpp)
 

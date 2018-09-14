@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 
+#include <foonathan/lex/identifier.hpp>
 #include <foonathan/lex/literal_token.hpp>
 #include <foonathan/lex/rule_token.hpp>
 #include <foonathan/lex/token.hpp>
@@ -20,14 +21,21 @@ namespace foonathan
             struct get_matcher_list
             {
                 // the rule tokens are all matcher already
-                using rule_matchers = keep_if<TokenSpec, is_rule_token>;
+                using rule_matchers = keep_if<TokenSpec, is_non_identifier_rule_token>;
+
+                // the identifier matcher
+                using identifiers = keep_if<TokenSpec, is_identifier>;
+                using keywords    = keep_if<TokenSpec, is_keyword>;
+                using keyword_identifier_matcher =
+                    detail::keyword_identifier_matcher<TokenSpec, identifiers, keywords>;
 
                 // use one literal matcher to match all literals
                 using literal_matcher =
-                    detail::literal_matcher<TokenSpec, keep_if<TokenSpec, is_literal_token>>;
+                    detail::literal_matcher<TokenSpec,
+                                            keep_if<TokenSpec, is_non_keyword_literal_token>>;
 
                 // concatenate all
-                using type = concat<rule_matchers, literal_matcher>;
+                using type = concat<rule_matchers, keyword_identifier_matcher, literal_matcher>;
             };
 
             template <class TokenSpec>
@@ -52,6 +60,8 @@ namespace foonathan
             template <class TokenSpec, class Head, class... Tail>
             struct try_match_impl<TokenSpec, type_list<Head, Tail...>>
             {
+                using tail_match = try_match_impl<TokenSpec, type_list<Tail...>>;
+
                 static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                    const char* end) noexcept
                 {
@@ -59,7 +69,7 @@ namespace foonathan
                     if (result.is_matched())
                         return result;
                     else
-                        return try_match_impl<TokenSpec, type_list<Tail...>>::try_match(str, end);
+                        return tail_match::try_match(str, end);
                 }
             };
         } // namespace detail
