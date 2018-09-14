@@ -12,9 +12,11 @@ set(detail_header_files
     )
 set(header_files
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp)
 add_library(foonathan_lex INTERFACE)
 target_sources(foonathan_lex INTERFACE ${detail_header_files} ${header_files})

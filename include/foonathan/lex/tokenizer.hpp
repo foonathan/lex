@@ -5,7 +5,6 @@
 #ifndef FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 
-#include <foonathan/lex/detail/trie.hpp>
 #include <foonathan/lex/literal_token.hpp>
 #include <foonathan/lex/rule_token.hpp>
 #include <foonathan/lex/token.hpp>
@@ -16,107 +15,60 @@ namespace foonathan
     {
         namespace detail
         {
-            //=== literal parsing ===//
-            template <class LiteralTokens>
-            struct trie_nodes_needed;
-
-            template <>
-            struct trie_nodes_needed<type_list<>> : std::integral_constant<std::size_t, 0>
+            //=== matcher_list ===//
+            template <class TokenSpec>
+            struct get_matcher_list
             {
+                // the rule tokens are all matcher already
+                using rule_matchers = keep_if<TokenSpec, is_rule_token>;
+
+                // use one literal matcher to match all literals
+                using literal_matcher =
+                    detail::literal_matcher<TokenSpec, keep_if<TokenSpec, is_literal_token>>;
+
+                // concatenate all
+                using type = concat<rule_matchers, literal_matcher>;
             };
-
-            template <typename Head, typename... Tail>
-            struct trie_nodes_needed<type_list<Head, Tail...>>
-            : std::integral_constant<
-                  std::size_t,
-                  // for each literal one node for each character in the string (excluding null) in the worst case
-                  sizeof(Head::value) - 1 + trie_nodes_needed<type_list<Tail...>>::value>
-            {
-            };
-
-            template <class TokenSpec, class LiteralTokens>
-            using literal_trie =
-                trie<token_kind<TokenSpec>, trie_nodes_needed<LiteralTokens>::value>;
-
-            template <class Trie, class LiteralTokens>
-            struct build_trie_impl;
-
-            template <class Trie>
-            struct build_trie_impl<Trie, type_list<>>
-            {
-                static constexpr void insert(Trie&) noexcept {}
-            };
-
-            template <class Trie, typename Head, typename... Tail>
-            struct build_trie_impl<Trie, type_list<Head, Tail...>>
-            {
-                static constexpr void insert(Trie& trie) noexcept
-                {
-                    trie.insert(Head::value, typename Trie::user_data(Head{}));
-                    build_trie_impl<Trie, type_list<Tail...>>::insert(trie);
-                }
-            };
-
-            template <class TokenSpec, class LiteralTokens>
-            constexpr literal_trie<TokenSpec, LiteralTokens> build_trie() noexcept
-            {
-                literal_trie<TokenSpec, LiteralTokens> result;
-                build_trie_impl<decltype(result), LiteralTokens>::insert(result);
-                return result;
-            }
-
-            //=== rule parsing ===//
-            template <class TokenSpec, typename... Tokens>
-            struct rule_match_impl;
 
             template <class TokenSpec>
-            struct rule_match_impl<TokenSpec>
+            using matcher_list = typename get_matcher_list<TokenSpec>::type;
+
+            //=== try_match_impl ===//
+            /// Calls ::try_match() for every matcher until one is found that matches.
+            template <class TokenSpec, class MatcherList>
+            struct try_match_impl;
+
+            template <class TokenSpec>
+            struct try_match_impl<TokenSpec, type_list<>>
             {
-                static constexpr match_result<TokenSpec> parse(const char*, const char*) noexcept
+                static constexpr match_result<TokenSpec> try_match(const char*,
+                                                                   const char*) noexcept
                 {
                     // nothing matched, create an error
                     return match_result<TokenSpec>(1);
                 }
             };
 
-            template <class TokenSpec, typename Head, typename... Tail>
-            struct rule_match_impl<TokenSpec, Head, Tail...>
+            template <class TokenSpec, class Head, class... Tail>
+            struct try_match_impl<TokenSpec, type_list<Head, Tail...>>
             {
-                static constexpr match_result<TokenSpec> parse(const char* str,
-                                                               const char* end) noexcept
+                static constexpr match_result<TokenSpec> try_match(const char* str,
+                                                                   const char* end) noexcept
                 {
-                    static_assert(is_rule_token<Head>::value, "");
                     auto result = Head::try_match(str, end);
                     if (result.is_matched())
                         return result;
                     else
-                        return rule_match_impl<TokenSpec, Tail...>::parse(str, end);
+                        return try_match_impl<TokenSpec, type_list<Tail...>>::try_match(str, end);
                 }
             };
-
-            template <class TokenSpec, typename... Types>
-            constexpr match_result<TokenSpec> rule_match(type_list<Types...>, const char* str,
-                                                         const char* end) noexcept
-            {
-                return rule_match_impl<TokenSpec, Types...>::parse(str, end);
-            }
-
-            //=== interface ===//
-            template <class TokenSpec>
-            constexpr match_result<TokenSpec> try_match(const char* str, const char* end) noexcept
-            {
-                using literals      = keep_if<TokenSpec, is_literal_token>;
-                constexpr auto trie = build_trie<TokenSpec, literals>();
-                if (auto result = trie.lookup_prefix(str, end))
-                    return match_result<TokenSpec>(result.data, result.prefix_length);
-                else
-                    return rule_match<TokenSpec>(keep_if<TokenSpec, is_rule_token>{}, str, end);
-            }
         } // namespace detail
 
         template <class TokenSpec>
         class tokenizer
         {
+            using matcher_list = detail::matcher_list<TokenSpec>;
+
         public:
             explicit constexpr tokenizer(const char* ptr, std::size_t size)
             : begin_(ptr), ptr_(ptr), end_(ptr + size)
@@ -152,7 +104,8 @@ namespace foonathan
                 if (ptr_ == end_)
                     return;
 
-                auto result = detail::try_match<TokenSpec>(ptr_, end_);
+                auto result =
+                    detail::try_match_impl<TokenSpec, matcher_list>::try_match(ptr_, end_);
                 // TODO: assert result.is_matched() && range of ptr_
                 cur_ = token<TokenSpec>(result.kind, token_spelling(ptr_, result.bump),
                                         static_cast<std::size_t>(ptr_ - begin_));
