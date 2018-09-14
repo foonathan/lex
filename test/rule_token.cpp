@@ -2,12 +2,10 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <foonathan/lex/tokenizer.hpp>
+#include <foonathan/lex/rule_token.hpp>
 
 #include <catch.hpp>
-#include <foonathan/lex/detail/constexpr_vector.hpp>
-
-namespace lex = foonathan::lex;
+#include "tokenize.hpp"
 
 namespace
 {
@@ -34,7 +32,7 @@ namespace
     };
 
     // token_c: 'c'
-    struct token_c : lex::null_token<token_c, test_spec>
+    struct token_c : lex::null_token
     {
     };
 
@@ -51,20 +49,6 @@ namespace
                 return unmatched();
         }
     };
-
-    using vector = lex::detail::constexpr_vector<lex::token<test_spec>, 16>;
-
-    template <std::size_t N>
-    constexpr vector tokenize(const char (&array)[N])
-    {
-        vector result;
-
-        lex::tokenizer<test_spec> tokenizer(array, N);
-        while (!tokenizer.is_eof())
-            result.push_back(tokenizer.get());
-
-        return result;
-    }
 } // namespace
 
 TEST_CASE("rule_token")
@@ -72,7 +56,7 @@ TEST_CASE("rule_token")
     SECTION("token_a")
     {
         static constexpr const char array[] = "aaaa";
-        constexpr auto              result  = tokenize(array);
+        constexpr auto              result  = tokenize<test_spec>(array);
 
         REQUIRE(result.size() == 1);
 
@@ -83,7 +67,7 @@ TEST_CASE("rule_token")
     SECTION("token_a error")
     {
         static constexpr const char array[] = "aaa";
-        constexpr auto              result  = tokenize(array);
+        constexpr auto              result  = tokenize<test_spec>(array);
 
         REQUIRE(result.size() == 1);
 
@@ -94,7 +78,7 @@ TEST_CASE("rule_token")
     SECTION("token_bc")
     {
         static constexpr const char array[] = "bccbc";
-        constexpr auto              result  = tokenize(array);
+        constexpr auto              result  = tokenize<test_spec>(array);
 
         REQUIRE(result.size() == 3);
 
@@ -113,7 +97,7 @@ TEST_CASE("rule_token")
     SECTION("token_bc error")
     {
         static constexpr const char array[] = "bbc";
-        constexpr auto              result  = tokenize(array);
+        constexpr auto              result  = tokenize<test_spec>(array);
 
         REQUIRE(result.size() == 2);
 
@@ -128,7 +112,7 @@ TEST_CASE("rule_token")
     SECTION("mixed")
     {
         static constexpr const char array[] = "aabcabaa";
-        constexpr auto              result  = tokenize(array);
+        constexpr auto              result  = tokenize<test_spec>(array);
 
         REQUIRE(result.size() == 5);
 

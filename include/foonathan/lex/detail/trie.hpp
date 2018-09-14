@@ -13,7 +13,7 @@ namespace foonathan
     {
         namespace detail
         {
-            /// A simple constexpr trie datastructure associating strings with `UserData`.
+            /// A simple constexpr trie data structure associating strings with `UserData`.
             /// It can contain at most `MaxNodes` nodes.
             template <typename UserData, std::size_t MaxNodes>
             class trie
@@ -55,6 +55,8 @@ namespace foonathan
                 };
 
             public:
+                using user_data = UserData;
+
                 constexpr trie() noexcept
                 {
                     nodes_.push_back(node{});
@@ -78,14 +80,25 @@ namespace foonathan
                     return const_cast<node*>(cur_node)->set_data(data);
                 }
 
-                /// Returns the user data of the longest matching prefix
-                /// or `nullptr` if there isn't any prefix.
-                constexpr const UserData* lookup_prefix(const char* str, std::size_t length) const
+                struct LookupResult
+                {
+                    UserData    data;
+                    std::size_t prefix_length;
+
+                    explicit constexpr operator bool() const noexcept
+                    {
+                        return prefix_length > 0;
+                    }
+                };
+
+                /// Returns the data of the longest matching prefix.
+                constexpr LookupResult lookup_prefix(const char* str, const char* end) const
                     noexcept
                 {
-                    auto cur_node = root_node();
-                    auto data     = cur_node->get_data();
-                    for (auto end = str + length; str != end; ++str)
+                    auto cur_node      = root_node();
+                    auto data          = cur_node->get_data();
+                    auto prefix_length = std::size_t(0);
+                    for (auto begin = str; str != end; ++str)
                     {
                         auto child = find_child(cur_node, *str);
                         if (!child)
@@ -94,11 +107,22 @@ namespace foonathan
 
                         cur_node = child;
                         if (auto new_data = cur_node->get_data())
-                            data = new_data;
+                        {
+                            data          = new_data;
+                            prefix_length = static_cast<std::size_t>(str - begin + 1);
+                        }
                     }
 
                     // return the last valid data, i.e. the longest prefix
-                    return data;
+                    if (data)
+                        return {*data, prefix_length};
+                    else
+                        return {{}, 0};
+                }
+                constexpr LookupResult lookup_prefix(const char* str, std::size_t length) const
+                    noexcept
+                {
+                    return lookup_prefix(str, str + length);
                 }
 
             private:
@@ -135,7 +159,8 @@ namespace foonathan
                     return nullptr;
                 }
 
-                constexpr_vector<node, MaxNodes> nodes_;
+                // +1 for root node
+                constexpr_vector<node, MaxNodes + 1> nodes_;
             };
         } // namespace detail
     }     // namespace lex

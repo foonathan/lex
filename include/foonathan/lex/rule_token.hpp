@@ -56,17 +56,13 @@ namespace foonathan
         /// A token that has no associated parsing rule.
         ///
         /// It can only be created by some other [lex::rule_token]().
-        template <class Derived, class TokenSpec>
         struct null_token
         {
-            using spec         = TokenSpec;
-            using token_kind   = lex::token_kind<TokenSpec>;
-            using match_result = lex::match_result<TokenSpec>;
         };
 
         /// Whether or not the given token is a null token.
         template <class Token>
-        struct is_null_token : detail::is_token_impl<null_token, Token>::value
+        struct is_null_token : std::is_base_of<null_token, Token>
         {
         };
 
@@ -114,6 +110,12 @@ namespace foonathan
             static constexpr match_result ok(std::size_t bump) noexcept
             {
                 return match_result(token_kind(Token{}), bump);
+            }
+
+            constexpr rule_token()
+            {
+                static_assert(std::is_base_of<rule_token, Derived>::value,
+                              "invalid type for derived");
             }
         };
 

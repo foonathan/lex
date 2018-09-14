@@ -17,10 +17,12 @@ endif()
 set(tests
         detail/constexpr_vector.cpp
         detail/trie.cpp
+        literal_token.cpp
         rule_token.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp
+               tokenize.hpp
                ${tests})
 target_include_directories(foonathan_lex_test SYSTEM PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex)

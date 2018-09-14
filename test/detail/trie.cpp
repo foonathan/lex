@@ -17,7 +17,8 @@ namespace
     {
         auto result = trie.lookup_prefix(str, std::strlen(str));
         REQUIRE(result);
-        REQUIRE(std::strcmp(*result, prefix) == 0);
+        REQUIRE(std::strcmp(result.data, prefix) == 0);
+        REQUIRE(result.prefix_length == std::strlen(result.data));
     }
 
     bool test_failure()
@@ -43,7 +44,7 @@ namespace
 
     constexpr const char* test_lookup(const test_trie& trie)
     {
-        return *trie.lookup_prefix("a", 1);
+        return trie.lookup_prefix("a", 1).data;
     }
 } // namespace
 
