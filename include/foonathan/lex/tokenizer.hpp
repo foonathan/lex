@@ -20,21 +20,20 @@ namespace foonathan
             template <class TokenSpec>
             struct try_parse_impl<TokenSpec>
             {
-                static constexpr parse_rule_result<TokenSpec> parse(const char*,
-                                                                    const char*) noexcept
+                static constexpr match_result<TokenSpec> parse(const char*, const char*) noexcept
                 {
                     // nothing matched, create an error
-                    return parse_rule_result<TokenSpec>(1);
+                    return match_result<TokenSpec>(1);
                 }
             };
 
             template <class TokenSpec, typename Head, typename... Tail>
             struct try_parse_impl<TokenSpec, Head, Tail...>
             {
-                static constexpr parse_rule_result<TokenSpec> parse(const char* str,
-                                                                    const char* end) noexcept
+                static constexpr match_result<TokenSpec> parse(const char* str,
+                                                               const char* end) noexcept
                 {
-                    static_assert(std::is_base_of<rule_token<TokenSpec>, Head>::value, "");
+                    static_assert(is_rule_token<Head>::value, "");
                     auto result = Head::try_match(str, end);
                     if (result.is_matched())
                         return result;
@@ -44,15 +43,14 @@ namespace foonathan
             };
 
             template <class TokenSpec, typename... Types>
-            constexpr parse_rule_result<TokenSpec> try_parse(type_list<Types...>, const char* str,
-                                                             const char* end) noexcept
+            constexpr match_result<TokenSpec> try_parse(type_list<Types...>, const char* str,
+                                                        const char* end) noexcept
             {
                 return try_parse_impl<TokenSpec, Types...>::parse(str, end);
             }
 
             template <class TokenSpec>
-            constexpr parse_rule_result<TokenSpec> try_parse(const char* str,
-                                                             const char* end) noexcept
+            constexpr match_result<TokenSpec> try_parse(const char* str, const char* end) noexcept
             {
                 return try_parse<TokenSpec>(TokenSpec{}, str, end);
             }

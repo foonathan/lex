@@ -13,22 +13,22 @@ namespace foonathan
     {
         /// The result of a [lex::rule_token]().
         template <class TokenSpec>
-        struct parse_rule_result
+        struct match_result
         {
             token_kind<TokenSpec> kind; //< The kind of token that was parsed.
             std::size_t           bump; //< How many characters were consumed.
 
             /// \effects Creates a result that didn't match anything.
-            explicit constexpr parse_rule_result() noexcept : kind(), bump(0) {}
+            explicit constexpr match_result() noexcept : kind(), bump(0) {}
 
             /// \effects Creates a failed result containing an error consuming the given amount of characters.
-            explicit constexpr parse_rule_result(std::size_t bump) noexcept : kind(), bump(bump)
+            explicit constexpr match_result(std::size_t bump) noexcept : kind(), bump(bump)
             {
                 // TODO: assert bump is not zero
             }
 
             /// \effects Creates a successful result that parsed the given token.
-            explicit constexpr parse_rule_result(token_kind<TokenSpec> kind, std::size_t bump)
+            explicit constexpr match_result(token_kind<TokenSpec> kind, std::size_t bump)
             : kind(kind), bump(bump)
             {
                 // TODO: assert bump is not zero and kind is not error
@@ -62,8 +62,45 @@ namespace foonathan
         /// If it didn't match anything, the next rule is tried.
         /// If it was an error, an error token is created.
         /// If it was a success, the correct token is created.
-        template <class TokenSpec>
+        template <class Derived, class TokenSpec>
         struct rule_token
+        {
+            using spec         = TokenSpec;
+            using token_kind   = lex::token_kind<TokenSpec>;
+            using match_result = lex::match_result<TokenSpec>;
+
+            static constexpr match_result unmatched() noexcept
+            {
+                return match_result();
+            }
+
+            static constexpr match_result error(std::size_t bump) noexcept
+            {
+                return match_result(bump);
+            }
+
+            static constexpr match_result ok(std::size_t bump) noexcept
+            {
+                return match_result(token_kind(Derived{}), bump);
+            }
+        };
+
+        namespace detail
+        {
+            template <class Token>
+            struct is_rule_token_impl
+            {
+                template <class TokenSpec>
+                static std::true_type  test(const rule_token<Token, TokenSpec>&);
+                static std::false_type test(...);
+
+                using value = decltype(test(std::declval<Token>()));
+            };
+        } // namespace detail
+
+        /// Whether or not the given token is a rule token.
+        template <class Token>
+        struct is_rule_token : detail::is_rule_token_impl<Token>::value
         {
         };
     } // namespace lex

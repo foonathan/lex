@@ -14,13 +14,12 @@ namespace
     using test_spec = lex::token_spec<struct token_a, struct token_bc>;
 
     // token_a: an even number of 'a'
-    struct token_a : lex::rule_token<test_spec>
+    struct token_a : lex::rule_token<token_a, test_spec>
     {
-        static constexpr lex::parse_rule_result<test_spec> try_match(const char* str,
-                                                                     const char* end) noexcept
+        static constexpr match_result try_match(const char* str, const char* end) noexcept
         {
             if (*str != 'a')
-                return lex::parse_rule_result<test_spec>();
+                return unmatched();
 
             auto start = str;
             while (str != end && *str == 'a')
@@ -28,23 +27,21 @@ namespace
             auto count = std::size_t(str - start);
 
             if (count % 2 == 0)
-                return lex::parse_rule_result<test_spec>(lex::token_kind<test_spec>(token_a{}),
-                                                         count);
+                return ok(count);
             else
-                return lex::parse_rule_result<test_spec>(count);
+                return error(count);
         }
     };
 
     // token_bc: 'bc'
-    struct token_bc : lex::rule_token<test_spec>
+    struct token_bc : lex::rule_token<token_bc, test_spec>
     {
-        static constexpr lex::parse_rule_result<test_spec> try_match(const char* str,
-                                                                     const char* end) noexcept
+        static constexpr match_result try_match(const char* str, const char* end) noexcept
         {
             if (*str == 'b' & str + 1 != end && str[1] == 'c')
-                return lex::parse_rule_result<test_spec>(lex::token_kind<test_spec>(token_bc{}), 2);
+                return ok(2);
             else
-                return lex::parse_rule_result<test_spec>();
+                return unmatched();
         }
     };
 
