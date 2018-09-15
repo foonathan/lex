@@ -4,60 +4,57 @@
 
 #include <foonathan/lex/identifier.hpp>
 
-#include <catch.hpp>
 #include "tokenize.hpp"
+#include <catch.hpp>
 
 namespace
 {
-    using test_spec = lex::token_spec<struct whitespace, struct identifier, struct keyword_a,
-                                      struct keyword_ab, struct keyword_c>;
+using test_spec = lex::token_spec<struct whitespace, struct identifier, struct keyword_a,
+                                  struct keyword_ab, struct keyword_c>;
 
-    struct whitespace : lex::rule_token<whitespace, test_spec>
+struct whitespace : lex::rule_token<whitespace, test_spec>
+{
+    static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-        static constexpr match_result try_match(const char* str, const char* end) noexcept
-        {
-            if (*str != ' ')
-                return unmatched();
+        if (*str != ' ')
+            return unmatched();
 
-            auto start = str;
-            while (str != end && *str == ' ')
-                ++str;
+        auto start = str;
+        while (str != end && *str == ' ')
+            ++str;
 
-            return ok(str - start);
-        }
-    };
+        return ok(str - start);
+    }
+};
 
-    struct identifier : lex::identifier<identifier, test_spec>
+struct identifier : lex::identifier<identifier, test_spec>
+{
+    static constexpr bool is_alpha(char c) noexcept
     {
-        static constexpr bool is_alpha(char c) noexcept
-        {
-            return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-        }
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    }
 
-        static constexpr match_result try_match(const char* str, const char* end) noexcept
-        {
-            if (!is_alpha(*str))
-                return unmatched();
-
-            auto start = str;
-            while (str != end && is_alpha(*str))
-                ++str;
-
-            return ok(str - start);
-        }
-    };
-
-    struct keyword_a : lex::keyword<'a'>
+    static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-    };
+        if (!is_alpha(*str))
+            return unmatched();
 
-    struct keyword_ab : lex::keyword<'a', 'b'>
-    {
-    };
+        auto start = str;
+        while (str != end && is_alpha(*str))
+            ++str;
 
-    struct keyword_c : lex::keyword<'c'>
-    {
-    };
+        return ok(str - start);
+    }
+};
+
+struct keyword_a : lex::keyword<'a'>
+{};
+
+struct keyword_ab : lex::keyword<'a', 'b'>
+{};
+
+struct keyword_c : lex::keyword<'c'>
+{};
 } // namespace
 
 TEST_CASE("identifier and keyword")

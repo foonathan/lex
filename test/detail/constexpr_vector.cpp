@@ -10,48 +10,48 @@ using namespace foonathan::lex;
 
 namespace
 {
-    using test_vector = detail::constexpr_vector<int, 16>;
+using test_vector = detail::constexpr_vector<int, 16>;
 
-    void verify(const test_vector& vec, std::initializer_list<int> values)
-    {
-        REQUIRE(vec.size() == values.size());
-        for (auto i = 0u; i != vec.size(); ++i)
-            REQUIRE(vec[i] == values.begin()[i]);
-    }
+void verify(const test_vector& vec, std::initializer_list<int> values)
+{
+    REQUIRE(vec.size() == values.size());
+    for (auto i = 0u; i != vec.size(); ++i)
+        REQUIRE(vec[i] == values.begin()[i]);
+}
 
-    constexpr test_vector test_push_back(test_vector input)
-    {
-        input.push_back(1);
-        input.push_back(2);
-        input.push_back(3);
-        input.push_back(4);
+constexpr test_vector test_push_back(test_vector input)
+{
+    input.push_back(1);
+    input.push_back(2);
+    input.push_back(3);
+    input.push_back(4);
 
-        return input;
-    }
+    return input;
+}
 
-    constexpr test_vector test_pop_back(test_vector input)
-    {
-        input.pop_back();
-        input.pop_back();
+constexpr test_vector test_pop_back(test_vector input)
+{
+    input.pop_back();
+    input.pop_back();
 
-        return input;
-    }
+    return input;
+}
 
-    constexpr test_vector test_insert(test_vector input)
-    {
-        input.insert(input.begin(), 11);
-        input.insert(input.begin() + 2, 22);
+constexpr test_vector test_insert(test_vector input)
+{
+    input.insert(input.begin(), 11);
+    input.insert(input.begin() + 2, 22);
 
-        return input;
-    }
+    return input;
+}
 
-    constexpr test_vector test_erase(test_vector input)
-    {
-        input.erase(input.begin());
-        input.erase(input.begin() + 1);
+constexpr test_vector test_erase(test_vector input)
+{
+    input.erase(input.begin());
+    input.erase(input.begin() + 1);
 
-        return input;
-    }
+    return input;
+}
 } // namespace
 
 TEST_CASE("detail::constexpr_vector")

@@ -4,48 +4,48 @@
 
 #include <foonathan/lex/detail/trie.hpp>
 
-#include <cstring>
 #include <catch.hpp>
+#include <cstring>
 
 using namespace foonathan::lex;
 
 namespace
 {
-    using test_trie = detail::trie<const char*, 16>;
+using test_trie = detail::trie<const char*, 16>;
 
-    void verify(const test_trie& trie, const char* str, const char* prefix)
-    {
-        auto result = trie.lookup_prefix(str, std::strlen(str));
-        REQUIRE(result);
-        REQUIRE(std::strcmp(result.data, prefix) == 0);
-        REQUIRE(result.prefix_length == std::strlen(result.data));
-    }
+void verify(const test_trie& trie, const char* str, const char* prefix)
+{
+    auto result = trie.lookup_prefix(str, std::strlen(str));
+    REQUIRE(result);
+    REQUIRE(std::strcmp(result.data, prefix) == 0);
+    REQUIRE(result.prefix_length == std::strlen(result.data));
+}
 
-    bool test_failure()
-    {
-        return true;
-    }
+bool test_failure()
+{
+    return true;
+}
 
-    constexpr test_trie insert_single(test_trie trie)
-    {
-        trie.insert("a", "a") || test_failure();
-        trie.insert("b", "b") || test_failure();
-        trie.insert("c", "c") || test_failure();
-        return trie;
-    }
+constexpr test_trie insert_single(test_trie trie)
+{
+    trie.insert("a", "a") || test_failure();
+    trie.insert("b", "b") || test_failure();
+    trie.insert("c", "c") || test_failure();
+    return trie;
+}
 
-    constexpr test_trie insert_multiple(test_trie trie)
-    {
-        trie.insert("ab", "ab") || test_failure();
-        trie.insert("abcd", "abcd") || test_failure();
-        trie.insert("bc", "bc") || test_failure();
-        return trie;
-    }
+constexpr test_trie insert_multiple(test_trie trie)
+{
+    trie.insert("ab", "ab") || test_failure();
+    trie.insert("abcd", "abcd") || test_failure();
+    trie.insert("bc", "bc") || test_failure();
+    return trie;
+}
 
-    constexpr const char* test_lookup(const test_trie& trie)
-    {
-        return trie.lookup_prefix("a", 1).data;
-    }
+constexpr const char* test_lookup(const test_trie& trie)
+{
+    return trie.lookup_prefix("a", 1).data;
+}
 } // namespace
 
 TEST_CASE("detail::trie")

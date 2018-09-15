@@ -4,51 +4,50 @@
 
 #include <foonathan/lex/rule_token.hpp>
 
-#include <catch.hpp>
 #include "tokenize.hpp"
+#include <catch.hpp>
 
 namespace
 {
-    using test_spec = lex::token_spec<struct token_a, struct token_c, struct token_bc>;
+using test_spec = lex::token_spec<struct token_a, struct token_c, struct token_bc>;
 
-    // token_a: an even number of 'a'
-    struct token_a : lex::rule_token<token_a, test_spec>
+// token_a: an even number of 'a'
+struct token_a : lex::rule_token<token_a, test_spec>
+{
+    static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-        static constexpr match_result try_match(const char* str, const char* end) noexcept
-        {
-            if (*str != 'a')
-                return unmatched();
+        if (*str != 'a')
+            return unmatched();
 
-            auto start = str;
-            while (str != end && *str == 'a')
-                ++str;
-            auto count = std::size_t(str - start);
+        auto start = str;
+        while (str != end && *str == 'a')
+            ++str;
+        auto count = std::size_t(str - start);
 
-            if (count % 2 == 0)
-                return ok(count);
-            else
-                return error(count);
-        }
-    };
+        if (count % 2 == 0)
+            return ok(count);
+        else
+            return error(count);
+    }
+};
 
-    // token_c: 'c'
-    struct token_c : lex::null_token
+// token_c: 'c'
+struct token_c : lex::null_token
+{};
+
+// token_bc: 'bc'
+struct token_bc : lex::rule_token<token_bc, test_spec>
+{
+    static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-    };
-
-    // token_bc: 'bc'
-    struct token_bc : lex::rule_token<token_bc, test_spec>
-    {
-        static constexpr match_result try_match(const char* str, const char* end) noexcept
-        {
-            if (*str == 'b' & str + 1 != end && str[1] == 'c')
-                return ok(2);
-            else if (*str == 'c')
-                return ok<token_c>(1);
-            else
-                return unmatched();
-        }
-    };
+        if (*str == 'b' & str + 1 != end && str[1] == 'c')
+            return ok(2);
+        else if (*str == 'c')
+            return ok<token_c>(1);
+        else
+            return unmatched();
+    }
+};
 } // namespace
 
 TEST_CASE("rule_token")

@@ -4,24 +4,21 @@
 
 #include <foonathan/lex/literal_token.hpp>
 
-#include <catch.hpp>
 #include "tokenize.hpp"
+#include <catch.hpp>
 
 namespace
 {
-    using test_spec = lex::token_spec<struct token_a, struct token_abc, struct token_bc>;
+using test_spec = lex::token_spec<struct token_a, struct token_abc, struct token_bc>;
 
-    struct token_a : lex::literal_token<'a'>
-    {
-    };
+struct token_a : lex::literal_token<'a'>
+{};
 
-    struct token_abc : lex::literal_token<'a', 'b', 'c'>
-    {
-    };
+struct token_abc : lex::literal_token<'a', 'b', 'c'>
+{};
 
-    struct token_bc : lex::literal_token<'b', 'c'>
-    {
-    };
+struct token_bc : lex::literal_token<'b', 'c'>
+{};
 } // namespace
 
 TEST_CASE("literal_token")
