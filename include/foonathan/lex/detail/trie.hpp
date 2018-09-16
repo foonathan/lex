@@ -6,6 +6,7 @@
 #define FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED
 
 #include <foonathan/lex/detail/constexpr_vector.hpp>
+#include <foonathan/lex/detail/select_integer.hpp>
 
 namespace foonathan
 {
@@ -13,6 +14,9 @@ namespace lex
 {
     namespace detail
     {
+        template <std::size_t MaxNodes>
+        using node_index = select_integer<MaxNodes>;
+
         /// A simple constexpr trie data structure associating strings with `UserData`.
         /// It can contain at most `MaxNodes` nodes.
         template <typename UserData, std::size_t MaxNodes>
@@ -23,16 +27,15 @@ namespace lex
 
             struct node
             {
-                static constexpr auto invalid = std::size_t(-1);
+                static constexpr auto invalid = node_index<MaxNodes>(-1);
+
+                // this maintains a linked list of children
+                node_index<MaxNodes> first_child          = invalid;
+                node_index<MaxNodes> next_child_of_parent = invalid;
 
                 UserData data{};
 
-                // this maintains a linked list of children
-                std::size_t first_child          = invalid;
-                std::size_t next_child_of_parent = invalid;
-
                 char character = '\0'; // '\0' for root node
-                bool has_data  = false;
 
                 constexpr node() noexcept = default;
 
@@ -40,17 +43,16 @@ namespace lex
 
                 constexpr bool set_data(UserData data) noexcept
                 {
-                    if (has_data)
+                    if (this->data)
                         return false;
 
                     this->data = data;
-                    has_data   = true;
                     return true;
                 }
 
                 constexpr const UserData* get_data() const noexcept
                 {
-                    return has_data ? &data : nullptr;
+                    return data ? &data : nullptr;
                 }
             };
 

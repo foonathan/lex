@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include <foonathan/lex/detail/select_integer.hpp>
 #include <foonathan/lex/detail/type_list.hpp>
 
 namespace foonathan
@@ -88,18 +89,20 @@ namespace lex
         }
 
     private:
+        // id 0: invalid
+        // id 1: EOF
+        using id_type = detail::select_integer<TokenSpec::size + 2>;
+
         template <class Token>
-        static constexpr std::uint32_t get_id() noexcept
+        static constexpr id_type get_id() noexcept
         {
             constexpr auto index = detail::index_of<TokenSpec, Token>::value;
             static_assert(detail::contains<TokenSpec, Token>::value,
                           "not one of the specified tokens");
-            // id 0: invalid
-            // id 1: EOF
-            return static_cast<std::uint32_t>(index + 2);
+            return static_cast<id_type>(index + 2);
         }
 
-        std::uint32_t id_;
+        id_type id_;
     };
 
     namespace detail
