@@ -40,6 +40,10 @@ namespace lex
     struct keyword : literal_token<Char...>
     {};
 
+    /// Expands to `keyword<String[0], String[1], ...>`.
+    /// It ignores all null characters.
+#define FOONATHAN_LEX_KEYWORD(String) FOONATHAN_LEX_DETAIL_STRING(foonathan::lex::keyword, String)
+
     /// Whether or not the given token is a keyword.
     template <class Token>
     struct is_keyword : detail::is_literal_token_impl<keyword, Token>::value

@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_LITERAL_TOKEN_HPP_INCLUDED
 #define FOONATHAN_LEX_LITERAL_TOKEN_HPP_INCLUDED
 
+#include <foonathan/lex/detail/string.hpp>
 #include <foonathan/lex/detail/trie.hpp>
 #include <foonathan/lex/match_result.hpp>
 #include <foonathan/lex/token_kind.hpp>
@@ -24,6 +25,11 @@ namespace lex
         static constexpr const char value[] = {Literal..., '\0'};
         static_assert(value[sizeof...(Literal) - 1] != '\0', "literal must not be null-terminated");
     };
+
+    /// Expands to `literal_token<String[0], String[1], ...>`.
+    /// It ignores all null characters.
+#define FOONATHAN_LEX_LITERAL(String)                                                              \
+    FOONATHAN_LEX_DETAIL_STRING(foonathan::lex::literal_token, String)
 
     namespace detail
     {

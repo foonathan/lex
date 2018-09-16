@@ -8,6 +8,7 @@ project(foonathan_lex)
 set(detail_header_files
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/constexpr_vector.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
     )

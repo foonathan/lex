@@ -14,10 +14,10 @@ using test_spec = lex::token_spec<struct token_a, struct token_abc, struct token
 struct token_a : lex::literal_token<'a'>
 {};
 
-struct token_abc : lex::literal_token<'a', 'b', 'c'>
+struct token_abc : FOONATHAN_LEX_LITERAL("abc")
 {};
 
-struct token_bc : lex::literal_token<'b', 'c'>
+struct token_bc : FOONATHAN_LEX_LITERAL("bc")
 {};
 } // namespace
 

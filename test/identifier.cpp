@@ -37,7 +37,7 @@ struct identifier : lex::identifier<identifier, test_spec>
 struct keyword_a : lex::keyword<'a'>
 {};
 
-struct keyword_ab : lex::keyword<'a', 'b'>
+struct keyword_ab : FOONATHAN_LEX_KEYWORD("ab")
 {};
 
 struct keyword_c : lex::keyword<'c'>
