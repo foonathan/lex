@@ -31,17 +31,23 @@ namespace lex
             return kind_;
         }
 
-        /// \returns Whether or not it is an error token.
+        /// \returns `!kind()`.
         constexpr bool is_error() const noexcept
         {
             return !kind_;
         }
 
-        /// \returns Whether or not it is the specified token.
+        /// \returns `kind().is(token)`.
         template <class Token>
         constexpr bool is(Token token = {}) const noexcept
         {
             return kind_.is(token);
+        }
+
+        /// \returns `kind().name()`.
+        constexpr const char* name() const noexcept
+        {
+            return kind_.name();
         }
 
         /// \returns The spelling of the token.

@@ -32,6 +32,7 @@ TEST_CASE("literal_token")
         REQUIRE(result.size() == 3);
 
         REQUIRE(result[0].is(token_a{}));
+        REQUIRE(result[0].name() == std::string("a"));
         REQUIRE(result[0].spelling() == "a");
         REQUIRE(result[0].offset(tokenizer) == 0);
 
@@ -52,6 +53,7 @@ TEST_CASE("literal_token")
         REQUIRE(result.size() == 5);
 
         REQUIRE(result[0].is(token_abc{}));
+        REQUIRE(result[0].name() == std::string("abc"));
         REQUIRE(result[0].spelling() == "abc");
         REQUIRE(result[0].offset(tokenizer) == 0);
 
@@ -68,6 +70,7 @@ TEST_CASE("literal_token")
         REQUIRE(result[3].offset(tokenizer) == 5);
 
         REQUIRE(result[4].is(token_bc{}));
+        REQUIRE(result[4].name() == std::string("bc"));
         REQUIRE(result[4].spelling() == "bc");
         REQUIRE(result[4].offset(tokenizer) == 6);
     }

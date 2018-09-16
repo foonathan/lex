@@ -22,6 +22,29 @@ namespace lex
     struct eof
     {};
 
+    namespace detail
+    {
+        // id 0: invalid
+        // id 1: EOF
+        template <class TokenSpec>
+        using id_type = detail::select_integer<TokenSpec::size + 2>;
+
+        template <class TokenSpec, class Token>
+        constexpr id_type<TokenSpec> get_id(Token) noexcept
+        {
+            constexpr auto index = detail::index_of<TokenSpec, Token>::value;
+            static_assert(detail::contains<TokenSpec, Token>::value,
+                          "not one of the specified tokens");
+            return static_cast<id_type<TokenSpec>>(index + 2);
+        }
+
+        template <class TokenSpec>
+        constexpr id_type<TokenSpec> get_id(eof) noexcept
+        {
+            return 1;
+        }
+    } // namespace detail
+
     /// Information about the kind of a token.
     template <class TokenSpec>
     class token_kind
@@ -31,12 +54,12 @@ namespace lex
         constexpr token_kind() noexcept : id_(0) {}
 
         /// \effects Creates the EOF token kind.
-        constexpr token_kind(eof) noexcept : id_(1) {}
+        constexpr token_kind(eof) noexcept : id_(detail::get_id<TokenSpec>(eof{})) {}
 
         /// \effects Creates the specified token kind.
         /// \requires The token must be one of the specified tokens.
         template <class Token>
-        constexpr token_kind(Token) noexcept : id_(get_id<Token>())
+        constexpr token_kind(Token) noexcept : id_(detail::get_id<TokenSpec>(Token{}))
         {}
 
         /// \returns Whether or not it is invalid.
@@ -45,17 +68,40 @@ namespace lex
             return id_ != 0;
         }
 
-        /// \returns Whether or not it is eof.
-        constexpr bool is(eof = {}) const noexcept
-        {
-            return id_ == 1;
-        }
-
         /// \returns Whether or not it is the specified token kind.
         template <class Token>
-        constexpr bool is(Token = {}) const noexcept
+        constexpr bool is(Token token = {}) const noexcept
         {
-            return id_ == get_id<Token>();
+            return id_ == detail::get_id<TokenSpec>(token);
+        }
+
+        /// \returns The name of the token.
+        /// If this function is used, all rule tokens must have a `static constexpr const char*
+        /// name;` member. This is returned as the name. For tokens that inherit from a class other
+        /// than [lex::rule_token]() it is automatically provided, but can of course be overriden by
+        /// hiding the declaration.
+        constexpr const char* name() const noexcept
+        {
+            if (!*this)
+                return "<error>";
+            else if (is(eof{}))
+                return "<eof>";
+            else
+            {
+                const char* result = nullptr;
+                detail::for_each(TokenSpec{}, [&](auto tag) {
+                    using type = typename decltype(tag)::type;
+                    if (!is(type{}))
+                        return true;
+                    else
+                    {
+                        result = type::name;
+                        return false;
+                    }
+                });
+                // TOOD: assert
+                return result;
+            }
         }
 
         friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept
@@ -89,20 +135,7 @@ namespace lex
         }
 
     private:
-        // id 0: invalid
-        // id 1: EOF
-        using id_type = detail::select_integer<TokenSpec::size + 2>;
-
-        template <class Token>
-        static constexpr id_type get_id() noexcept
-        {
-            constexpr auto index = detail::index_of<TokenSpec, Token>::value;
-            static_assert(detail::contains<TokenSpec, Token>::value,
-                          "not one of the specified tokens");
-            return static_cast<id_type>(index + 2);
-        }
-
-        id_type id_;
+        detail::id_type<TokenSpec> id_;
     };
 
     namespace detail

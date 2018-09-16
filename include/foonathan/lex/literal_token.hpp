@@ -24,7 +24,12 @@ namespace lex
     {
         static constexpr const char value[] = {Literal..., '\0'};
         static_assert(value[sizeof...(Literal) - 1] != '\0', "literal must not be null-terminated");
+
+        static constexpr const char* name = value;
     };
+
+    template <char... Literal>
+    constexpr const char literal_token<Literal...>::value[];
 
     /// Expands to `literal_token<String[0], String[1], ...>`.
     /// It ignores all null characters.

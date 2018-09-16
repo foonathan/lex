@@ -15,7 +15,9 @@ using test_spec = lex::token_spec<struct whitespace, struct identifier, struct k
 
 struct whitespace : lex::rule_token<whitespace, test_spec>,
                     lex::loop_ascii_mixin<whitespace, lex::ascii::is_blank>
-{};
+{
+    static constexpr const char* name = "<whitespace>";
+};
 
 struct identifier : lex::identifier<identifier, test_spec>
 {
@@ -53,14 +55,17 @@ TEST_CASE("identifier and keyword")
     REQUIRE(result.size() == 9);
 
     REQUIRE(result[0].is(identifier{}));
+    REQUIRE(result[0].name() == std::string("<identifier>"));
     REQUIRE(result[0].spelling() == "dd");
     REQUIRE(result[0].offset(tokenizer) == 0);
 
     REQUIRE(result[1].is(whitespace{}));
+    REQUIRE(result[1].name() == std::string("<whitespace>"));
     REQUIRE(result[1].spelling() == " ");
     REQUIRE(result[1].offset(tokenizer) == 2);
 
     REQUIRE(result[2].is(keyword_a{}));
+    REQUIRE(result[2].name() == std::string("a"));
     REQUIRE(result[2].spelling() == "a");
     REQUIRE(result[2].offset(tokenizer) == 3);
 
@@ -69,6 +74,7 @@ TEST_CASE("identifier and keyword")
     REQUIRE(result[3].offset(tokenizer) == 4);
 
     REQUIRE(result[4].is(keyword_ab{}));
+    REQUIRE(result[4].name() == std::string("ab"));
     REQUIRE(result[4].spelling() == "ab");
     REQUIRE(result[4].offset(tokenizer) == 5);
 
@@ -85,6 +91,7 @@ TEST_CASE("identifier and keyword")
     REQUIRE(result[7].offset(tokenizer) == 11);
 
     REQUIRE(result[8].is(keyword_c{}));
+    REQUIRE(result[8].name() == std::string("c"));
     REQUIRE(result[8].spelling() == "c");
     REQUIRE(result[8].offset(tokenizer) == 12);
 }

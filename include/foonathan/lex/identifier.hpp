@@ -18,7 +18,9 @@ namespace lex
     /// At most one identifier must be present in a token specification.
     template <class Derived, class TokenSpec>
     struct identifier : rule_token<Derived, TokenSpec>
-    {};
+    {
+        static constexpr const char* name = "<identifier>";
+    };
 
     /// Whether or not the given token is an identifier.
     template <class Token>

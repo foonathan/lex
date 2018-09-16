@@ -19,6 +19,13 @@ namespace lex
             static constexpr auto size = sizeof...(Types);
         };
 
+        template <typename T>
+        struct type_list<T>
+        {
+            static constexpr auto size = 1;
+            using type                 = T;
+        };
+
         //=== cat ===//
         template <class List, typename... Ts>
         struct cat_impl;
@@ -99,6 +106,33 @@ namespace lex
 
         template <class List, template <typename> class Predicate>
         using remove_if = typename filter_impl<List, Predicate>::negative;
+
+        //=== for_each ===//
+        template <class List, typename Func>
+        struct for_each_impl;
+
+        template <typename Func>
+        struct for_each_impl<type_list<>, Func>
+        {
+            static constexpr void apply(const Func&) noexcept {}
+        };
+
+        template <typename Head, typename... Tail, typename Func>
+        struct for_each_impl<type_list<Head, Tail...>, Func>
+        {
+            static constexpr void apply(const Func& f) noexcept
+            {
+                if (!f(type_list<Head>{}))
+                    return;
+                for_each_impl<type_list<Tail...>, Func>::apply(f);
+            }
+        };
+
+        template <class List, typename Func>
+        constexpr void for_each(List, Func f) noexcept
+        {
+            for_each_impl<List, Func>::apply(f);
+        }
     } // namespace detail
 } // namespace lex
 } // namespace foonathan
