@@ -46,44 +46,45 @@ struct keyword_c : lex::keyword<'c'>
 
 TEST_CASE("identifier and keyword")
 {
-    static constexpr const char array[] = "dd a ab abc c";
-    constexpr auto              result  = tokenize<test_spec>(array);
+    static constexpr const char array[]   = "dd a ab abc c";
+    constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
+    constexpr auto              result    = tokenize<test_spec>(tokenizer);
 
     REQUIRE(result.size() == 9);
 
     REQUIRE(result[0].is(identifier{}));
     REQUIRE(result[0].spelling() == "dd");
-    REQUIRE(result[0].offset() == 0);
+    REQUIRE(result[0].offset(tokenizer) == 0);
 
     REQUIRE(result[1].is(whitespace{}));
     REQUIRE(result[1].spelling() == " ");
-    REQUIRE(result[1].offset() == 2);
+    REQUIRE(result[1].offset(tokenizer) == 2);
 
     REQUIRE(result[2].is(keyword_a{}));
     REQUIRE(result[2].spelling() == "a");
-    REQUIRE(result[2].offset() == 3);
+    REQUIRE(result[2].offset(tokenizer) == 3);
 
     REQUIRE(result[3].is(whitespace{}));
     REQUIRE(result[3].spelling() == " ");
-    REQUIRE(result[3].offset() == 4);
+    REQUIRE(result[3].offset(tokenizer) == 4);
 
     REQUIRE(result[4].is(keyword_ab{}));
     REQUIRE(result[4].spelling() == "ab");
-    REQUIRE(result[4].offset() == 5);
+    REQUIRE(result[4].offset(tokenizer) == 5);
 
     REQUIRE(result[5].is(whitespace{}));
     REQUIRE(result[5].spelling() == " ");
-    REQUIRE(result[5].offset() == 7);
+    REQUIRE(result[5].offset(tokenizer) == 7);
 
     REQUIRE(result[6].is(identifier{}));
     REQUIRE(result[6].spelling() == "abc");
-    REQUIRE(result[6].offset() == 8);
+    REQUIRE(result[6].offset(tokenizer) == 8);
 
     REQUIRE(result[7].is(whitespace{}));
     REQUIRE(result[7].spelling() == " ");
-    REQUIRE(result[7].offset() == 11);
+    REQUIRE(result[7].offset(tokenizer) == 11);
 
     REQUIRE(result[8].is(keyword_c{}));
     REQUIRE(result[8].spelling() == "c");
-    REQUIRE(result[8].offset() == 12);
+    REQUIRE(result[8].offset(tokenizer) == 12);
 }

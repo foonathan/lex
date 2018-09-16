@@ -16,21 +16,41 @@ namespace lex
     template <class... Tokens>
     using token_spec = detail::type_list<Tokens...>;
 
+    /// Tag type to mark the EOF token.
+    /// It is generated at the very end.
+    struct eof
+    {};
+
+    /// Information about the kind of a token.
     template <class TokenSpec>
     class token_kind
     {
     public:
+        /// \effects Creates an invalid token kind.
         constexpr token_kind() noexcept : id_(0) {}
 
+        /// \effects Creates the EOF token kind.
+        constexpr token_kind(eof) noexcept : id_(1) {}
+
+        /// \effects Creates the specified token kind.
+        /// \requires The token must be one of the specified tokens.
         template <class Token>
-        explicit constexpr token_kind(Token) noexcept : id_(get_id<Token>())
+        constexpr token_kind(Token) noexcept : id_(get_id<Token>())
         {}
 
+        /// \returns Whether or not it is invalid.
         explicit constexpr operator bool() const noexcept
         {
             return id_ != 0;
         }
 
+        /// \returns Whether or not it is eof.
+        constexpr bool is(eof = {}) const noexcept
+        {
+            return id_ == 1;
+        }
+
+        /// \returns Whether or not it is the specified token kind.
         template <class Token>
         constexpr bool is(Token = {}) const noexcept
         {
@@ -74,7 +94,9 @@ namespace lex
             constexpr auto index = detail::index_of<TokenSpec, Token>::value;
             static_assert(detail::contains<TokenSpec, Token>::value,
                           "not one of the specified tokens");
-            return static_cast<std::uint32_t>(index + 1);
+            // id 0: invalid
+            // id 1: EOF
+            return static_cast<std::uint32_t>(index + 2);
         }
 
         std::uint32_t id_;

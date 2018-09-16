@@ -82,36 +82,37 @@ struct alpha : lex::rule_token<alpha, test_spec>,
 
 TEST_CASE("single_ascii_token and ascii_token")
 {
-    static constexpr const char array[] = "Abcde  12aBB";
-    constexpr auto              result  = tokenize<test_spec>(array);
+    static constexpr const char array[]   = "Abcde  12aBB";
+    constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
+    constexpr auto              result    = tokenize<test_spec>(tokenizer);
 
     REQUIRE(result.size() == 7);
 
     REQUIRE(result[0].is(alpha{}));
     REQUIRE(result[0].spelling() == "Abcde");
-    REQUIRE(result[0].offset() == 0);
+    REQUIRE(result[0].offset(tokenizer) == 0);
 
     REQUIRE(result[1].is(whitespace{}));
     REQUIRE(result[1].spelling() == "  ");
-    REQUIRE(result[1].offset() == 5);
+    REQUIRE(result[1].offset(tokenizer) == 5);
 
     REQUIRE(result[2].is(digit{}));
     REQUIRE(result[2].spelling() == "1");
-    REQUIRE(result[2].offset() == 7);
+    REQUIRE(result[2].offset(tokenizer) == 7);
 
     REQUIRE(result[3].is(digit{}));
     REQUIRE(result[3].spelling() == "2");
-    REQUIRE(result[3].offset() == 8);
+    REQUIRE(result[3].offset(tokenizer) == 8);
 
     REQUIRE(result[4].is_error());
     REQUIRE(result[4].spelling() == "a");
-    REQUIRE(result[4].offset() == 9);
+    REQUIRE(result[4].offset(tokenizer) == 9);
 
     REQUIRE(result[5].is(alpha{}));
     REQUIRE(result[5].spelling() == "B");
-    REQUIRE(result[5].offset() == 10);
+    REQUIRE(result[5].offset(tokenizer) == 10);
 
     REQUIRE(result[6].is(alpha{}));
     REQUIRE(result[6].spelling() == "B");
-    REQUIRE(result[6].offset() == 11);
+    REQUIRE(result[6].offset(tokenizer) == 11);
 }

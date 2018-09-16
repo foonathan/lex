@@ -14,12 +14,11 @@ namespace lex = foonathan::lex;
 template <class Spec>
 using vector = lex::detail::constexpr_vector<lex::token<Spec>, 16>;
 
-template <class Spec, std::size_t N>
-constexpr vector<Spec> tokenize(const char (&array)[N])
+template <class Spec>
+constexpr vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)
 {
     vector<Spec> result;
 
-    lex::tokenizer<Spec> tokenizer(array, N);
     while (!tokenizer.is_eof())
         result.push_back(tokenizer.get());
 
