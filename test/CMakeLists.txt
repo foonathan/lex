@@ -19,7 +19,8 @@ set(tests
         detail/trie.cpp
         identifier.cpp
         literal_token.cpp
-        rule_token.cpp)
+        rule_token.cpp
+        rules.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp

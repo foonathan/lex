@@ -6,36 +6,23 @@
 
 #include "tokenize.hpp"
 #include <catch.hpp>
+#include <foonathan/lex/rules.hpp>
 
 namespace
 {
 using test_spec = lex::token_spec<struct whitespace, struct identifier, struct keyword_a,
                                   struct keyword_ab, struct keyword_c>;
 
-struct whitespace : lex::rule_token<whitespace, test_spec>
-{
-    static constexpr match_result try_match(const char* str, const char* end) noexcept
-    {
-        if (*str != ' ')
-            return unmatched();
-
-        auto start = str;
-        while (str != end && *str == ' ')
-            ++str;
-
-        return ok(str - start);
-    }
-};
+struct whitespace : lex::rule_token<whitespace, test_spec>,
+                    lex::loop_ascii_mixin<whitespace, lex::ascii::is_blank>
+{};
 
 struct identifier : lex::identifier<identifier, test_spec>
 {
-    static constexpr bool is_alpha(char c) noexcept
-    {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-    }
-
     static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
+        using lex::ascii::is_alpha;
+
         if (!is_alpha(*str))
             return unmatched();
 
