@@ -15,13 +15,13 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
 endif()
 
 set(tests
-        detail/constexpr_vector.cpp
-        detail/string.cpp
-        detail/trie.cpp
-        identifier.cpp
-        literal_token.cpp
-        rule_token.cpp
-        rules.cpp)
+    detail/constexpr_vector.cpp
+    detail/string.cpp
+    detail/trie.cpp
+    identifier.cpp
+    literal_token.cpp
+    rule_token.cpp
+    ascii.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp

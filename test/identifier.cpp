@@ -6,7 +6,7 @@
 
 #include "tokenize.hpp"
 #include <catch.hpp>
-#include <foonathan/lex/rules.hpp>
+#include <foonathan/lex/ascii.hpp>
 
 namespace
 {
