@@ -142,8 +142,6 @@ namespace lex
         /// EOF.
         constexpr void bump() noexcept
         {
-            auto offset = static_cast<std::size_t>(ptr_ - begin_);
-
             if (ptr_ == end_)
                 cur_ = token<TokenSpec>(token_kind<TokenSpec>(eof{}), ptr_, 0);
             else

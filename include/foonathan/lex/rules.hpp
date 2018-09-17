@@ -27,11 +27,28 @@ namespace lex
         /// The type of all functions in this namespace.
         using predicate = bool (*)(char);
 
+        namespace detail
+        {
+            template <typename T>
+            constexpr bool is_ascii_impl(std::true_type /* signed */, T c) noexcept
+            {
+                // all positive values are ASCII
+                return c >= 0;
+            }
+
+            template <typename T>
+            constexpr bool is_ascii_impl(std::false_type /* unsigned */, T c) noexcept
+            {
+                // all values less than or equal to 0x7F  are ASCII
+                return c <= 0x7F;
+            }
+        } // namespace detail
+
         /// \returns Whether or not the character is an ASCII character.
         constexpr bool is_ascii(char c) noexcept
         {
             static_assert(0x7F <= CHAR_MAX, "???");
-            return c <= 0x7F;
+            return detail::is_ascii_impl(std::is_signed<char>{}, c);
         }
 
         /// \returns Whether or not the character is an ASCII control character other than space
@@ -80,14 +97,14 @@ namespace lex
         /// \returns Whether or not the character is a lower-case ASCII character, `a` to `z`.
         constexpr bool is_lower(char c) noexcept
         {
-            static_assert('a' + 1 == 'b' && 'a' + 25 == 'z', "machine is not using ASCII...?");
+            static_assert('a' + 25 == 'z', "machine is not using ASCII...?");
             return c >= 'a' && c <= 'z';
         }
 
         /// \returns Whether or not the character is an upper-case ASCII character, `A` to `Z`.
         constexpr bool is_upper(char c) noexcept
         {
-            static_assert('A' + 1 == 'B' && 'A' + 25 == 'Z', "machine is not using ASCII...?");
+            static_assert('A' + 25 == 'Z', "machine is not using ASCII...?");
             return c >= 'A' && c <= 'Z';
         }
 

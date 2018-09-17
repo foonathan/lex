@@ -23,7 +23,7 @@ namespace lex
     {
     public:
         /// \effects Creates an invalid, partially-formed token that may not be used.
-        constexpr token() noexcept : kind_(), size_(0), ptr_(nullptr) {}
+        constexpr token() noexcept : ptr_(nullptr), size_(0), kind_() {}
 
         /// \returns The kind of token it is.
         constexpr token_kind<TokenSpec> kind() const noexcept

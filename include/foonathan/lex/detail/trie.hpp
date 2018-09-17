@@ -14,6 +14,7 @@ namespace lex
 {
     namespace detail
     {
+        // index is off-by one, as root node is not indexed
         template <std::size_t MaxNodes>
         using node_index = select_integer<MaxNodes>;
 
@@ -137,8 +138,9 @@ namespace lex
                 auto new_node = nodes_.push_back(child);
 
                 // insert as first child
-                auto old_first                 = parent->first_child;
-                parent->first_child            = nodes_.size() - 1;
+                auto old_first = parent->first_child;
+                // - 2 because root node would be -1
+                parent->first_child = static_cast<node_index<MaxNodes>>(nodes_.size() - 2);
                 new_node->next_child_of_parent = old_first;
 
                 return new_node;
@@ -146,10 +148,10 @@ namespace lex
 
             constexpr const node* find_child(const node* cur, char c) const noexcept
             {
-                auto cur_child = cur->first_child;
+                auto cur_child = static_cast<std::size_t>(cur->first_child);
                 while (cur_child != node::invalid)
                 {
-                    auto& n = nodes_[cur_child];
+                    auto& n = nodes_[cur_child + 1]; // +1 because root node would be -1
                     if (n.character == c)
                         return &n;
                     else
