@@ -13,11 +13,11 @@ set(detail_header_files
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
     )
 set(header_files
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
@@ -26,11 +26,14 @@ add_library(foonathan_lex INTERFACE)
 target_sources(foonathan_lex INTERFACE ${detail_header_files} ${header_files})
 target_include_directories(foonathan_lex INTERFACE include/)
 
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+option(FOONATHAN_LEX_BUILD_TEST "build tests of foonathan/lex" OFF)
+if(${FOONATHAN_LEX_BUILD_TEST} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
     enable_testing()
     add_subdirectory(test)
 endif()
 
-# TODO: temporary, for testing
-add_executable(foonathan_lex_main main.cpp)
-target_link_libraries(foonathan_lex_main PUBLIC foonathan_lex)
+option(FOONATHAN_LEX_BUILD_BENCHMARK "build benchmarks of foonathan/lex" OFF)
+if(${FOONATHAN_LEX_BUILD_TEST} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+    add_subdirectory(benchmark)
+endif()
+

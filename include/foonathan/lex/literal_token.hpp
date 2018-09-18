@@ -108,7 +108,8 @@ namespace lex
         template <class TokenSpec, class LiteralTokens>
         struct literal_matcher
         {
-            static constexpr auto trie = build_trie<TokenSpec, LiteralTokens>();
+            static constexpr literal_trie<TokenSpec, LiteralTokens> trie
+                = build_trie<TokenSpec, LiteralTokens>();
 
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
@@ -119,6 +120,10 @@ namespace lex
                     return match_result<TokenSpec>();
             }
         };
+
+        template <class TokenSpec, class LiteralTokens>
+        constexpr literal_trie<TokenSpec, LiteralTokens>
+            literal_matcher<TokenSpec, LiteralTokens>::trie;
     } // namespace detail
 } // namespace lex
 } // namespace foonathan
