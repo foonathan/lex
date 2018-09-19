@@ -73,6 +73,9 @@ struct arrow : lex::null_token
 struct minus_minus : lex::null_token
 {};
 
+struct minus_eq : lex::null_token
+{};
+
 struct minus : lex::rule_token<minus, token_spec>
 {
     static match_result try_match(const char* str, const char* end)

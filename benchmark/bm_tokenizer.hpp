@@ -41,6 +41,9 @@ struct arrow : lex::literal_token<'-', '>'>
 struct minus_minus : lex::literal_token<'-', '-'>
 {};
 
+struct minus_eq : lex::literal_token<'-', '='>
+{};
+
 struct minus : lex::literal_token<'-'>
 {};
 
