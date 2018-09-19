@@ -7,13 +7,13 @@
 
 #include <foonathan/lex/spelling.hpp>
 
-void baseline(const char* str, const char* end, void (*f)(foonathan::lex::token_spelling))
+void baseline(const char* str, const char* end, void (*f)(int, foonathan::lex::token_spelling))
 {
     namespace lex = foonathan::lex;
 
     while (str != end)
     {
-        f(lex::token_spelling(str, 1));
+        f(0, lex::token_spelling(str, 1));
         ++str;
     }
 }

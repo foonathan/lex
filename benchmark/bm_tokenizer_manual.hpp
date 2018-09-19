@@ -109,7 +109,8 @@ struct whitespace : lex::rule_token<whitespace, token_spec>,
 {};
 } // namespace tokenizer_manual_ns
 
-void tokenizer_manual(const char* str, const char* end, void (*f)(foonathan::lex::token_spelling))
+void tokenizer_manual(const char* str, const char* end,
+                      void (*f)(int, foonathan::lex::token_spelling))
 {
     using namespace tokenizer_manual_ns;
     namespace lex = foonathan::lex;
@@ -119,7 +120,7 @@ void tokenizer_manual(const char* str, const char* end, void (*f)(foonathan::lex
     {
         auto cur = tokenizer.peek();
         if (!cur.is_error())
-            f(cur.spelling());
+            f(cur.kind().get(), cur.spelling());
         tokenizer.bump();
     }
 }

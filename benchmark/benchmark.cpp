@@ -8,6 +8,7 @@
 
 #include "bm_baseline.hpp"
 #include "bm_manual.hpp"
+#include "bm_manual_opt.hpp"
 #include "bm_tokenizer.hpp"
 #include "bm_tokenizer_manual.hpp"
 
@@ -38,7 +39,8 @@ void benchmark_impl(Func f, benchmark::State& state, const char* str, const char
 {
     for (auto _ : state)
     {
-        f(str, end, [](lex::token_spelling spelling) {
+        f(str, end, [](int kind, lex::token_spelling spelling) {
+            benchmark::DoNotOptimize(kind);
             benchmark::DoNotOptimize(spelling.data());
             benchmark::DoNotOptimize(spelling.size());
         });
@@ -69,6 +71,17 @@ BENCHMARK_CAPTURE(bm_manual, all_last, all_last);
 BENCHMARK_CAPTURE(bm_manual, all_first, all_first);
 BENCHMARK_CAPTURE(bm_manual, punctuation, punctuation);
 BENCHMARK_CAPTURE(bm_manual, punctuation_ws, punctuation_ws);
+
+template <unsigned N>
+void bm_manual_opt(benchmark::State& state, const char (&array)[N])
+{
+    benchmark_impl(&manual_opt, state, array, array + N - 1);
+}
+BENCHMARK_CAPTURE(bm_manual_opt, all_error, all_error);
+BENCHMARK_CAPTURE(bm_manual_opt, all_last, all_last);
+BENCHMARK_CAPTURE(bm_manual_opt, all_first, all_first);
+BENCHMARK_CAPTURE(bm_manual_opt, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_manual_opt, punctuation_ws, punctuation_ws);
 
 template <unsigned N>
 void bm_tokenizer(benchmark::State& state, const char (&array)[N])

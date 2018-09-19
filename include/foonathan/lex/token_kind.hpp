@@ -75,6 +75,12 @@ namespace lex
             return id_ == detail::get_id<TokenSpec>(token);
         }
 
+        /// \returns The underlying integer value of the token.
+        auto get() const noexcept
+        {
+            return id_;
+        }
+
         /// \returns The name of the token.
         /// If this function is used, all rule tokens must have a `static constexpr const char*
         /// name;` member. This is returned as the name. For tokens that inherit from a class other
