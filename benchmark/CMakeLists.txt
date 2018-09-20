@@ -16,5 +16,6 @@ add_executable(foonathan_lex_benchmark
                bm_manual.hpp
                bm_manual_opt.hpp
                bm_tokenizer.hpp
-               bm_tokenizer_manual.hpp)
+               bm_tokenizer_manual.hpp
+               bm_trie.hpp)
 target_link_libraries(foonathan_lex_benchmark PUBLIC foonathan_lex benchmark)

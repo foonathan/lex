@@ -11,6 +11,7 @@
 #include "bm_manual_opt.hpp"
 #include "bm_tokenizer.hpp"
 #include "bm_tokenizer_manual.hpp"
+#include "bm_trie.hpp"
 
 namespace lex = foonathan::lex;
 
@@ -105,8 +106,20 @@ BENCHMARK_CAPTURE(bm_tokenizer_manual, all_first, all_first);
 BENCHMARK_CAPTURE(bm_tokenizer_manual, punctuation, punctuation);
 BENCHMARK_CAPTURE(bm_tokenizer_manual, punctuation_ws, punctuation_ws);
 
+template <unsigned N>
+void bm_trie(benchmark::State& state, const char (&array)[N])
+{
+    benchmark_impl(&trie, state, array, array + N - 1);
+}
+BENCHMARK_CAPTURE(bm_trie, all_error, all_error);
+BENCHMARK_CAPTURE(bm_trie, all_last, all_last);
+BENCHMARK_CAPTURE(bm_trie, all_first, all_first);
+BENCHMARK_CAPTURE(bm_trie, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_trie, punctuation_ws, punctuation_ws);
+
 int main(int argc, char* argv[])
-{ // a reporter that generates an HTML table output
+{
+    // a reporter that generates an HTML table output
     struct Reporter : benchmark::BenchmarkReporter
     {
         bool ReportContext(const Context&) override
