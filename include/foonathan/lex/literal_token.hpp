@@ -47,6 +47,12 @@ namespace lex
 
             using value = decltype(test(std::declval<Token>()));
         };
+
+        template <char... Literal>
+        literal_token<Literal...> get_literal_type(const literal_token<Literal...>&);
+
+        template <class Token>
+        using literal_token_type = decltype(get_literal_type(Token{}));
     } // namespace detail
 
     /// Whether or not the token is a literal token.
@@ -56,74 +62,43 @@ namespace lex
 
     namespace detail
     {
-        //=== literal_trie type ===//
-        template <class LiteralTokens>
-        struct trie_nodes_needed;
-
-        template <>
-        struct trie_nodes_needed<type_list<>> : std::integral_constant<std::size_t, 0>
-        {};
-
-        template <typename Head, typename... Tail>
-        struct trie_nodes_needed<type_list<Head, Tail...>>
-        : std::integral_constant<std::size_t,
-                                 // for each literal one node for each character in the string
-                                 // (excluding null) in the worst case
-                                 sizeof(Head::value) - 1
-                                     + trie_nodes_needed<type_list<Tail...>>::value>
-        {};
-
-        template <class TokenSpec, class LiteralTokens>
-        using literal_trie = trie<token_kind<TokenSpec>, trie_nodes_needed<LiteralTokens>::value>;
-
         //=== literal trie building ===//
-        template <class Trie, class LiteralTokens>
+        template <class TokenSpec, class LiteralTokens>
         struct build_trie_impl;
 
-        template <class Trie>
-        struct build_trie_impl<Trie, type_list<>>
+        template <class TokenSpec>
+        struct build_trie_impl<TokenSpec, type_list<>>
         {
-            static constexpr void insert(Trie&) noexcept {}
+            using type = typename trie<detail::id_type<TokenSpec>>::empty;
         };
 
-        template <class Trie, typename Head, typename... Tail>
-        struct build_trie_impl<Trie, type_list<Head, Tail...>>
+        template <class TokenSpec, typename Head, typename... Tail>
+        struct build_trie_impl<TokenSpec, type_list<Head, Tail...>>
         {
-            static constexpr void insert(Trie& trie) noexcept
-            {
-                trie.insert(Head::value, typename Trie::user_data(Head{}));
-                build_trie_impl<Trie, type_list<Tail...>>::insert(trie);
-            }
+            using base = typename build_trie_impl<TokenSpec, type_list<Tail...>>::type;
+            using type = typename trie<detail::id_type<TokenSpec>>::template insert_string<
+                base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
         };
 
         template <class TokenSpec, class LiteralTokens>
-        constexpr literal_trie<TokenSpec, LiteralTokens> build_trie() noexcept
-        {
-            literal_trie<TokenSpec, LiteralTokens> result;
-            build_trie_impl<decltype(result), LiteralTokens>::insert(result);
-            return result;
-        }
+        using literal_trie = typename build_trie_impl<TokenSpec, LiteralTokens>::type;
 
         //=== literal_matcher ===//
         template <class TokenSpec, class LiteralTokens>
         struct literal_matcher
         {
-            static constexpr literal_trie<TokenSpec, LiteralTokens> trie
-                = build_trie<TokenSpec, LiteralTokens>();
+            using trie = literal_trie<TokenSpec, LiteralTokens>;
 
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
-                if (auto result = trie.lookup_prefix(str, end))
-                    return match_result<TokenSpec>(result.data, result.prefix_length);
+                if (auto result = trie::lookup_prefix(str, end))
+                    return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(result.data),
+                                                   result.length);
                 else
                     return match_result<TokenSpec>();
             }
         };
-
-        template <class TokenSpec, class LiteralTokens>
-        constexpr literal_trie<TokenSpec, LiteralTokens>
-            literal_matcher<TokenSpec, LiteralTokens>::trie;
     } // namespace detail
 } // namespace lex
 } // namespace foonathan

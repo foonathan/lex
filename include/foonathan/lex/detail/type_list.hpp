@@ -24,6 +24,18 @@ namespace lex
         {
             static constexpr auto size = 1;
             using type                 = T;
+
+            template <typename>
+            using type_or = T;
+        };
+
+        template <>
+        struct type_list<>
+        {
+            static constexpr auto size = 0;
+
+            template <typename T>
+            using type_or = T;
         };
 
         //=== cat ===//

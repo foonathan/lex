@@ -11,67 +11,80 @@ using namespace foonathan::lex;
 
 namespace
 {
-using test_trie = detail::trie<const char*, 16>;
+using test_trie = detail::trie<const char*>;
 
-void verify(const test_trie& trie, const char* str, const char* prefix)
+template <class Trie>
+void verify(Trie, const char* str, const char* prefix)
 {
-    auto result = trie.lookup_prefix(str, std::strlen(str));
+    auto result = Trie::lookup_prefix(str, std::strlen(str));
     REQUIRE(result);
     REQUIRE(std::strcmp(result.data, prefix) == 0);
-    REQUIRE(result.prefix_length == std::strlen(result.data));
+    REQUIRE(result.length == std::strlen(result.data));
 }
 
-bool test_failure()
-{
-    return true;
-}
+constexpr const char a[] = "a";
+constexpr const char b[] = "b";
+constexpr const char c[] = "c";
 
-constexpr test_trie insert_single(test_trie trie)
+template <class Trie>
+struct insert_single_impl
 {
-    trie.insert("a", "a") || test_failure();
-    trie.insert("b", "b") || test_failure();
-    trie.insert("c", "c") || test_failure();
-    return trie;
-}
+    using first  = test_trie::insert<Trie, a, 'a'>;
+    using second = test_trie::insert<first, b, 'b'>;
+    using third  = test_trie::insert<second, c, 'c'>;
+    using type   = third;
+};
 
-constexpr test_trie insert_multiple(test_trie trie)
-{
-    trie.insert("ab", "ab") || test_failure();
-    trie.insert("abcd", "abcd") || test_failure();
-    trie.insert("bc", "bc") || test_failure();
-    return trie;
-}
+template <class Trie>
+using insert_single = typename insert_single_impl<Trie>::type;
 
-constexpr const char* test_lookup(const test_trie& trie)
+constexpr const char ab[]   = "ab";
+constexpr const char abcd[] = "abcd";
+constexpr const char bc[]   = "bc";
+
+template <class Trie>
+struct insert_multiple_impl
 {
-    return trie.lookup_prefix("a", 1).data;
+    using first  = test_trie::insert<Trie, ab, 'a', 'b'>;
+    using second = test_trie::insert<first, abcd, 'a', 'b', 'c', 'd'>;
+    using third  = test_trie::insert<second, bc, 'b', 'c'>;
+    using type   = third;
+};
+
+template <class Trie>
+using insert_multiple = typename insert_multiple_impl<Trie>::type;
+
+template <class Trie>
+constexpr const char* test_lookup(Trie)
+{
+    return Trie::lookup_prefix("a", 1).data;
 }
 } // namespace
 
 TEST_CASE("detail::trie")
 {
-    constexpr auto trie0 = test_trie();
-    REQUIRE(!trie0.lookup_prefix("a", 1));
+    using trie0 = test_trie::empty;
+    REQUIRE(!trie0::lookup_prefix("a", 1));
 
-    constexpr auto trie1 = insert_single(trie0);
-    verify(trie1, "a", "a");
-    verify(trie1, "b", "b");
-    verify(trie1, "c", "c");
-    verify(trie1, "ab", "a");
-    REQUIRE(!trie1.lookup_prefix("d", 1));
+    using trie1 = insert_single<trie0>;
+    verify(trie1{}, "a", "a");
+    verify(trie1{}, "b", "b");
+    verify(trie1{}, "c", "c");
+    verify(trie1{}, "ab", "a");
+    REQUIRE(!trie1::lookup_prefix("d", 1));
 
-    constexpr auto trie2 = insert_multiple(trie1);
-    verify(trie2, "a", "a");
-    verify(trie2, "ab", "ab");
-    verify(trie2, "abcd", "abcd");
-    verify(trie2, "abc", "ab");
-    verify(trie2, "b", "b");
-    verify(trie2, "bc", "bc");
-    verify(trie2, "bcd", "bc");
-    verify(trie2, "c", "c");
-    verify(trie2, "cd", "c");
-    REQUIRE(!trie2.lookup_prefix("d", 1));
+    using trie2 = insert_multiple<trie1>;
+    verify(trie2{}, "a", "a");
+    verify(trie2{}, "ab", "ab");
+    verify(trie2{}, "abcd", "abcd");
+    verify(trie2{}, "abc", "ab");
+    verify(trie2{}, "b", "b");
+    verify(trie2{}, "bc", "bc");
+    verify(trie2{}, "bcd", "bc");
+    verify(trie2{}, "c", "c");
+    verify(trie2{}, "cd", "c");
+    REQUIRE(!trie2::lookup_prefix("d", 1));
 
-    constexpr auto result = test_lookup(trie2);
+    constexpr auto result = test_lookup(trie2{});
     REQUIRE(std::strcmp(result, "a") == 0);
 }

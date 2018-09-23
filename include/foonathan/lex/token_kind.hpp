@@ -50,6 +50,12 @@ namespace lex
     class token_kind
     {
     public:
+        /// \effects Creates it from the integral id.
+        static constexpr token_kind from_id(detail::id_type<TokenSpec> id) noexcept
+        {
+            return token_kind(0, id);
+        }
+
         /// \effects Creates an invalid token kind.
         constexpr token_kind() noexcept : id_(0) {}
 
@@ -76,7 +82,7 @@ namespace lex
         }
 
         /// \returns The underlying integer value of the token.
-        auto get() const noexcept
+        constexpr auto get() const noexcept
         {
             return id_;
         }
@@ -141,6 +147,8 @@ namespace lex
         }
 
     private:
+        explicit constexpr token_kind(int, detail::id_type<TokenSpec> id) noexcept : id_(id) {}
+
         detail::id_type<TokenSpec> id_;
     };
 

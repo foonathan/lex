@@ -62,12 +62,12 @@ void trie(const char* str, const char* end, void (*f)(int, foonathan::lex::token
     using namespace trie_ns;
     namespace lex = foonathan::lex;
 
-    constexpr auto trie = lex::detail::build_trie<literals, literals>();
+    using trie = lex::detail::literal_trie<literals, literals>;
     while (str != end)
     {
-        auto result = trie.lookup_prefix(str, end);
+        auto result = trie::lookup_prefix(str, end);
         if (result)
-            f(result.data.get(), bump(str, result.prefix_length));
+            f(result.data, bump(str, result.length));
         else if (lex::ascii::is_space(*str))
         {
             auto begin = str++;

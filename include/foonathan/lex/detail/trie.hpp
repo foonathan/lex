@@ -7,6 +7,7 @@
 
 #include <foonathan/lex/detail/constexpr_vector.hpp>
 #include <foonathan/lex/detail/select_integer.hpp>
+#include <foonathan/lex/detail/type_list.hpp>
 
 namespace foonathan
 {
@@ -14,155 +15,211 @@ namespace lex
 {
     namespace detail
     {
-        // index is off-by one, as root node is not indexed
-        template <std::size_t MaxNodes>
-        using node_index = select_integer<MaxNodes>;
-
-        /// A simple constexpr trie data structure associating strings with `UserData`.
-        /// It can contain at most `MaxNodes` nodes.
-        template <typename UserData, std::size_t MaxNodes>
+        template <typename UserData>
         class trie
         {
-            static_assert(std::is_default_constructible<UserData>::value,
-                          "user data must be default constructible");
-
-            struct node
-            {
-                static constexpr auto invalid = node_index<MaxNodes>(-1);
-
-                // this maintains a linked list of children
-                node_index<MaxNodes> first_child          = invalid;
-                node_index<MaxNodes> next_child_of_parent = invalid;
-
-                UserData data{};
-
-                char character = '\0'; // '\0' for root node
-
-                constexpr node() noexcept = default;
-
-                constexpr explicit node(char c) noexcept : character(c) {}
-
-                constexpr bool set_data(UserData data) noexcept
-                {
-                    if (this->data)
-                        return false;
-
-                    this->data = data;
-                    return true;
-                }
-
-                constexpr const UserData* get_data() const noexcept
-                {
-                    return data ? &data : nullptr;
-                }
-            };
-
-        public:
-            using user_data = UserData;
-
-            constexpr trie() noexcept
-            {
-                nodes_.push_back(node{});
-            }
-
-            /// Inserts the given string and user data.
-            /// Returns whether or not this is a duplicate.
-            constexpr bool insert(const char* str, UserData data) noexcept
-            {
-                auto cur_node = root_node();
-                while (auto c = *str++)
-                {
-                    auto child = find_child(cur_node, c);
-                    if (!child)
-                        // need to add a new child for the current character
-                        child = create_child(cur_node, node(c));
-
-                    cur_node = child;
-                }
-
-                return const_cast<node*>(cur_node)->set_data(data);
-            }
-
-            struct LookupResult
+            struct lookup_result
             {
                 UserData    data;
-                std::size_t prefix_length;
+                std::size_t length;
 
                 explicit constexpr operator bool() const noexcept
                 {
-                    return prefix_length > 0;
+                    return length > 0;
                 }
             };
 
-            /// Returns the data of the longest matching prefix.
-            constexpr LookupResult lookup_prefix(const char* str, const char* end) const noexcept
+            template <char C>
+            struct node_finder
             {
-                auto cur_node      = root_node();
-                auto data          = cur_node->get_data();
-                auto prefix_length = std::size_t(0);
-                for (auto begin = str; str != end; ++str)
-                {
-                    auto child = find_child(cur_node, *str);
-                    if (!child)
-                        // we can no longer extend the prefix
-                        break;
+                template <typename Node>
+                struct predicate : std::integral_constant<bool, Node::character == C>
+                {};
+            };
 
-                    cur_node = child;
-                    if (auto new_data = cur_node->get_data())
+            struct error_node;
+
+            template <char C, class Nodes>
+            using matching_node =
+                typename keep_if<Nodes,
+                                 node_finder<C>::template predicate>::template type_or<error_node>;
+
+            template <class NewNode, class Nodes>
+            using insert_node
+                = concat<remove_if<Nodes, node_finder<NewNode::character>::template predicate>,
+                         NewNode>;
+
+            struct error_node
+            {
+                static constexpr auto is_terminal = false;
+                using children                    = type_list<>;
+
+                static constexpr lookup_result lookup_prefix(std::size_t, const char*,
+                                                             const char*) noexcept
+                {
+                    return lookup_result{{}, 0};
+                }
+            };
+
+            template <class ChildNodes>
+            static constexpr lookup_result lookup_prefix_impl(std::size_t length_so_far,
+                                                              const char* str,
+                                                              const char* end) noexcept
+            {
+#define FOONATHAN_LEX_DETAIL_CASE_0(Value)                                                         \
+case Value:                                                                                        \
+    return matching_node<Value, ChildNodes>::lookup_prefix(length_so_far + 1, str + 1, end);
+#define FOONATHAN_LEX_DETAIL_CASE_1(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_0(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_0(Value + 1)
+#define FOONATHAN_LEX_DETAIL_CASE_2(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_1(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_1(Value + 2)
+#define FOONATHAN_LEX_DETAIL_CASE_3(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_2(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_2(Value + 4)
+#define FOONATHAN_LEX_DETAIL_CASE_4(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_3(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_3(Value + 8)
+#define FOONATHAN_LEX_DETAIL_CASE_5(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_4(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_4(Value + 16)
+#define FOONATHAN_LEX_DETAIL_CASE_6(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_5(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_5(Value + 32)
+#define FOONATHAN_LEX_DETAIL_CASE_7(Value)                                                         \
+    FOONATHAN_LEX_DETAIL_CASE_6(Value)                                                             \
+    FOONATHAN_LEX_DETAIL_CASE_6(Value + 64)
+
+                if (str != end)
+                {
+                    switch (*str)
                     {
-                        data          = new_data;
-                        prefix_length = static_cast<std::size_t>(str - begin + 1);
+                        FOONATHAN_LEX_DETAIL_CASE_7(0)
+
+                    default:
+                        break;
                     }
                 }
 
-                // return the last valid data, i.e. the longest prefix
-                if (data)
-                    return {*data, prefix_length};
-                else
-                    return {{}, 0};
-            }
-            constexpr LookupResult lookup_prefix(const char* str, std::size_t length) const noexcept
-            {
-                return lookup_prefix(str, str + length);
+                return lookup_result{{}, 0};
             }
 
-        private:
-            constexpr const node* root_node() const noexcept
+            template <char C, class ChildNodes>
+            struct non_terminal_node
             {
-                return &nodes_[0];
-            }
+                static constexpr auto is_terminal = false;
+                using children                    = ChildNodes;
+                static constexpr auto character   = C;
 
-            constexpr node* create_child(const node* parent_, node child) noexcept
-            {
-                auto parent   = const_cast<node*>(parent_);
-                auto new_node = nodes_.push_back(child);
+                template <class Child>
+                using insert = non_terminal_node<C, insert_node<Child, ChildNodes>>;
 
-                // insert as first child
-                auto old_first = parent->first_child;
-                // - 2 because root node would be -1
-                parent->first_child = static_cast<node_index<MaxNodes>>(nodes_.size() - 2);
-                new_node->next_child_of_parent = old_first;
-
-                return new_node;
-            }
-
-            constexpr const node* find_child(const node* cur, char c) const noexcept
-            {
-                auto cur_child = static_cast<std::size_t>(cur->first_child);
-                while (cur_child != node::invalid)
+                static constexpr lookup_result lookup_prefix(std::size_t length_so_far,
+                                                             const char* str,
+                                                             const char* end) noexcept
                 {
-                    auto& n = nodes_[cur_child + 1]; // +1 because root node would be -1
-                    if (n.character == c)
-                        return &n;
+                    return trie::lookup_prefix_impl<ChildNodes>(length_so_far, str, end);
+                }
+            };
+
+            template <char C, UserData data, class ChildNodes>
+            struct terminal_node
+            {
+                static constexpr auto is_terminal = true;
+                using children                    = ChildNodes;
+                static constexpr auto character   = C;
+
+                template <class Child>
+                using insert = terminal_node<C, data, insert_node<Child, ChildNodes>>;
+
+                static constexpr lookup_result lookup_prefix(std::size_t length_so_far,
+                                                             const char* str,
+                                                             const char* end) noexcept
+                {
+                    auto longer_result
+                        = trie::lookup_prefix_impl<ChildNodes>(length_so_far, str, end);
+                    if (longer_result.length > 0)
+                        return longer_result;
                     else
-                        cur_child = n.next_child_of_parent;
+                        return lookup_result{data, length_so_far};
+                }
+            };
+
+            template <class ChildNodes>
+            struct root_node
+            {
+                static constexpr auto is_terminal = false;
+                using children                    = ChildNodes;
+
+                template <class Child>
+                using insert = root_node<insert_node<Child, ChildNodes>>;
+
+                static constexpr lookup_result lookup_prefix(const char* str,
+                                                             const char* end) noexcept
+                {
+                    return trie::lookup_prefix_impl<ChildNodes>(0, str, end);
                 }
 
-                return nullptr;
-            }
+                static constexpr lookup_result lookup_prefix(const char* str,
+                                                             std::size_t size) noexcept
+                {
+                    return trie::lookup_prefix_impl<ChildNodes>(0, str, str + size);
+                }
+            };
 
-            // +1 for root node
-            constexpr_vector<node, MaxNodes + 1> nodes_;
+            template <class CurNode, UserData Data, char... Chars>
+            struct insert_impl;
+
+            template <class CurNode, UserData Data, char C>
+            struct insert_impl<CurNode, Data, C>
+            {
+                // the target is the C-child of the current node
+                using target_node = matching_node<C, typename CurNode::children>;
+                static_assert(!target_node::is_terminal, "duplicate string insert into trie");
+
+                // need to turn the target into a terminal node with the same character and children
+                using new_node = terminal_node<C, Data, typename target_node::children>;
+
+                using type = typename CurNode::template insert<new_node>;
+            };
+
+            template <class CurNode, UserData Data, char Head, char Second, char... Rest>
+            struct insert_impl<CurNode, Data, Head, Second, Rest...>
+            {
+                // the target is the Head-child of the current node
+                using target_node = matching_node<Head, typename CurNode::children>;
+                using no_target   = std::is_same<target_node, error_node>;
+
+                // if the target doesn't exist we need to create a new non-terminal node
+                using actual_target
+                    = std::conditional_t<no_target::value, non_terminal_node<Head, type_list<>>,
+                                         target_node>;
+
+                // insert the children into the actual target
+                using inserted = typename insert_impl<actual_target, Data, Second, Rest...>::type;
+
+                // insert the target with children into the current node
+                using type = typename CurNode::template insert<inserted>;
+            };
+
+            template <class CurNode, UserData Data, typename String>
+            struct insert_string_impl;
+
+            template <class CurNode, UserData Data, template <char...> class String, char... Char>
+            struct insert_string_impl<CurNode, Data, String<Char...>>
+            {
+                using type = typename insert_impl<CurNode, Data, Char...>::type;
+            };
+
+        public:
+            using empty = root_node<type_list<>>;
+
+            template <class Root, UserData Data, char... Chars>
+            using insert = typename insert_impl<Root, Data, Chars...>::type;
+
+            template <class Root, UserData Data, typename String>
+            using insert_string = typename insert_string_impl<Root, Data, String>::type;
         };
     } // namespace detail
 } // namespace lex
