@@ -52,70 +52,70 @@ void benchmark_impl(Func f, benchmark::State& state, const char* str, const char
 } // namespace
 
 template <unsigned N>
-void bm_baseline(benchmark::State& state, const char (&array)[N])
+void bm_0_baseline(benchmark::State& state, const char (&array)[N])
 {
     benchmark_impl(&baseline, state, array, array + N - 1);
 }
-BENCHMARK_CAPTURE(bm_baseline, all_error, all_error);
-BENCHMARK_CAPTURE(bm_baseline, all_last, all_last);
-BENCHMARK_CAPTURE(bm_baseline, all_first, all_first);
-BENCHMARK_CAPTURE(bm_baseline, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_baseline, punctuation_ws, punctuation_ws);
+BENCHMARK_CAPTURE(bm_0_baseline, all_error, all_error);
+BENCHMARK_CAPTURE(bm_0_baseline, all_last, all_last);
+BENCHMARK_CAPTURE(bm_0_baseline, all_first, all_first);
+BENCHMARK_CAPTURE(bm_0_baseline, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_0_baseline, punctuation_ws, punctuation_ws);
 
 template <unsigned N>
-void bm_manual(benchmark::State& state, const char (&array)[N])
+void bm_1_manual(benchmark::State& state, const char (&array)[N])
 {
     benchmark_impl(&manual, state, array, array + N - 1);
 }
-BENCHMARK_CAPTURE(bm_manual, all_error, all_error);
-BENCHMARK_CAPTURE(bm_manual, all_last, all_last);
-BENCHMARK_CAPTURE(bm_manual, all_first, all_first);
-BENCHMARK_CAPTURE(bm_manual, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_manual, punctuation_ws, punctuation_ws);
+BENCHMARK_CAPTURE(bm_1_manual, all_error, all_error);
+BENCHMARK_CAPTURE(bm_1_manual, all_last, all_last);
+BENCHMARK_CAPTURE(bm_1_manual, all_first, all_first);
+BENCHMARK_CAPTURE(bm_1_manual, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_1_manual, punctuation_ws, punctuation_ws);
 
 template <unsigned N>
-void bm_manual_opt(benchmark::State& state, const char (&array)[N])
-{
-    benchmark_impl(&manual_opt, state, array, array + N - 1);
-}
-BENCHMARK_CAPTURE(bm_manual_opt, all_error, all_error);
-BENCHMARK_CAPTURE(bm_manual_opt, all_last, all_last);
-BENCHMARK_CAPTURE(bm_manual_opt, all_first, all_first);
-BENCHMARK_CAPTURE(bm_manual_opt, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_manual_opt, punctuation_ws, punctuation_ws);
-
-template <unsigned N>
-void bm_tokenizer(benchmark::State& state, const char (&array)[N])
-{
-    benchmark_impl(&tokenizer, state, array, array + N - 1);
-}
-BENCHMARK_CAPTURE(bm_tokenizer, all_error, all_error);
-BENCHMARK_CAPTURE(bm_tokenizer, all_last, all_last);
-BENCHMARK_CAPTURE(bm_tokenizer, all_first, all_first);
-BENCHMARK_CAPTURE(bm_tokenizer, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_tokenizer, punctuation_ws, punctuation_ws);
-
-template <unsigned N>
-void bm_tokenizer_manual(benchmark::State& state, const char (&array)[N])
+void bm_2_tokenizer_manual(benchmark::State& state, const char (&array)[N])
 {
     benchmark_impl(&tokenizer_manual, state, array, array + N - 1);
 }
-BENCHMARK_CAPTURE(bm_tokenizer_manual, all_error, all_error);
-BENCHMARK_CAPTURE(bm_tokenizer_manual, all_last, all_last);
-BENCHMARK_CAPTURE(bm_tokenizer_manual, all_first, all_first);
-BENCHMARK_CAPTURE(bm_tokenizer_manual, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_tokenizer_manual, punctuation_ws, punctuation_ws);
+BENCHMARK_CAPTURE(bm_2_tokenizer_manual, all_error, all_error);
+BENCHMARK_CAPTURE(bm_2_tokenizer_manual, all_last, all_last);
+BENCHMARK_CAPTURE(bm_2_tokenizer_manual, all_first, all_first);
+BENCHMARK_CAPTURE(bm_2_tokenizer_manual, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_2_tokenizer_manual, punctuation_ws, punctuation_ws);
 
 template <unsigned N>
-void bm_trie(benchmark::State& state, const char (&array)[N])
+void bm_3_manual_opt(benchmark::State& state, const char (&array)[N])
+{
+    benchmark_impl(&manual_opt, state, array, array + N - 1);
+}
+BENCHMARK_CAPTURE(bm_3_manual_opt, all_error, all_error);
+BENCHMARK_CAPTURE(bm_3_manual_opt, all_last, all_last);
+BENCHMARK_CAPTURE(bm_3_manual_opt, all_first, all_first);
+BENCHMARK_CAPTURE(bm_3_manual_opt, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_3_manual_opt, punctuation_ws, punctuation_ws);
+
+template <unsigned N>
+void bm_4_trie(benchmark::State& state, const char (&array)[N])
 {
     benchmark_impl(&trie, state, array, array + N - 1);
 }
-BENCHMARK_CAPTURE(bm_trie, all_error, all_error);
-BENCHMARK_CAPTURE(bm_trie, all_last, all_last);
-BENCHMARK_CAPTURE(bm_trie, all_first, all_first);
-BENCHMARK_CAPTURE(bm_trie, punctuation, punctuation);
-BENCHMARK_CAPTURE(bm_trie, punctuation_ws, punctuation_ws);
+BENCHMARK_CAPTURE(bm_4_trie, all_error, all_error);
+BENCHMARK_CAPTURE(bm_4_trie, all_last, all_last);
+BENCHMARK_CAPTURE(bm_4_trie, all_first, all_first);
+BENCHMARK_CAPTURE(bm_4_trie, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_4_trie, punctuation_ws, punctuation_ws);
+
+template <unsigned N>
+void bm_5_tokenizer(benchmark::State& state, const char (&array)[N])
+{
+    benchmark_impl(&tokenizer, state, array, array + N - 1);
+}
+BENCHMARK_CAPTURE(bm_5_tokenizer, all_error, all_error);
+BENCHMARK_CAPTURE(bm_5_tokenizer, all_last, all_last);
+BENCHMARK_CAPTURE(bm_5_tokenizer, all_first, all_first);
+BENCHMARK_CAPTURE(bm_5_tokenizer, punctuation, punctuation);
+BENCHMARK_CAPTURE(bm_5_tokenizer, punctuation_ws, punctuation_ws);
 
 int main(int argc, char* argv[])
 {

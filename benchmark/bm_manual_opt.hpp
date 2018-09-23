@@ -35,13 +35,19 @@ void manual_opt(const char* str, const char* end, void (*f)(int, foonathan::lex:
 
     while (str != end)
     {
+        // don't call function directly,
+        // go to memory store first
+        // this makes the benchmark more fair:
+        // a real tokenizer won't be able to handle each token directly as well
+        auto id   = -1;
+        auto size = 0u;
         switch (*str)
         {
         case '.':
-            if (starts_with(str, end, "..."))
-                f(0, bump(str, 3));
+            if (str + 1 != end && str[1] == '.' && str + 2 != end && str[2] == '.')
+                id = 0, size = 3;
             else
-                f(1, bump(str, 1));
+                id = 1, size = 1;
             break;
 
         case '+':
@@ -49,17 +55,17 @@ void manual_opt(const char* str, const char* end, void (*f)(int, foonathan::lex:
                 switch (str[1])
                 {
                 case '=':
-                    f(2, bump(str, 2));
+                    id = 2, size = 2;
                     break;
                 case '+':
-                    f(3, bump(str, 2));
+                    id = 3, size = 2;
                     break;
                 default:
-                    f(4, bump(str, 1));
+                    id = 4, size = 1;
                     break;
                 }
             else
-                f(4, bump(str, 1));
+                id = 4, size = 1;
             break;
 
         case '-':
@@ -68,25 +74,25 @@ void manual_opt(const char* str, const char* end, void (*f)(int, foonathan::lex:
                 {
                 case '>':
                     if (str + 2 != end && str[2] == '*')
-                        f(5, bump(str, 3));
+                        id = 5, size = 3;
                     else
-                        f(6, bump(str, 2));
+                        id = 6, size = 2;
                 case '-':
-                    f(7, bump(str, 2));
+                    id = 7, size = 2;
                     break;
                 case '=':
-                    f(8, bump(str, 2));
+                    id = 8, size = 2;
                     break;
 
                 default:
-                    f(9, bump(str, 1));
+                    id = 9, size = 1;
                 }
             else
-                f(9, bump(str, 1));
+                id = 9, size = 1;
             break;
 
         case '~':
-            f(10, bump(str, 1));
+            id = 10, size = 1;
             break;
 
         case ' ':
@@ -96,10 +102,11 @@ void manual_opt(const char* str, const char* end, void (*f)(int, foonathan::lex:
         case '\f':
         case '\v': // whitespace
         {
-            auto begin = str++;
-            while (str != end && lex::ascii::is_space(*str))
-                ++str;
-            f(11, lex::token_spelling(begin, static_cast<std::size_t>(str - begin)));
+            auto cur = str;
+            while (cur != end && lex::ascii::is_space(*cur))
+                ++cur;
+            id   = 11;
+            size = static_cast<unsigned>(cur - str);
             break;
         }
 
@@ -107,6 +114,9 @@ void manual_opt(const char* str, const char* end, void (*f)(int, foonathan::lex:
             ++str;
             break;
         }
+
+        if (size > 0)
+            f(id, bump(str, size));
     }
 }
 

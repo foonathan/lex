@@ -23,11 +23,33 @@ namespace lex
                 UserData    data;
                 std::size_t length;
 
+                constexpr lookup_result() noexcept : data{}, length(0) {}
+
+                constexpr lookup_result(UserData data, std::size_t length) noexcept
+                : data(data), length(length)
+                {}
+
                 explicit constexpr operator bool() const noexcept
                 {
                     return length > 0;
                 }
             };
+            template <class... Nodes>
+            static constexpr lookup_result lookup_prefix_impl(type_list<Nodes...>,
+                                                              std::size_t length_so_far,
+                                                              const char* str,
+                                                              const char* end) noexcept
+            {
+                if (str == end)
+                    return lookup_result{};
+
+                lookup_result result;
+                bool          dummy[]
+                    = {(*str == Nodes::character
+                        && (result = Nodes::lookup_prefix(length_so_far + 1, str + 1, end)))...};
+                (void)dummy;
+                return result;
+            }
 
             template <char C>
             struct node_finder
@@ -37,7 +59,11 @@ namespace lex
                 {};
             };
 
-            struct error_node;
+            struct error_node
+            {
+                static constexpr auto is_terminal = false;
+                using children                    = type_list<>;
+            };
 
             template <char C, class Nodes>
             using matching_node =
@@ -48,62 +74,6 @@ namespace lex
             using insert_node
                 = concat<remove_if<Nodes, node_finder<NewNode::character>::template predicate>,
                          NewNode>;
-
-            struct error_node
-            {
-                static constexpr auto is_terminal = false;
-                using children                    = type_list<>;
-
-                static constexpr lookup_result lookup_prefix(std::size_t, const char*,
-                                                             const char*) noexcept
-                {
-                    return lookup_result{{}, 0};
-                }
-            };
-
-            template <class ChildNodes>
-            static constexpr lookup_result lookup_prefix_impl(std::size_t length_so_far,
-                                                              const char* str,
-                                                              const char* end) noexcept
-            {
-#define FOONATHAN_LEX_DETAIL_CASE_0(Value)                                                         \
-case Value:                                                                                        \
-    return matching_node<Value, ChildNodes>::lookup_prefix(length_so_far + 1, str + 1, end);
-#define FOONATHAN_LEX_DETAIL_CASE_1(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_0(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_0(Value + 1)
-#define FOONATHAN_LEX_DETAIL_CASE_2(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_1(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_1(Value + 2)
-#define FOONATHAN_LEX_DETAIL_CASE_3(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_2(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_2(Value + 4)
-#define FOONATHAN_LEX_DETAIL_CASE_4(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_3(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_3(Value + 8)
-#define FOONATHAN_LEX_DETAIL_CASE_5(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_4(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_4(Value + 16)
-#define FOONATHAN_LEX_DETAIL_CASE_6(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_5(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_5(Value + 32)
-#define FOONATHAN_LEX_DETAIL_CASE_7(Value)                                                         \
-    FOONATHAN_LEX_DETAIL_CASE_6(Value)                                                             \
-    FOONATHAN_LEX_DETAIL_CASE_6(Value + 64)
-
-                if (str != end)
-                {
-                    switch (*str)
-                    {
-                        FOONATHAN_LEX_DETAIL_CASE_7(0)
-
-                    default:
-                        break;
-                    }
-                }
-
-                return lookup_result{{}, 0};
-            }
 
             template <char C, class ChildNodes>
             struct non_terminal_node
@@ -119,7 +89,7 @@ case Value:                                                                     
                                                              const char* str,
                                                              const char* end) noexcept
                 {
-                    return trie::lookup_prefix_impl<ChildNodes>(length_so_far, str, end);
+                    return trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
                 }
             };
 
@@ -138,7 +108,7 @@ case Value:                                                                     
                                                              const char* end) noexcept
                 {
                     auto longer_result
-                        = trie::lookup_prefix_impl<ChildNodes>(length_so_far, str, end);
+                        = trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
                     if (longer_result.length > 0)
                         return longer_result;
                     else
@@ -158,13 +128,13 @@ case Value:                                                                     
                 static constexpr lookup_result lookup_prefix(const char* str,
                                                              const char* end) noexcept
                 {
-                    return trie::lookup_prefix_impl<ChildNodes>(0, str, end);
+                    return trie::lookup_prefix_impl(ChildNodes{}, 0, str, end);
                 }
 
                 static constexpr lookup_result lookup_prefix(const char* str,
                                                              std::size_t size) noexcept
                 {
-                    return trie::lookup_prefix_impl<ChildNodes>(0, str, str + size);
+                    return trie::lookup_prefix_impl(ChildNodes{}, 0, str, str + size);
                 }
             };
 
