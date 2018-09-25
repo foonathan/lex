@@ -66,8 +66,8 @@ void trie(const char* str, const char* end, void (*f)(int, foonathan::lex::token
     while (str != end)
     {
         auto result = trie::lookup_prefix(str, end);
-        if (result)
-            f(result.data, bump(str, result.length));
+        if (result.is_success())
+            f(result.kind.get(), bump(str, result.bump));
         else if (lex::ascii::is_space(*str))
         {
             auto begin = str++;

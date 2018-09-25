@@ -69,14 +69,14 @@ namespace lex
         template <class TokenSpec>
         struct build_trie_impl<TokenSpec, type_list<>>
         {
-            using type = typename trie<detail::id_type<TokenSpec>>::empty;
+            using type = typename trie<TokenSpec>::empty;
         };
 
         template <class TokenSpec, typename Head, typename... Tail>
         struct build_trie_impl<TokenSpec, type_list<Head, Tail...>>
         {
             using base = typename build_trie_impl<TokenSpec, type_list<Tail...>>::type;
-            using type = typename trie<detail::id_type<TokenSpec>>::template insert_string<
+            using type = typename trie<TokenSpec>::template insert_literal_str<
                 base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
         };
 
@@ -92,11 +92,7 @@ namespace lex
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
-                if (auto result = trie::lookup_prefix(str, end))
-                    return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(result.data),
-                                                   result.length);
-                else
-                    return match_result<TokenSpec>();
+                return trie::lookup_prefix(str, end);
             }
         };
     } // namespace detail

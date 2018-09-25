@@ -5,9 +5,9 @@
 #ifndef FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED
 #define FOONATHAN_LEX_DETAIL_TRIE_HPP_INCLUDED
 
-#include <foonathan/lex/detail/constexpr_vector.hpp>
 #include <foonathan/lex/detail/select_integer.hpp>
 #include <foonathan/lex/detail/type_list.hpp>
+#include <foonathan/lex/match_result.hpp>
 
 namespace foonathan
 {
@@ -15,38 +15,22 @@ namespace lex
 {
     namespace detail
     {
-        template <typename UserData>
+        template <class TokenSpec>
         class trie
         {
-            struct lookup_result
-            {
-                UserData    data;
-                std::size_t length;
-
-                constexpr lookup_result() noexcept : data{}, length(0) {}
-
-                constexpr lookup_result(UserData data, std::size_t length) noexcept
-                : data(data), length(length)
-                {}
-
-                explicit constexpr operator bool() const noexcept
-                {
-                    return length > 0;
-                }
-            };
             template <class... Nodes>
-            static constexpr lookup_result lookup_prefix_impl(type_list<Nodes...>,
-                                                              std::size_t length_so_far,
-                                                              const char* str,
-                                                              const char* end) noexcept
+            static constexpr match_result<TokenSpec> lookup_prefix_impl(type_list<Nodes...>,
+                                                                        std::size_t length_so_far,
+                                                                        const char* str,
+                                                                        const char* end) noexcept
             {
                 if (str == end)
-                    return lookup_result{};
+                    return match_result<TokenSpec>();
 
-                lookup_result result;
-                bool          dummy[]
-                    = {(*str == Nodes::character
-                        && (result = Nodes::lookup_prefix(length_so_far + 1, str + 1, end)))...};
+                match_result<TokenSpec> result;
+                bool                    dummy[] = {
+                    (*str == Nodes::character
+                     && (result = Nodes::lookup_prefix(length_so_far + 1, str + 1, end), true))...};
                 (void)dummy;
                 return result;
             }
@@ -85,15 +69,14 @@ namespace lex
                 template <class Child>
                 using insert = non_terminal_node<C, insert_node<Child, ChildNodes>>;
 
-                static constexpr lookup_result lookup_prefix(std::size_t length_so_far,
-                                                             const char* str,
-                                                             const char* end) noexcept
+                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
+                                                    const char* end) noexcept
                 {
                     return trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
                 }
             };
 
-            template <char C, UserData data, class ChildNodes>
+            template <char C, id_type<TokenSpec> Id, class ChildNodes>
             struct terminal_node
             {
                 static constexpr auto is_terminal = true;
@@ -101,18 +84,18 @@ namespace lex
                 static constexpr auto character   = C;
 
                 template <class Child>
-                using insert = terminal_node<C, data, insert_node<Child, ChildNodes>>;
+                using insert = terminal_node<C, Id, insert_node<Child, ChildNodes>>;
 
-                static constexpr lookup_result lookup_prefix(std::size_t length_so_far,
-                                                             const char* str,
-                                                             const char* end) noexcept
+                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
+                                                    const char* end) noexcept
                 {
                     auto longer_result
                         = trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
-                    if (longer_result.length > 0)
+                    if (longer_result.is_matched())
                         return longer_result;
                     else
-                        return lookup_result{data, length_so_far};
+                        return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),
+                                                       length_so_far);
                 }
             };
 
@@ -125,37 +108,35 @@ namespace lex
                 template <class Child>
                 using insert = root_node<insert_node<Child, ChildNodes>>;
 
-                static constexpr lookup_result lookup_prefix(const char* str,
-                                                             const char* end) noexcept
+                static constexpr auto lookup_prefix(const char* str, const char* end) noexcept
                 {
                     return trie::lookup_prefix_impl(ChildNodes{}, 0, str, end);
                 }
 
-                static constexpr lookup_result lookup_prefix(const char* str,
-                                                             std::size_t size) noexcept
+                static constexpr auto lookup_prefix(const char* str, std::size_t size) noexcept
                 {
                     return trie::lookup_prefix_impl(ChildNodes{}, 0, str, str + size);
                 }
             };
 
-            template <class CurNode, UserData Data, char... Chars>
-            struct insert_impl;
+            template <class CurNode, id_type<TokenSpec> Id, char... Chars>
+            struct insert_literal_impl;
 
-            template <class CurNode, UserData Data, char C>
-            struct insert_impl<CurNode, Data, C>
+            template <class CurNode, id_type<TokenSpec> Id, char C>
+            struct insert_literal_impl<CurNode, Id, C>
             {
                 // the target is the C-child of the current node
                 using target_node = matching_node<C, typename CurNode::children>;
                 static_assert(!target_node::is_terminal, "duplicate string insert into trie");
 
                 // need to turn the target into a terminal node with the same character and children
-                using new_node = terminal_node<C, Data, typename target_node::children>;
+                using new_node = terminal_node<C, Id, typename target_node::children>;
 
                 using type = typename CurNode::template insert<new_node>;
             };
 
-            template <class CurNode, UserData Data, char Head, char Second, char... Rest>
-            struct insert_impl<CurNode, Data, Head, Second, Rest...>
+            template <class CurNode, id_type<TokenSpec> Id, char Head, char Second, char... Rest>
+            struct insert_literal_impl<CurNode, Id, Head, Second, Rest...>
             {
                 // the target is the Head-child of the current node
                 using target_node = matching_node<Head, typename CurNode::children>;
@@ -167,29 +148,31 @@ namespace lex
                                          target_node>;
 
                 // insert the children into the actual target
-                using inserted = typename insert_impl<actual_target, Data, Second, Rest...>::type;
+                using inserted =
+                    typename insert_literal_impl<actual_target, Id, Second, Rest...>::type;
 
                 // insert the target with children into the current node
                 using type = typename CurNode::template insert<inserted>;
             };
 
-            template <class CurNode, UserData Data, typename String>
-            struct insert_string_impl;
+            template <class CurNode, id_type<TokenSpec> Id, typename String>
+            struct insert_literal_str_impl;
 
-            template <class CurNode, UserData Data, template <char...> class String, char... Char>
-            struct insert_string_impl<CurNode, Data, String<Char...>>
+            template <class CurNode, id_type<TokenSpec> Id, template <char...> class String,
+                      char... Char>
+            struct insert_literal_str_impl<CurNode, Id, String<Char...>>
             {
-                using type = typename insert_impl<CurNode, Data, Char...>::type;
+                using type = typename insert_literal_impl<CurNode, Id, Char...>::type;
             };
 
         public:
             using empty = root_node<type_list<>>;
 
-            template <class Root, UserData Data, char... Chars>
-            using insert = typename insert_impl<Root, Data, Chars...>::type;
+            template <class Root, id_type<TokenSpec> Id, char... Chars>
+            using insert_literal = typename insert_literal_impl<Root, Id, Chars...>::type;
 
-            template <class Root, UserData Data, typename String>
-            using insert_string = typename insert_string_impl<Root, Data, String>::type;
+            template <class Root, id_type<TokenSpec> Id, typename String>
+            using insert_literal_str = typename insert_literal_str_impl<Root, Id, String>::type;
         };
     } // namespace detail
 } // namespace lex

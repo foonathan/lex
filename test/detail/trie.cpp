@@ -11,43 +11,56 @@ using namespace foonathan::lex;
 
 namespace
 {
-using test_trie = detail::trie<const char*>;
+// actual types don't matter for the trie, just the id
+using tokens = token_spec<struct a, struct b, struct c, struct ab, struct abcd, struct bc>;
+struct a
+{};
+struct b
+{};
+struct c
+{};
+struct ab
+{};
+struct abcd
+{};
+struct bc
+{};
 
-template <class Trie>
+template <typename T>
+constexpr auto id_of()
+{
+    return token_kind<tokens>(T{}).get();
+}
+
+using test_trie = detail::trie<tokens>;
+
+template <typename T, class Trie>
 void verify(Trie, const char* str, const char* prefix)
 {
     auto result = Trie::lookup_prefix(str, std::strlen(str));
-    REQUIRE(result);
-    REQUIRE(std::strcmp(result.data, prefix) == 0);
-    REQUIRE(result.length == std::strlen(result.data));
+    REQUIRE(result.is_success());
+    REQUIRE(result.bump == std::strlen(prefix));
+    REQUIRE(result.kind.template is<T>());
 }
-
-constexpr const char a[] = "a";
-constexpr const char b[] = "b";
-constexpr const char c[] = "c";
 
 template <class Trie>
 struct insert_single_impl
 {
-    using first  = test_trie::insert<Trie, a, 'a'>;
-    using second = test_trie::insert<first, b, 'b'>;
-    using third  = test_trie::insert<second, c, 'c'>;
+    using first  = test_trie::insert_literal<Trie, id_of<a>(), 'a'>;
+    using second = test_trie::insert_literal<first, id_of<b>(), 'b'>;
+    using third  = test_trie::insert_literal<second, id_of<c>(), 'c'>;
     using type   = third;
 };
 
 template <class Trie>
 using insert_single = typename insert_single_impl<Trie>::type;
 
-constexpr const char ab[]   = "ab";
-constexpr const char abcd[] = "abcd";
-constexpr const char bc[]   = "bc";
-
 template <class Trie>
 struct insert_multiple_impl
 {
-    using first  = test_trie::insert<Trie, ab, 'a', 'b'>;
-    using second = test_trie::insert<first, abcd, 'a', 'b', 'c', 'd'>;
-    using third  = test_trie::insert<second, bc, 'b', 'c'>;
+    using first  = test_trie::insert_literal<Trie, id_of<ab>(), 'a', 'b'>;
+    using second = test_trie::insert_literal<first, id_of<abcd>(), 'a', 'b', 'c', 'd'>;
+    using third  = test_trie::insert_literal<second, id_of<bc>(), 'b', 'c'>;
     using type   = third;
 };
 
@@ -55,36 +68,36 @@ template <class Trie>
 using insert_multiple = typename insert_multiple_impl<Trie>::type;
 
 template <class Trie>
-constexpr const char* test_lookup(Trie)
+constexpr auto test_lookup(Trie)
 {
-    return Trie::lookup_prefix("a", 1).data;
+    return Trie::lookup_prefix("a", 1).kind;
 }
 } // namespace
 
 TEST_CASE("detail::trie")
 {
     using trie0 = test_trie::empty;
-    REQUIRE(!trie0::lookup_prefix("a", 1));
+    REQUIRE(!trie0::lookup_prefix("a", 1).is_matched());
 
     using trie1 = insert_single<trie0>;
-    verify(trie1{}, "a", "a");
-    verify(trie1{}, "b", "b");
-    verify(trie1{}, "c", "c");
-    verify(trie1{}, "ab", "a");
-    REQUIRE(!trie1::lookup_prefix("d", 1));
+    verify<a>(trie1{}, "a", "a");
+    verify<b>(trie1{}, "b", "b");
+    verify<c>(trie1{}, "c", "c");
+    verify<a>(trie1{}, "ab", "a");
+    REQUIRE(!trie1::lookup_prefix("d", 1).is_matched());
 
     using trie2 = insert_multiple<trie1>;
-    verify(trie2{}, "a", "a");
-    verify(trie2{}, "ab", "ab");
-    verify(trie2{}, "abcd", "abcd");
-    verify(trie2{}, "abc", "ab");
-    verify(trie2{}, "b", "b");
-    verify(trie2{}, "bc", "bc");
-    verify(trie2{}, "bcd", "bc");
-    verify(trie2{}, "c", "c");
-    verify(trie2{}, "cd", "c");
-    REQUIRE(!trie2::lookup_prefix("d", 1));
+    verify<a>(trie2{}, "a", "a");
+    verify<ab>(trie2{}, "ab", "ab");
+    verify<abcd>(trie2{}, "abcd", "abcd");
+    verify<ab>(trie2{}, "abc", "ab");
+    verify<b>(trie2{}, "b", "b");
+    verify<bc>(trie2{}, "bc", "bc");
+    verify<bc>(trie2{}, "bcd", "bc");
+    verify<c>(trie2{}, "c", "c");
+    verify<c>(trie2{}, "cd", "c");
+    REQUIRE(!trie2::lookup_prefix("d", 1).is_matched());
 
     constexpr auto result = test_lookup(trie2{});
-    REQUIRE(std::strcmp(result, "a") == 0);
+    REQUIRE(result.is<a>());
 }
