@@ -28,20 +28,33 @@ namespace lex
                     return match_result<TokenSpec>();
 
                 match_result<TokenSpec> result;
-                bool                    dummy[] = {
-                    (*str == Nodes::character
-                     && (result = Nodes::lookup_prefix(length_so_far + 1, str + 1, end), true))...};
+                bool                    dummy[]
+                    = {(!result.is_matched() && Nodes::try_lookup(str)
+                        && (result = Nodes::lookup_prefix(length_so_far, str, end), true))...};
                 (void)dummy;
                 return result;
             }
 
             template <char C>
-            struct node_finder
+            struct node_char_finder
             {
                 template <typename Node>
                 struct predicate : std::integral_constant<bool, Node::character == C>
                 {};
             };
+
+            template <class Target, typename = void>
+            struct node_finder
+            {
+                template <typename Node>
+                struct predicate : std::false_type
+                {};
+            };
+
+            template <class Target>
+            struct node_finder<Target, decltype(void(Target::character))>
+            : node_char_finder<Target::character>
+            {};
 
             struct error_node
             {
@@ -50,14 +63,12 @@ namespace lex
             };
 
             template <char C, class Nodes>
-            using matching_node =
-                typename keep_if<Nodes,
-                                 node_finder<C>::template predicate>::template type_or<error_node>;
+            using matching_node = typename keep_if<
+                Nodes, node_char_finder<C>::template predicate>::template type_or<error_node>;
 
             template <class NewNode, class Nodes>
             using insert_node
-                = concat<remove_if<Nodes, node_finder<NewNode::character>::template predicate>,
-                         NewNode>;
+                = concat<remove_if<Nodes, node_finder<NewNode>::template predicate>, NewNode>;
 
             template <char C, class ChildNodes>
             struct non_terminal_node
@@ -69,10 +80,15 @@ namespace lex
                 template <class Child>
                 using insert = non_terminal_node<C, insert_node<Child, ChildNodes>>;
 
+                static constexpr bool try_lookup(const char* str) noexcept
+                {
+                    return *str == C;
+                }
+
                 static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
                                                     const char* end) noexcept
                 {
-                    return trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
+                    return trie::lookup_prefix_impl(ChildNodes{}, length_so_far + 1, str + 1, end);
                 }
             };
 
@@ -86,9 +102,17 @@ namespace lex
                 template <class Child>
                 using insert = terminal_node<C, Id, insert_node<Child, ChildNodes>>;
 
+                static constexpr bool try_lookup(const char* str) noexcept
+                {
+                    return *str == C;
+                }
+
                 static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
                                                     const char* end) noexcept
                 {
+                    ++length_so_far;
+                    ++str;
+
                     auto longer_result
                         = trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
                     if (longer_result.is_matched())
@@ -96,6 +120,25 @@ namespace lex
                     else
                         return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),
                                                        length_so_far);
+                }
+            };
+
+            template <class Matcher>
+            struct matcher_node
+            {
+                static constexpr auto is_terminal = true;
+                using children                    = type_list<>;
+
+                static constexpr bool try_lookup(const char*) noexcept
+                {
+                    return true;
+                }
+
+                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
+                                                    const char* end) noexcept
+                {
+                    (void)length_so_far; // TODO: assert == 0
+                    return Matcher::try_match(str, end);
                 }
             };
 
@@ -173,6 +216,9 @@ namespace lex
 
             template <class Root, id_type<TokenSpec> Id, typename String>
             using insert_literal_str = typename insert_literal_str_impl<Root, Id, String>::type;
+
+            template <class Root, class Matcher>
+            using insert_matcher = typename Root::template insert<matcher_node<Matcher>>;
         };
     } // namespace detail
 } // namespace lex

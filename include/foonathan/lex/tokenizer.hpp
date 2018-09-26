@@ -16,59 +16,47 @@ namespace lex
 {
     namespace detail
     {
-        //=== matcher_list ===//
-        template <class TokenSpec>
-        struct get_matcher_list
+        //=== try_match ===//
+        template <class TokenSpec, class Root, class Matchers>
+        struct build_matcher_trie
         {
-            // the rule tokens are all matcher already
-            using rule_matchers = keep_if<TokenSpec, is_non_identifier_rule_token>;
+            using type = Root;
+        };
 
-            // the identifier matcher
+        template <class TokenSpec, class Root, class Head, class... Tail>
+        struct build_matcher_trie<TokenSpec, Root, type_list<Head, Tail...>>
+        {
+            using with_head = typename trie<TokenSpec>::template insert_matcher<Root, Head>;
+            using type =
+                typename build_matcher_trie<TokenSpec, with_head, type_list<Tail...>>::type;
+        };
+
+        template <class TokenSpec>
+        struct try_match_impl
+        {
+            // build the identifier matcher
             using identifiers = keep_if<TokenSpec, is_identifier>;
             using keywords    = keep_if<TokenSpec, is_keyword>;
             using keyword_identifier_matcher
                 = detail::keyword_identifier_matcher<TokenSpec, identifiers, keywords>;
 
-            // use one literal matcher to match all literals
-            using literal_matcher
-                = detail::literal_matcher<TokenSpec,
-                                          keep_if<TokenSpec, is_non_keyword_literal_token>>;
-
-            // concatenate all
-            using type = concat<rule_matchers, keyword_identifier_matcher, literal_matcher>;
-        };
-
-        template <class TokenSpec>
-        using matcher_list = typename get_matcher_list<TokenSpec>::type;
-
-        //=== try_match_impl ===//
-        /// Calls ::try_match() for every matcher until one is found that matches.
-        template <class TokenSpec, class MatcherList>
-        struct try_match_impl;
-
-        template <class TokenSpec>
-        struct try_match_impl<TokenSpec, type_list<>>
-        {
-            static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
-            {
-                // nothing matched, create an error
-                return match_result<TokenSpec>(1);
-            }
-        };
-
-        template <class TokenSpec, class Head, class... Tail>
-        struct try_match_impl<TokenSpec, type_list<Head, Tail...>>
-        {
-            using tail_match = try_match_impl<TokenSpec, type_list<Tail...>>;
+            // use  the literal trie and insert all rule tokens, as well as the identifier matcher
+            using literal_trie
+                = detail::literal_trie<TokenSpec, keep_if<TokenSpec, is_non_keyword_literal_token>>;
+            using rule_tokens = keep_if<TokenSpec, is_non_identifier_rule_token>;
+            using rule_trie =
+                typename build_matcher_trie<TokenSpec, literal_trie, rule_tokens>::type;
+            using trie = typename detail::trie<TokenSpec>::template insert_matcher<
+                rule_trie, keyword_identifier_matcher>;
 
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
-                auto result = Head::try_match(str, end);
+                auto result = trie::lookup_prefix(str, end);
                 if (result.is_matched())
                     return result;
                 else
-                    return tail_match::try_match(str, end);
+                    return match_result<TokenSpec>(1);
             }
         };
     } // namespace detail
@@ -146,10 +134,7 @@ namespace lex
                 cur_ = token<TokenSpec>(token_kind<TokenSpec>(eof{}), ptr_, 0);
             else
             {
-                using matcher_list = detail::matcher_list<TokenSpec>;
-
-                auto result
-                    = detail::try_match_impl<TokenSpec, matcher_list>::try_match(ptr_, end_);
+                auto result = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
                 // TODO: assert result.is_matched() && range of ptr_
                 cur_ = token<TokenSpec>(result.kind, ptr_, result.bump);
                 ptr_ += result.bump;
