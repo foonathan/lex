@@ -77,14 +77,14 @@ constexpr auto test_lookup(Trie)
 TEST_CASE("detail::trie")
 {
     using trie0 = test_trie::empty;
-    REQUIRE(!trie0::lookup_prefix("a", 1).is_matched());
+    REQUIRE(trie0::lookup_prefix("a", 1).is_error());
 
     using trie1 = insert_single<trie0>;
     verify<a>(trie1{}, "a", "a");
     verify<b>(trie1{}, "b", "b");
     verify<c>(trie1{}, "c", "c");
     verify<a>(trie1{}, "ab", "a");
-    REQUIRE(!trie1::lookup_prefix("d", 1).is_matched());
+    REQUIRE(trie1::lookup_prefix("d", 1).is_error());
 
     using trie2 = insert_multiple<trie1>;
     verify<a>(trie2{}, "a", "a");
@@ -96,7 +96,7 @@ TEST_CASE("detail::trie")
     verify<bc>(trie2{}, "bcd", "bc");
     verify<c>(trie2{}, "c", "c");
     verify<c>(trie2{}, "cd", "c");
-    REQUIRE(!trie2::lookup_prefix("d", 1).is_matched());
+    REQUIRE(trie2::lookup_prefix("d", 1).is_error());
 
     constexpr auto result = test_lookup(trie2{});
     REQUIRE(result.is<a>());

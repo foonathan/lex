@@ -25,14 +25,18 @@ namespace lex
                                                                         const char* end) noexcept
             {
                 if (str == end)
-                    return match_result<TokenSpec>();
+                    return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
 
                 match_result<TokenSpec> result;
                 bool                    dummy[]
                     = {(!result.is_matched() && Nodes::try_lookup(str)
                         && (result = Nodes::lookup_prefix(length_so_far, str, end), true))...};
                 (void)dummy;
-                return result;
+
+                if (result.is_matched())
+                    return result;
+                else
+                    return match_result<TokenSpec>(1);
             }
 
             template <char C>
@@ -115,7 +119,7 @@ namespace lex
 
                     auto longer_result
                         = trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
-                    if (longer_result.is_matched())
+                    if (longer_result.is_success())
                         return longer_result;
                     else
                         return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),

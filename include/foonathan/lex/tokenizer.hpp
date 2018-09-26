@@ -52,11 +52,7 @@ namespace lex
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
-                auto result = trie::lookup_prefix(str, end);
-                if (result.is_matched())
-                    return result;
-                else
-                    return match_result<TokenSpec>(1);
+                return trie::lookup_prefix(str, end);
             }
         };
     } // namespace detail
@@ -130,15 +126,10 @@ namespace lex
         /// EOF.
         constexpr void bump() noexcept
         {
-            if (ptr_ == end_)
-                cur_ = token<TokenSpec>(token_kind<TokenSpec>(eof{}), ptr_, 0);
-            else
-            {
-                auto result = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
-                // TODO: assert result.is_matched() && range of ptr_
-                cur_ = token<TokenSpec>(result.kind, ptr_, result.bump);
-                ptr_ += result.bump;
-            }
+            auto result = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
+            // TODO: assert result.is_matched() && range of ptr_
+            cur_ = token<TokenSpec>(result.kind, ptr_, result.bump);
+            ptr_ += result.bump;
         }
 
         /// \effects Resets the tokenizer to the specified position.
