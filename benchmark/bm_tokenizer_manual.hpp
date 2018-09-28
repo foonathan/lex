@@ -35,9 +35,9 @@ struct dot : lex::rule_token<dot, token_spec>
     static match_result try_match(const char* str, const char* end)
     {
         if (starts_with(str, end, "..."))
-            return ok<ellipsis>(3);
+            return success<ellipsis>(3);
         else if (starts_with(str, end, "."))
-            return ok<dot>(1);
+            return success<dot>(1);
         else
             return unmatched();
     }
@@ -54,11 +54,11 @@ struct plus : lex::rule_token<plus, token_spec>
     static match_result try_match(const char* str, const char* end)
     {
         if (starts_with(str, end, "+="))
-            return ok<plus_eq>(2);
+            return success<plus_eq>(2);
         else if (starts_with(str, end, "++"))
-            return ok<plus_plus>(2);
+            return success<plus_plus>(2);
         else if (starts_with(str, end, "+"))
-            return ok<plus>(1);
+            return success<plus>(1);
         else
             return unmatched();
     }
@@ -81,13 +81,13 @@ struct minus : lex::rule_token<minus, token_spec>
     static match_result try_match(const char* str, const char* end)
     {
         if (starts_with(str, end, "->*"))
-            return ok<arrow_deref>(3);
+            return success<arrow_deref>(3);
         else if (starts_with(str, end, "->"))
-            return ok<arrow>(2);
+            return success<arrow>(2);
         else if (starts_with(str, end, "--"))
-            return ok<minus_minus>(2);
+            return success<minus_minus>(2);
         else if (starts_with(str, end, "-"))
-            return ok<minus_minus>(1);
+            return success<minus_minus>(1);
         else
             return unmatched();
     }
@@ -98,7 +98,7 @@ struct tilde : lex::rule_token<tilde, token_spec>
     static match_result try_match(const char* str, const char* end)
     {
         if (starts_with(str, end, "~"))
-            return ok(1);
+            return success(1);
         else
             return unmatched();
     }
@@ -119,9 +119,10 @@ void tokenizer_manual(const char* str, const char* end,
     while (!tokenizer.is_eof())
     {
         auto cur = tokenizer.peek();
-        if (!cur.is_error())
+        if (cur)
             f(cur.kind().get(), cur.spelling());
         tokenizer.bump();
     }
 }
+
 #endif // FOONATHAN_LEX_BM_TOKENIZER_MANUAL_HPP_INCLUDED

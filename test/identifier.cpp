@@ -32,7 +32,7 @@ struct identifier : lex::identifier<identifier, test_spec>
         while (str != end && is_alpha(*str))
             ++str;
 
-        return ok(str - start);
+        return success(str - start);
     }
 };
 

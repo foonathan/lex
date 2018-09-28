@@ -169,7 +169,7 @@ namespace lex
             static_assert(is_rule_token<Derived>::value, "derived class must be a rule token");
 
             if (Predicate(*str))
-                return Derived::ok(1);
+                return Derived::success(1);
             else
                 return Derived::unmatched();
         }
@@ -199,7 +199,7 @@ namespace lex
             while (str != end && TailPredicate(*str))
                 ++str;
 
-            return Derived::ok(str - start);
+            return Derived::success(str - start);
         }
     };
 
@@ -214,18 +214,7 @@ namespace lex
     /// it and [lex::rule_token]() or [lex::identifier]().
     template <class Derived, ascii::predicate Predicate>
     struct loop_ascii_mixin : head_tail_ascii_mixin<Derived, Predicate, Predicate>
-    {
-        static constexpr auto try_match(const char* str, const char* end) noexcept
-        {
-            static_assert(is_rule_token<Derived>::value, "derived class must be a rule token");
-
-            auto start = str;
-            while (str != end && Predicate(*str))
-                ++str;
-
-            return Derived::ok(str - start);
-        }
-    };
+    {};
 } // namespace lex
 } // namespace foonathan
 

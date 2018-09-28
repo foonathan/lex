@@ -72,7 +72,7 @@ void trie(const char* str, const char* end, void (*f)(int, foonathan::lex::token
         auto id   = -1;
         auto size = 0u;
 
-        auto result = trie::lookup_prefix(str, end);
+        auto result = trie::try_match(str, end);
         if (result.is_success())
         {
             id   = result.kind.get();

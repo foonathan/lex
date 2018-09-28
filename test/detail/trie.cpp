@@ -37,7 +37,7 @@ using test_trie = detail::trie<tokens>;
 template <typename T, class Trie>
 void verify(Trie, const char* str, const char* prefix)
 {
-    auto result = Trie::lookup_prefix(str, std::strlen(str));
+    auto result = Trie::try_match(str, std::strlen(str));
     REQUIRE(result.is_success());
     REQUIRE(result.bump == std::strlen(prefix));
     REQUIRE(result.kind.template is<T>());
@@ -70,21 +70,21 @@ using insert_multiple = typename insert_multiple_impl<Trie>::type;
 template <class Trie>
 constexpr auto test_lookup(Trie)
 {
-    return Trie::lookup_prefix("a", 1).kind;
+    return Trie::try_match("a", 1).kind;
 }
 } // namespace
 
 TEST_CASE("detail::trie")
 {
     using trie0 = test_trie::empty;
-    REQUIRE(trie0::lookup_prefix("a", 1).is_error());
+    REQUIRE(trie0::try_match("a", 1).is_error());
 
     using trie1 = insert_single<trie0>;
     verify<a>(trie1{}, "a", "a");
     verify<b>(trie1{}, "b", "b");
     verify<c>(trie1{}, "c", "c");
     verify<a>(trie1{}, "ab", "a");
-    REQUIRE(trie1::lookup_prefix("d", 1).is_error());
+    REQUIRE(trie1::try_match("d", 1).is_error());
 
     using trie2 = insert_multiple<trie1>;
     verify<a>(trie2{}, "a", "a");
@@ -96,7 +96,7 @@ TEST_CASE("detail::trie")
     verify<bc>(trie2{}, "bcd", "bc");
     verify<c>(trie2{}, "c", "c");
     verify<c>(trie2{}, "cd", "c");
-    REQUIRE(trie2::lookup_prefix("d", 1).is_error());
+    REQUIRE(trie2::try_match("d", 1).is_error());
 
     constexpr auto result = test_lookup(trie2{});
     REQUIRE(result.is<a>());

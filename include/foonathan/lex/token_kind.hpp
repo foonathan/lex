@@ -17,6 +17,10 @@ namespace lex
     template <class... Tokens>
     using token_spec = detail::type_list<Tokens...>;
 
+    /// Tag type to mark an error token.
+    struct error
+    {};
+
     /// Tag type to mark the EOF token.
     /// It is generated at the very end.
     struct eof
@@ -39,6 +43,12 @@ namespace lex
         }
 
         template <class TokenSpec>
+        constexpr id_type<TokenSpec> get_id(error) noexcept
+        {
+            return 0;
+        }
+
+        template <class TokenSpec>
         constexpr id_type<TokenSpec> get_id(eof) noexcept
         {
             return 1;
@@ -56,8 +66,11 @@ namespace lex
             return token_kind(0, id);
         }
 
-        /// \effects Creates an invalid token kind.
-        constexpr token_kind() noexcept : id_(0) {}
+        /// \effects Creates an error token kind.
+        /// \group ctor_error
+        constexpr token_kind() noexcept : token_kind(error{}) {}
+        /// \group ctor_error
+        constexpr token_kind(error) noexcept : id_(detail::get_id<TokenSpec>(error{})) {}
 
         /// \effects Creates the EOF token kind.
         constexpr token_kind(eof) noexcept : id_(detail::get_id<TokenSpec>(eof{})) {}
@@ -68,7 +81,7 @@ namespace lex
         constexpr token_kind(Token) noexcept : id_(detail::get_id<TokenSpec>(Token{}))
         {}
 
-        /// \returns Whether or not it is invalid.
+        /// \returns Whether or not it is the error token.
         explicit constexpr operator bool() const noexcept
         {
             return id_ != 0;

@@ -64,7 +64,7 @@ void tokenizer(const char* str, const char* end, void (*f)(int, foonathan::lex::
     while (!tokenizer.is_eof())
     {
         auto cur = tokenizer.peek();
-        if (!cur.is_error())
+        if (cur)
             f(cur.kind().get(), cur.spelling());
         tokenizer.bump();
     }

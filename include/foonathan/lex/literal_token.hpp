@@ -82,19 +82,6 @@ namespace lex
 
         template <class TokenSpec, class LiteralTokens>
         using literal_trie = typename build_trie_impl<TokenSpec, LiteralTokens>::type;
-
-        //=== literal_matcher ===//
-        template <class TokenSpec, class LiteralTokens>
-        struct literal_matcher
-        {
-            using trie = literal_trie<TokenSpec, LiteralTokens>;
-
-            static constexpr match_result<TokenSpec> try_match(const char* str,
-                                                               const char* end) noexcept
-            {
-                return trie::lookup_prefix(str, end);
-            }
-        };
     } // namespace detail
 } // namespace lex
 } // namespace foonathan

@@ -48,29 +48,29 @@ namespace lex
         /// \returns An unmatched result.
         static constexpr match_result unmatched() noexcept
         {
-            return match_result();
+            return match_result::unmatched();
         }
 
         /// \returns An error result consuming the given number of characters.
         static constexpr match_result error(std::size_t bump) noexcept
         {
-            return match_result(bump);
+            return match_result::error(bump);
         }
 
         /// \returns A matched result creating the `Derived` token and consuming the given
         /// number of characters.
         template <typename Integer>
-        static constexpr match_result ok(Integer bump) noexcept
+        static constexpr match_result success(Integer bump) noexcept
         {
-            return match_result(token_kind(Derived{}), static_cast<std::size_t>(bump));
+            return match_result::success(token_kind(Derived{}), static_cast<std::size_t>(bump));
         }
 
         /// \returns A matched result creating some other null token and consuming the given
         /// number of characters.
         template <class Token, typename Integer>
-        static constexpr match_result ok(Integer bump) noexcept
+        static constexpr match_result success(Integer bump) noexcept
         {
-            return match_result(token_kind(Token{}), static_cast<std::size_t>(bump));
+            return match_result::success(token_kind(Token{}), static_cast<std::size_t>(bump));
         }
 
         constexpr rule_token()

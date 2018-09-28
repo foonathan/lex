@@ -17,44 +17,42 @@ namespace lex
     namespace detail
     {
         //=== try_match ===//
-        template <class TokenSpec, class Root, class Matchers>
-        struct build_matcher_trie
+        template <class TokenSpec, class Root, class Rules>
+        struct insert_rules
         {
             using type = Root;
         };
 
         template <class TokenSpec, class Root, class Head, class... Tail>
-        struct build_matcher_trie<TokenSpec, Root, type_list<Head, Tail...>>
+        struct insert_rules<TokenSpec, Root, type_list<Head, Tail...>>
         {
-            using with_head = typename trie<TokenSpec>::template insert_matcher<Root, Head>;
-            using type =
-                typename build_matcher_trie<TokenSpec, with_head, type_list<Tail...>>::type;
+            using with_head = typename trie<TokenSpec>::template insert_rule<Root, Head>;
+            using type      = typename insert_rules<TokenSpec, with_head, type_list<Tail...>>::type;
         };
 
         template <class TokenSpec>
-        struct try_match_impl
+        struct build_trie
         {
-            // build the identifier matcher
+            // split the tokens
             using identifiers = keep_if<TokenSpec, is_identifier>;
             using keywords    = keep_if<TokenSpec, is_keyword>;
+            using rule_tokens = keep_if<TokenSpec, is_non_identifier_rule_token>;
+            using literals    = keep_if<TokenSpec, is_non_keyword_literal_token>;
+
+            // start with the literal trie
+            using trie0 = detail::literal_trie<TokenSpec, literals>;
+            // insert all rule tokens
+            using trie1 = typename insert_rules<TokenSpec, trie0, rule_tokens>::type;
+            // insert the keyword identifier rule
             using keyword_identifier_matcher
                 = detail::keyword_identifier_matcher<TokenSpec, identifiers, keywords>;
-
-            // use  the literal trie and insert all rule tokens, as well as the identifier matcher
-            using literal_trie
-                = detail::literal_trie<TokenSpec, keep_if<TokenSpec, is_non_keyword_literal_token>>;
-            using rule_tokens = keep_if<TokenSpec, is_non_identifier_rule_token>;
-            using rule_trie =
-                typename build_matcher_trie<TokenSpec, literal_trie, rule_tokens>::type;
-            using trie = typename detail::trie<TokenSpec>::template insert_matcher<
-                rule_trie, keyword_identifier_matcher>;
-
-            static constexpr match_result<TokenSpec> try_match(const char* str,
-                                                               const char* end) noexcept
-            {
-                return trie::lookup_prefix(str, end);
-            }
+            using trie2 =
+                typename detail::trie<TokenSpec>::template insert_rule<trie1,
+                                                                       keyword_identifier_matcher>;
         };
+
+        template <class TokenSpec>
+        using token_spec_trie = typename build_trie<TokenSpec>::trie2;
     } // namespace detail
 
     /// Tokenizes a character range according the token specification.
@@ -70,6 +68,8 @@ namespace lex
     template <class TokenSpec>
     class tokenizer
     {
+        using trie = detail::token_spec_trie<TokenSpec>;
+
     public:
         //=== constructors ===//
         /// \effects Creates a tokenizer that will tokenize the range `[ptr, ptr + size)`.
@@ -79,7 +79,7 @@ namespace lex
 
         /// \effects Creates a tokenizer that will tokenize the range `[begin, end)`.
         explicit constexpr tokenizer(const char* begin, const char* end)
-        : begin_(begin), ptr_(begin), end_(end)
+        : begin_(begin), ptr_(begin), end_(end), last_result_(match_result<TokenSpec>::unmatched())
         {
             reset(begin);
         }
@@ -138,7 +138,7 @@ namespace lex
         {
             // TODO: assert
             ptr_         = position;
-            last_result_ = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
+            last_result_ = trie::try_match(ptr_, end_);
         }
 
         //=== getters ===//

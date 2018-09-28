@@ -25,7 +25,7 @@ struct token_a : lex::rule_token<token_a, test_spec>
         auto count = std::size_t(str - start);
 
         if (count % 2 == 0)
-            return ok(count);
+            return success(count);
         else
             return error(count);
     }
@@ -41,9 +41,9 @@ struct token_bc : lex::rule_token<token_bc, test_spec>
     static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
         if (*str == 'b' & str + 1 != end && str[1] == 'c')
-            return ok(2);
+            return success(2);
         else if (*str == 'c')
-            return ok<token_c>(1);
+            return success<token_c>(1);
         else
             return unmatched();
     }
@@ -72,7 +72,7 @@ TEST_CASE("rule_token")
 
         REQUIRE(result.size() == 1);
 
-        REQUIRE(result[0].is_error());
+        REQUIRE(result[0].is(lex::error{}));
         REQUIRE(result[0].spelling() == "aaa");
         REQUIRE(result[0].offset(tokenizer) == 0);
     }
@@ -104,7 +104,7 @@ TEST_CASE("rule_token")
 
         REQUIRE(result.size() == 2);
 
-        REQUIRE(result[0].is_error());
+        REQUIRE(result[0].is(lex::error{}));
         REQUIRE(result[0].spelling() == "b");
         REQUIRE(result[0].offset(tokenizer) == 0);
 
@@ -128,11 +128,11 @@ TEST_CASE("rule_token")
         REQUIRE(result[1].spelling() == "bc");
         REQUIRE(result[1].offset(tokenizer) == 2);
 
-        REQUIRE(result[2].is_error());
+        REQUIRE(result[2].is(lex::error{}));
         REQUIRE(result[2].spelling() == "a");
         REQUIRE(result[2].offset(tokenizer) == 4);
 
-        REQUIRE(result[3].is_error());
+        REQUIRE(result[3].is(lex::error{}));
         REQUIRE(result[3].spelling() == "b");
         REQUIRE(result[3].offset(tokenizer) == 5);
 

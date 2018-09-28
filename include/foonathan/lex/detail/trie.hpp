@@ -18,54 +18,66 @@ namespace lex
         template <class TokenSpec>
         class trie
         {
+            //=== node lookup ===//
+            // finds a node for the given character
             template <char C>
-            struct node_char_finder
+            struct node_finder
             {
                 template <typename Node>
                 struct predicate : std::integral_constant<bool, Node::character == C>
                 {};
             };
 
-            template <class Target, typename = void>
-            struct node_finder
-            {
-                template <typename Node>
-                struct predicate : std::false_type
-                {};
-            };
-
-            template <class Target>
-            struct node_finder<Target, decltype(void(Target::character))>
-            : node_char_finder<Target::character>
-            {};
-
+            // error node in case none is found
             struct error_node
             {
                 static constexpr auto is_terminal = false;
                 using children                    = type_list<>;
             };
 
+            // the node that matches the given character
             template <char C, class Nodes>
-            using matching_node = typename keep_if<
-                Nodes, node_char_finder<C>::template predicate>::template type_or<error_node>;
+            using matching_node =
+                typename keep_if<Nodes,
+                                 node_finder<C>::template predicate>::template type_or<error_node>;
 
+            // inserts the new node into the list of node, replacing any previous ones if necessary
             template <class NewNode, class Nodes>
             using insert_node
-                = concat<remove_if<Nodes, node_finder<NewNode>::template predicate>, NewNode>;
+                = concat<remove_if<Nodes, node_finder<NewNode::character>::template predicate>,
+                         NewNode>;
 
+            //=== nodes ===//
+            // wraps a rule token for the interface required here
+            template <class Rule>
+            struct rule_wrapper
+            {
+                static constexpr auto try_match(std::size_t, const char* str,
+                                                const char* end) noexcept
+                {
+                    return Rule::try_match(str, end);
+                }
+            };
+
+            // tries to match all children
             template <class... Children>
             static constexpr auto try_match_children(type_list<Children...>,
                                                      std::size_t length_so_far, const char* str,
                                                      const char* end) noexcept
             {
-                match_result<TokenSpec> result;
-                bool                    dummy[]
-                    = {(!result.is_matched()
+                // need to check for EOF now
+                if (str == end)
+                    return match_result<TokenSpec>::eof();
+
+                auto result = match_result<TokenSpec>::unmatched();
+                bool dummy[]
+                    = {(result.is_unmatched()
                         && (result = Children::try_match(length_so_far, str, end), true))...};
                 (void)dummy;
                 return result;
             }
 
+            // a non-terminal node matching the given character
             template <char C, class ChildNodes>
             struct non_terminal_node
             {
@@ -79,15 +91,14 @@ namespace lex
                 static constexpr auto try_match(std::size_t length_so_far, const char* str,
                                                 const char* end) noexcept
                 {
-                    if (str == end)
-                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
-                    else if (*str != C)
-                        return match_result<TokenSpec>();
+                    if (*str != C)
+                        return match_result<TokenSpec>::unmatched();
                     else
                         return try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
                 }
             };
 
+            // a terminal node terminating token Id with the given character
             template <char C, id_type<TokenSpec> Id, class ChildNodes>
             struct terminal_node
             {
@@ -101,60 +112,64 @@ namespace lex
                 static constexpr auto try_match(std::size_t length_so_far, const char* str,
                                                 const char* end) noexcept
                 {
-                    if (str == end)
-                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
-                    else if (*str != C)
-                        return match_result<TokenSpec>();
+                    if (*str != C)
+                        return match_result<TokenSpec>::unmatched();
                     else
                     {
+                        ++length_so_far;
+                        ++str;
+
+                        // check for a longer match
                         auto child_result
-                            = try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
-                        if (child_result.is_matched())
+                            = try_match_children(ChildNodes{}, length_so_far, str, end);
+                        if (child_result.is_success())
+                            // found a longer match
                             return child_result;
                         else
-                            return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),
-                                                           length_so_far + 1);
+                            return match_result<TokenSpec>::success(token_kind<TokenSpec>::from_id(
+                                                                        Id),
+                                                                    length_so_far);
                     }
                 }
             };
 
-            template <class ChildNodes, class... Matchers>
+            // the root node, with additional rules
+            template <class ChildNodes, class... Rules>
             struct root_node
             {
                 static constexpr auto is_terminal = false;
                 using children                    = ChildNodes;
 
                 template <class Child>
-                using insert = root_node<insert_node<Child, ChildNodes>, Matchers...>;
+                using insert = root_node<insert_node<Child, ChildNodes>, Rules...>;
 
-                template <class Matcher>
-                using insert_matcher = root_node<ChildNodes, Matchers..., Matcher>;
+                template <class Rule>
+                using insert_rule = root_node<ChildNodes, Rules..., Rule>;
 
-                static constexpr auto lookup_prefix(const char* str, const char* end) noexcept
+                static constexpr auto try_match(const char* str, const char* end) noexcept
                 {
+                    // match all literals
                     auto child_result = try_match_children(ChildNodes{}, 0, str, end);
                     if (child_result.is_matched())
                         return child_result;
-                    else if (str == end)
-                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
 
-                    match_result<TokenSpec> result;
-                    bool                    dummy[] = {(!result.is_matched()
-                                     && (result = Matchers::try_match(str, end), true))...};
-                    (void)dummy;
+                    // match all rules
+                    auto rule_result
+                        = try_match_children(type_list<rule_wrapper<Rules>...>{}, 0, str, end);
+                    if (rule_result.is_matched())
+                        return rule_result;
 
-                    if (result.is_matched())
-                        return result;
-                    else
-                        return match_result<TokenSpec>(1);
+                    // nothing matched, error
+                    return match_result<TokenSpec>::error(1);
                 }
 
-                static constexpr auto lookup_prefix(const char* str, std::size_t size) noexcept
+                static constexpr auto try_match(const char* str, std::size_t size) noexcept
                 {
-                    return lookup_prefix(str, str + size);
+                    return try_match(str, str + size);
                 }
             };
 
+            //=== trie construction ===//
             template <class CurNode, id_type<TokenSpec> Id, char... Chars>
             struct insert_literal_impl;
 
@@ -202,16 +217,20 @@ namespace lex
             };
 
         public:
+            // an empty trie
             using empty = root_node<type_list<>>;
 
+            // inserts a literal token into the trie
             template <class Root, id_type<TokenSpec> Id, char... Chars>
             using insert_literal = typename insert_literal_impl<Root, Id, Chars...>::type;
 
+            // inserts a literal token where `String = StringTemplate<Chars...>`
             template <class Root, id_type<TokenSpec> Id, typename String>
             using insert_literal_str = typename insert_literal_str_impl<Root, Id, String>::type;
 
-            template <class Root, class Matcher>
-            using insert_matcher = typename Root::template insert_matcher<Matcher>;
+            // inserts a rule
+            template <class Root, class Rule>
+            using insert_rule = typename Root::template insert_rule<Rule>;
         };
     } // namespace detail
 } // namespace lex

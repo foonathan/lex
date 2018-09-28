@@ -31,10 +31,10 @@ namespace lex
             return kind_;
         }
 
-        /// \returns `!kind()`.
-        constexpr bool is_error() const noexcept
+        /// \returns `!!kind()`.
+        explicit constexpr operator bool() const noexcept
         {
-            return !kind_;
+            return !!kind();
         }
 
         /// \returns `kind().is(token)`.

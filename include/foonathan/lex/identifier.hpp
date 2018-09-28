@@ -68,8 +68,6 @@ namespace lex
         template <class TokenSpec, class Identifier, class Keywords>
         struct keyword_identifier_matcher<TokenSpec, type_list<Identifier>, Keywords>
         {
-            using keyword_matcher = literal_matcher<TokenSpec, Keywords>;
-
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
@@ -81,8 +79,8 @@ namespace lex
                 // try to match a keyword in the identifier
                 auto identifier_begin = str;
                 auto identifier_end   = str + identifier.bump;
-                auto keyword = literal_matcher<TokenSpec, Keywords>::try_match(identifier_begin,
-                                                                               identifier_end);
+                auto keyword = literal_trie<TokenSpec, Keywords>::try_match(identifier_begin,
+                                                                            identifier_end);
                 if (keyword.is_matched() && keyword.bump == identifier.bump)
                     // we've matched a keyword and it isn't a prefix but the whole string
                     return keyword;
@@ -100,7 +98,7 @@ namespace lex
             static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
             {
                 // no identifier rule, so will never match
-                return match_result<TokenSpec>{};
+                return match_result<TokenSpec>::unmatched();
             }
         };
     } // namespace detail

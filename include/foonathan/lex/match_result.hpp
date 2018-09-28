@@ -18,40 +18,69 @@ namespace lex
         token_kind<TokenSpec> kind; //< The kind of token that was parsed.
         std::size_t           bump; //< How many characters were consumed.
 
+        match_result() = delete;
+
         /// \effects Creates a result that didn't match anything.
-        explicit constexpr match_result() noexcept : kind(), bump(0) {}
+        static constexpr auto unmatched() noexcept
+        {
+            return match_result<TokenSpec>({}, 0);
+        }
 
         /// \effects Creates a failed result containing an error consuming the given amount of
         /// characters.
-        explicit constexpr match_result(std::size_t bump) noexcept : kind(), bump(bump)
+        static constexpr auto error(std::size_t bump) noexcept
         {
             // TODO: assert bump is not zero
+            return match_result<TokenSpec>({}, bump);
         }
 
         /// \effects Creates a successful result that parsed the given token.
-        explicit constexpr match_result(token_kind<TokenSpec> kind, std::size_t bump)
-        : kind(kind), bump(bump)
+        static constexpr auto success(token_kind<TokenSpec> kind, std::size_t bump) noexcept
         {
-            // TODO: assert bump is not zero and kind is not error
+            // TODO: assert bump is not zero and kind is not error/eof
+            return match_result<TokenSpec>(kind, bump);
         }
 
-        /// \returns Whether or not anything was matched.
-        constexpr bool is_matched() const noexcept
+        /// \effects Creates a successful result that reached EOF.
+        static constexpr auto eof() noexcept
         {
-            return bump != 0;
+            return match_result<TokenSpec>(lex::eof{}, 0);
+        }
+
+        /// \returns Whether or not nothing was matched at all.
+        constexpr bool is_unmatched() const noexcept
+        {
+            return !is_eof() && bump == 0;
         }
 
         /// \returns Whether or not the result is an error.
         constexpr bool is_error() const noexcept
         {
-            return is_matched() && !kind;
+            return bump > 0 && !kind;
         }
 
         /// \returns Whether or not the result is a success.
         constexpr bool is_success() const noexcept
         {
-            return is_matched() && kind;
+            return bump > 0 && kind;
         }
+
+        /// \returns Whether or not the result is EOF.
+        constexpr bool is_eof() const noexcept
+        {
+            return kind.is(lex::eof{});
+        }
+
+        /// \returns Whether or not anything was matched.
+        constexpr bool is_matched() const noexcept
+        {
+            return !is_unmatched();
+        }
+
+    private:
+        explicit constexpr match_result(token_kind<TokenSpec> kind, std::size_t bump) noexcept
+        : kind(kind), bump(bump)
+        {}
     };
 
 } // namespace lex

@@ -65,7 +65,7 @@ TEST_CASE("literal_token")
         REQUIRE(result[2].spelling() == "a");
         REQUIRE(result[2].offset(tokenizer) == 4);
 
-        REQUIRE(result[3].is_error());
+        REQUIRE(result[3].is(lex::error{}));
         REQUIRE(result[3].spelling() == "b");
         REQUIRE(result[3].offset(tokenizer) == 5);
 
