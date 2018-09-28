@@ -81,7 +81,7 @@ namespace lex
         explicit constexpr tokenizer(const char* begin, const char* end)
         : begin_(begin), ptr_(begin), end_(end)
         {
-            bump();
+            reset(begin);
         }
 
         /// \effects Creates a tokenizer that will tokenize the given array.
@@ -93,7 +93,8 @@ namespace lex
         /// \returns The current token.
         constexpr token<TokenSpec> peek() const noexcept
         {
-            return cur_;
+            // TODO: assert result.is_matched() && range of ptr_
+            return token<TokenSpec>(last_result_.kind, ptr_, last_result_.bump);
         }
 
         /// \returns Whether or not EOF was reached.
@@ -102,13 +103,15 @@ namespace lex
         /// has no effect anymore.
         constexpr bool is_eof() const noexcept
         {
-            return ptr_ == end_;
+            // ASSERT: last_result_.is_eof()
+            return ptr_ + last_result_.bump == end_;
         }
 
         /// \returns Whether or not the current token is an error token.
         constexpr bool is_error() const noexcept
         {
-            return peek().is_error();
+            // ASSERT: peek().is_error()
+            return last_result_.is_error();
         }
 
         /// Returns and advances the token.
@@ -126,18 +129,16 @@ namespace lex
         /// EOF.
         constexpr void bump() noexcept
         {
-            auto result = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
-            // TODO: assert result.is_matched() && range of ptr_
-            cur_ = token<TokenSpec>(result.kind, ptr_, result.bump);
-            ptr_ += result.bump;
+            reset(ptr_ + last_result_.bump);
         }
 
-        /// \effects Resets the tokenizer to the specified position.
-        /// The next call to `bump()` will parse a token starting there.
+        /// \effects Resets the tokenizer to the specified position and parses that token
+        /// immediately.
         constexpr void reset(const char* position) noexcept
         {
             // TODO: assert
-            ptr_ = position;
+            ptr_         = position;
+            last_result_ = detail::try_match_impl<TokenSpec>::try_match(ptr_, end_);
         }
 
         //=== getters ===//
@@ -148,9 +149,10 @@ namespace lex
         }
 
         /// \returns The current position in the character range.
-        /// After `bump()` is called, `peek()` will return the token starting at that position.
+        /// `peek()` returns the token starting at that position.
         constexpr const char* current_ptr() const noexcept
         {
+            // ASSERT: equal to peek()
             return ptr_;
         }
 
@@ -165,7 +167,7 @@ namespace lex
         const char* ptr_{};
         const char* end_{};
 
-        token<TokenSpec> cur_;
+        match_result<TokenSpec> last_result_;
     };
 } // namespace lex
 } // namespace foonathan

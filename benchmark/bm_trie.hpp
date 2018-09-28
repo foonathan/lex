@@ -65,18 +65,32 @@ void trie(const char* str, const char* end, void (*f)(int, foonathan::lex::token
     using trie = lex::detail::literal_trie<literals, literals>;
     while (str != end)
     {
+        // don't call function directly,
+        // go to memory store first
+        // this makes the benchmark more fair:
+        // a real tokenizer won't be able to handle each token directly as well
+        auto id   = -1;
+        auto size = 0u;
+
         auto result = trie::lookup_prefix(str, end);
         if (result.is_success())
-            f(result.kind.get(), bump(str, result.bump));
+        {
+            id   = result.kind.get();
+            size = result.bump;
+        }
         else if (lex::ascii::is_space(*str))
         {
-            auto begin = str++;
-            while (str != end && lex::ascii::is_space(*str))
-                ++str;
-            f(-1, lex::token_spelling(begin, static_cast<std::size_t>(str - begin)));
+            auto cur = str++;
+            while (cur != end && lex::ascii::is_space(*cur))
+                ++cur;
+            id   = -1;
+            size = static_cast<unsigned>(cur - str);
         }
         else
             ++str;
+
+        if (size > 0)
+            f(result.kind.get(), bump(str, result.bump));
     }
 }
 

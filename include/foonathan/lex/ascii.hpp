@@ -214,7 +214,18 @@ namespace lex
     /// it and [lex::rule_token]() or [lex::identifier]().
     template <class Derived, ascii::predicate Predicate>
     struct loop_ascii_mixin : head_tail_ascii_mixin<Derived, Predicate, Predicate>
-    {};
+    {
+        static constexpr auto try_match(const char* str, const char* end) noexcept
+        {
+            static_assert(is_rule_token<Derived>::value, "derived class must be a rule token");
+
+            auto start = str;
+            while (str != end && Predicate(*str))
+                ++str;
+
+            return Derived::ok(str - start);
+        }
+    };
 } // namespace lex
 } // namespace foonathan
 

@@ -18,27 +18,6 @@ namespace lex
         template <class TokenSpec>
         class trie
         {
-            template <class... Nodes>
-            static constexpr match_result<TokenSpec> lookup_prefix_impl(type_list<Nodes...>,
-                                                                        std::size_t length_so_far,
-                                                                        const char* str,
-                                                                        const char* end) noexcept
-            {
-                if (str == end)
-                    return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
-
-                match_result<TokenSpec> result;
-                bool                    dummy[]
-                    = {(!result.is_matched() && Nodes::try_lookup(str)
-                        && (result = Nodes::lookup_prefix(length_so_far, str, end), true))...};
-                (void)dummy;
-
-                if (result.is_matched())
-                    return result;
-                else
-                    return match_result<TokenSpec>(1);
-            }
-
             template <char C>
             struct node_char_finder
             {
@@ -74,6 +53,19 @@ namespace lex
             using insert_node
                 = concat<remove_if<Nodes, node_finder<NewNode>::template predicate>, NewNode>;
 
+            template <class... Children>
+            static constexpr auto try_match_children(type_list<Children...>,
+                                                     std::size_t length_so_far, const char* str,
+                                                     const char* end) noexcept
+            {
+                match_result<TokenSpec> result;
+                bool                    dummy[]
+                    = {(!result.is_matched()
+                        && (result = Children::try_match(length_so_far, str, end), true))...};
+                (void)dummy;
+                return result;
+            }
+
             template <char C, class ChildNodes>
             struct non_terminal_node
             {
@@ -84,15 +76,15 @@ namespace lex
                 template <class Child>
                 using insert = non_terminal_node<C, insert_node<Child, ChildNodes>>;
 
-                static constexpr bool try_lookup(const char* str) noexcept
+                static constexpr auto try_match(std::size_t length_so_far, const char* str,
+                                                const char* end) noexcept
                 {
-                    return *str == C;
-                }
-
-                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
-                                                    const char* end) noexcept
-                {
-                    return trie::lookup_prefix_impl(ChildNodes{}, length_so_far + 1, str + 1, end);
+                    if (str == end)
+                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
+                    else if (*str != C)
+                        return match_result<TokenSpec>();
+                    else
+                        return try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
                 }
             };
 
@@ -106,63 +98,60 @@ namespace lex
                 template <class Child>
                 using insert = terminal_node<C, Id, insert_node<Child, ChildNodes>>;
 
-                static constexpr bool try_lookup(const char* str) noexcept
+                static constexpr auto try_match(std::size_t length_so_far, const char* str,
+                                                const char* end) noexcept
                 {
-                    return *str == C;
-                }
-
-                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
-                                                    const char* end) noexcept
-                {
-                    ++length_so_far;
-                    ++str;
-
-                    auto longer_result
-                        = trie::lookup_prefix_impl(ChildNodes{}, length_so_far, str, end);
-                    if (longer_result.is_success())
-                        return longer_result;
+                    if (str == end)
+                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
+                    else if (*str != C)
+                        return match_result<TokenSpec>();
                     else
-                        return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),
-                                                       length_so_far);
+                    {
+                        auto child_result
+                            = try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
+                        if (child_result.is_matched())
+                            return child_result;
+                        else
+                            return match_result<TokenSpec>(token_kind<TokenSpec>::from_id(Id),
+                                                           length_so_far + 1);
+                    }
                 }
             };
 
-            template <class Matcher>
-            struct matcher_node
-            {
-                static constexpr auto is_terminal = true;
-                using children                    = type_list<>;
-
-                static constexpr bool try_lookup(const char*) noexcept
-                {
-                    return true;
-                }
-
-                static constexpr auto lookup_prefix(std::size_t length_so_far, const char* str,
-                                                    const char* end) noexcept
-                {
-                    (void)length_so_far; // TODO: assert == 0
-                    return Matcher::try_match(str, end);
-                }
-            };
-
-            template <class ChildNodes>
+            template <class ChildNodes, class... Matchers>
             struct root_node
             {
                 static constexpr auto is_terminal = false;
                 using children                    = ChildNodes;
 
                 template <class Child>
-                using insert = root_node<insert_node<Child, ChildNodes>>;
+                using insert = root_node<insert_node<Child, ChildNodes>, Matchers...>;
+
+                template <class Matcher>
+                using insert_matcher = root_node<ChildNodes, Matchers..., Matcher>;
 
                 static constexpr auto lookup_prefix(const char* str, const char* end) noexcept
                 {
-                    return trie::lookup_prefix_impl(ChildNodes{}, 0, str, end);
+                    auto child_result = try_match_children(ChildNodes{}, 0, str, end);
+                    if (child_result.is_matched())
+                        return child_result;
+                    else if (str == end)
+                        return match_result<TokenSpec>(token_kind<TokenSpec>(eof{}), 0);
+
+                    match_result<TokenSpec> result;
+                    bool                    dummy[] = {(!result.is_matched()
+                                     && (result = Matchers::try_match(str, end), true))...};
+                    (void)dummy;
+
+                    if (result.is_matched())
+                        return result;
+                    else
+                        return match_result<TokenSpec>(1);
                 }
 
                 static constexpr auto lookup_prefix(const char* str, std::size_t size) noexcept
                 {
-                    return trie::lookup_prefix_impl(ChildNodes{}, 0, str, str + size);
+                    return lookup_prefix(str, str + size);
                 }
             };
 
@@ -222,7 +211,7 @@ namespace lex
             using insert_literal_str = typename insert_literal_str_impl<Root, Id, String>::type;
 
             template <class Root, class Matcher>
-            using insert_matcher = typename Root::template insert<matcher_node<Matcher>>;
+            using insert_matcher = typename Root::template insert_matcher<Matcher>;
         };
     } // namespace detail
 } // namespace lex
