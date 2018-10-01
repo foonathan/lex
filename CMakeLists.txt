@@ -5,7 +5,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(foonathan_lex)
 
+include(external/external.cmake)
+
 set(detail_header_files
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/constexpr_vector.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
@@ -25,6 +28,7 @@ set(header_files
 add_library(foonathan_lex INTERFACE)
 target_sources(foonathan_lex INTERFACE ${detail_header_files} ${header_files})
 target_include_directories(foonathan_lex INTERFACE include/)
+target_link_libraries(foonathan_lex INTERFACE debug_assert)
 
 option(FOONATHAN_LEX_BUILD_TEST "build tests of foonathan/lex" OFF)
 if(${FOONATHAN_LEX_BUILD_TEST} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))

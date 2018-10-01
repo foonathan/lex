@@ -94,7 +94,6 @@ namespace lex
         /// \returns The current token.
         constexpr token<TokenSpec> peek() const noexcept
         {
-            // TODO: assert result.is_matched() && range of ptr_
             return token<TokenSpec>(last_result_.kind, ptr_, last_result_.bump);
         }
 
@@ -102,7 +101,7 @@ namespace lex
         /// If this is `true`, `bump()` will have no effect anymore and `peek()` returns EOF.
         constexpr bool is_done() const noexcept
         {
-            // ASSERT
+            FOONATHAN_LEX_ASSERT(last_result_.bump != 0 || peek().is(eof{}));
             return last_result_.bump == 0;
         }
 
@@ -128,7 +127,8 @@ namespace lex
         /// immediately.
         constexpr void reset(const char* position) noexcept
         {
-            // TODO: assert
+            FOONATHAN_LEX_PRECONDITION(begin_ <= position && position <= end_,
+                                       "position out of range");
             ptr_         = position;
             last_result_ = trie::try_match(ptr_, end_);
         }
@@ -144,7 +144,7 @@ namespace lex
         /// `peek()` returns the token starting at that position.
         constexpr const char* current_ptr() const noexcept
         {
-            // ASSERT: equal to peek()
+            FOONATHAN_LEX_ASSERT(peek().spelling().data() == ptr_);
             return ptr_;
         }
 

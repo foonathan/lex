@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_MATCH_RESULT_HPP_INCLUDED
 #define FOONATHAN_LEX_MATCH_RESULT_HPP_INCLUDED
 
+#include <foonathan/lex/detail/assert.hpp>
 #include <foonathan/lex/token_kind.hpp>
 
 namespace foonathan
@@ -30,14 +31,16 @@ namespace lex
         /// characters.
         static constexpr auto error(std::size_t bump) noexcept
         {
-            // TODO: assert bump is not zero
+            FOONATHAN_LEX_PRECONDITION(bump > 0, "bump must not be 0");
             return match_result<TokenSpec>({}, bump);
         }
 
         /// \effects Creates a successful result that parsed the given token.
         static constexpr auto success(token_kind<TokenSpec> kind, std::size_t bump) noexcept
         {
-            // TODO: assert bump is not zero and kind is not error/eof
+            FOONATHAN_LEX_PRECONDITION(bump > 0, "bump must not be 0");
+            FOONATHAN_LEX_PRECONDITION(!kind.is(lex::error{}) && !kind.is(lex::eof{}),
+                                       "use eof() or error() to match a special token");
             return match_result<TokenSpec>(kind, bump);
         }
 

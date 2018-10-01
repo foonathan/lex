@@ -124,7 +124,7 @@ namespace lex
                         return false;
                     }
                 });
-                // TOOD: assert
+                FOONATHAN_LEX_ASSERT(result);
                 return result;
             }
         }
