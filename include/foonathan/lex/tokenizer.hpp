@@ -84,9 +84,10 @@ namespace lex
             reset(begin);
         }
 
-        /// \effects Creates a tokenizer that will tokenize the given array.
+        /// \effects Creates a tokenizer that will tokenize the given array *excluding* a null
+        /// terminator.
         template <std::size_t N>
-        explicit constexpr tokenizer(const char (&array)[N]) : tokenizer(array, array + N)
+        explicit constexpr tokenizer(const char (&array)[N]) : tokenizer(array, array + N - 1)
         {}
 
         //=== tokenizer functions ===//
@@ -98,20 +99,11 @@ namespace lex
         }
 
         /// \returns Whether or not EOF was reached.
-        /// If this becomes `true` for the first time, the next call to `bump()` will store the EOF
-        /// token. Then it will still return `true` but `peek()` will always return EOF and `bump()`
-        /// has no effect anymore.
-        constexpr bool is_eof() const noexcept
+        /// If this is `true`, `bump()` will have no effect anymore and `peek()` returns EOF.
+        constexpr bool is_done() const noexcept
         {
-            // ASSERT: last_result_.is_eof()
-            return ptr_ + last_result_.bump == end_;
-        }
-
-        /// \returns Whether or not the current token is an error token.
-        constexpr bool is_error() const noexcept
-        {
-            // ASSERT: peek().is_error()
-            return last_result_.is_error();
+            // ASSERT
+            return last_result_.bump == 0;
         }
 
         /// Returns and advances the token.

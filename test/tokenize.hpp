@@ -20,7 +20,7 @@ constexpr vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)
 {
     vector<Spec> result;
 
-    while (!tokenizer.is_eof())
+    while (!tokenizer.is_done())
         result.push_back(tokenizer.get());
 
     return result;

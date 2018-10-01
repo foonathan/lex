@@ -18,10 +18,11 @@ set(tests
     detail/constexpr_vector.cpp
     detail/string.cpp
     detail/trie.cpp
+    ascii.cpp
     identifier.cpp
     literal_token.cpp
     rule_token.cpp
-    ascii.cpp)
+    tokenizer.cpp)
 
 add_executable(foonathan_lex_test
                test.cpp

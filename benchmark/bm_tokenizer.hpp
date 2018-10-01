@@ -61,7 +61,7 @@ void tokenizer(const char* str, const char* end, void (*f)(int, foonathan::lex::
     namespace lex = foonathan::lex;
 
     lex::tokenizer<token_spec> tokenizer(str, end);
-    while (!tokenizer.is_eof())
+    while (!tokenizer.is_done())
     {
         auto cur = tokenizer.peek();
         if (cur)
