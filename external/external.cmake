@@ -2,8 +2,11 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
+set(dependency_via_submodule OFF)
+
 find_package(debug_assert QUIET)
 if(NOT debug_assert_FOUND)
+    set(dependency_via_submodule ON)
     if(TARGET debug_assert)
         message(STATUS "Using inherited debug_assert target")
     else()

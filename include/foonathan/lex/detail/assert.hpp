@@ -12,7 +12,11 @@
 #endif
 
 #ifndef FOONATHAN_LEX_ENABLE_PRECONDITIONS
-#    define FOONATHAN_LEX_ENABLE_PRECONDITIONS !defined(NDEBUG)
+#    ifdef NDEBUG
+#        define FOONATHAN_LEX_ENABLE_PRECONDITIONS 0
+#    else
+#        define FOONATHAN_LEX_ENABLE_PRECONDITIONS 1
+#    endif
 #endif
 
 namespace foonathan
