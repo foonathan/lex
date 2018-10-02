@@ -1,3 +1,7 @@
+# Copyright (C) 2018 Jonathan Müller <jonathanmueller.dev@gmail.com>
+# This file is subject to the license terms in the LICENSE file
+# found in the top-level directory of this distribution.
+
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
     file(DOWNLOAD
          https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
@@ -33,5 +37,12 @@ target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex)
 target_compile_definitions(foonathan_lex_test PUBLIC
                                 FOONATHAN_LEX_ENABLE_ASSERTIONS=1
                                 FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
+target_compile_options(foonathan_lex_test PUBLIC
+                            # clang/GCC warnings
+                            $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+                                -pedantic-errors -Werror -Wall -Wextra -Wconversion>
+                            # MSVC warnings
+                            $<$<CXX_COMPILER_ID:MSVC>:
+                                /WX /W4>)
 
 add_test(NAME test COMMAND foonathan_lex_test)

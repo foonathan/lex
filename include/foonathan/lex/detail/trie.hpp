@@ -72,7 +72,8 @@ namespace lex
                 auto result = match_result<TokenSpec>::unmatched();
                 bool dummy[]
                     = {(result.is_unmatched()
-                        && (result = Children::try_match(length_so_far, str, end), true))...};
+                        && (result = Children::try_match(length_so_far, str, end), true))...,
+                       true};
                 (void)dummy;
                 return result;
             }
