@@ -2,7 +2,7 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 project(foonathan_lex)
 
 include(external/external.cmake)
@@ -25,8 +25,10 @@ set(header_files
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp)
+
 add_library(foonathan_lex INTERFACE)
 target_sources(foonathan_lex INTERFACE ${detail_header_files} ${header_files})
+target_compile_features(foonathan_lex INTERFACE cxx_std_14)
 target_include_directories(foonathan_lex INTERFACE include/)
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
 

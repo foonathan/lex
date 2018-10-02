@@ -19,3 +19,6 @@ add_executable(foonathan_lex_benchmark
                bm_tokenizer_manual.hpp
                bm_trie.hpp)
 target_link_libraries(foonathan_lex_benchmark PUBLIC foonathan_lex benchmark)
+target_compile_definitions(foonathan_lex_benchmark PUBLIC
+                           FOONATHAN_LEX_ENABLE_ASSERTIONS=0
+                           FOONATHAN_LEX_ENABLE_PRECONDITIONS=0)

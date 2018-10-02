@@ -7,13 +7,12 @@
 
 #include <debug_assert.hpp>
 
-// TODO: enable based on some CMake
-#ifndef FOONATHAN_ENABLE_ASSERTIONS
-#    define FOONATHAN_ENABLE_ASSERTIONS 0
+#ifndef FOONATHAN_LEX_ENABLE_ASSERTIONS
+#    define FOONATHAN_LEX_ENABLE_ASSERTIONS 0
 #endif
 
-#ifndef FOONATHAN_ENABLE_PRECONDITIONS
-#    define FOONATHAN_ENABLE_PRECONDITIONS 0
+#ifndef FOONATHAN_LEX_ENABLE_PRECONDITIONS
+#    define FOONATHAN_LEX_ENABLE_PRECONDITIONS !defined(NDEBUG)
 #endif
 
 namespace foonathan
@@ -22,16 +21,18 @@ namespace lex
 {
     namespace detail
     {
-        struct assert_handler : debug_assert::default_handler,
-                                debug_assert::set_level<FOONATHAN_ENABLE_ASSERTIONS>
+        struct assert_handler
+        : debug_assert::default_handler,
+          debug_assert::set_level<static_cast<unsigned>(FOONATHAN_LEX_ENABLE_ASSERTIONS)>
         {};
 
 #define FOONATHAN_LEX_ASSERT(Expr)                                                                 \
     if (detail::assert_handler::level > 0 && !(Expr))                                              \
     DEBUG_UNREACHABLE(detail::assert_handler{}, "internal assertion error: " #Expr)
 
-        struct precondition_handler : debug_assert::default_handler,
-                                      debug_assert::set_level<FOONATHAN_ENABLE_PRECONDITIONS>
+        struct precondition_handler
+        : debug_assert::default_handler,
+          debug_assert::set_level<static_cast<unsigned>(FOONATHAN_LEX_ENABLE_PRECONDITIONS)>
         {};
 
 #define FOONATHAN_LEX_PRECONDITION(Expr, Str)                                                      \

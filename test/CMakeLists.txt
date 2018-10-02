@@ -30,6 +30,8 @@ add_executable(foonathan_lex_test
                ${tests})
 target_include_directories(foonathan_lex_test SYSTEM PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex)
-set_target_properties(foonathan_lex_test PROPERTIES CXX_STANDARD 14)
+target_compile_definitions(foonathan_lex_test PUBLIC
+                                FOONATHAN_LEX_ENABLE_ASSERTIONS=1
+                                FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
 
 add_test(NAME test COMMAND foonathan_lex_test)

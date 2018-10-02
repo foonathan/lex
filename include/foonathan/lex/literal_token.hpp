@@ -22,7 +22,7 @@ namespace lex
     template <char... Literal>
     struct literal_token
     {
-        static constexpr const char value[] = {Literal..., '\0'};
+        static constexpr const char value[sizeof...(Literal) + 1] = {Literal..., '\0'};
         static_assert(value[sizeof...(Literal) - 1] != '\0', "literal must not be null-terminated");
 
         static constexpr const char* name = value;
