@@ -2,7 +2,7 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#include <foonathan/lex/identifier.hpp>
+#include <foonathan/lex/identifier_token.hpp>
 
 #include "tokenize.hpp"
 #include <catch.hpp>
@@ -19,7 +19,7 @@ struct whitespace : lex::rule_token<whitespace, test_spec>,
     static constexpr const char* name = "<whitespace>";
 };
 
-struct identifier : lex::identifier<identifier, test_spec>
+struct identifier : lex::identifier_token<identifier, test_spec>
 {
     static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
@@ -36,17 +36,17 @@ struct identifier : lex::identifier<identifier, test_spec>
     }
 };
 
-struct keyword_a : lex::keyword<'a'>
+struct keyword_a : lex::keyword_token<'a'>
 {};
 
 struct keyword_ab : FOONATHAN_LEX_KEYWORD("ab")
 {};
 
-struct keyword_c : lex::keyword<'c'>
+struct keyword_c : lex::keyword_token<'c'>
 {};
 } // namespace
 
-TEST_CASE("identifier and keyword")
+TEST_CASE("identifier_token and keyword_token")
 {
     static constexpr const char array[]   = "dd a ab abc c";
     constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);

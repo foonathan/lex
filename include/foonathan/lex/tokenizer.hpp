@@ -5,7 +5,7 @@
 #ifndef FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 
-#include <foonathan/lex/identifier.hpp>
+#include <foonathan/lex/identifier_token.hpp>
 #include <foonathan/lex/literal_token.hpp>
 #include <foonathan/lex/rule_token.hpp>
 #include <foonathan/lex/token.hpp>
@@ -34,8 +34,8 @@ namespace lex
         struct build_trie
         {
             // split the tokens
-            using identifiers = keep_if<TokenSpec, is_identifier>;
-            using keywords    = keep_if<TokenSpec, is_keyword>;
+            using identifiers = keep_if<TokenSpec, is_identifier_token>;
+            using keywords    = keep_if<TokenSpec, is_keyword_token>;
             using rule_tokens = keep_if<TokenSpec, is_non_identifier_rule_token>;
             using literals    = keep_if<TokenSpec, is_non_keyword_literal_token>;
 

@@ -23,7 +23,7 @@ set(tests
     detail/string.cpp
     detail/trie.cpp
     ascii.cpp
-    identifier.cpp
+    identifier_token.cpp
     literal_token.cpp
     rule_token.cpp
     tokenizer.cpp)
