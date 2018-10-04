@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZER_HPP_INCLUDED
 
+#include <foonathan/lex/detail/trie.hpp>
 #include <foonathan/lex/identifier_token.hpp>
 #include <foonathan/lex/literal_token.hpp>
 #include <foonathan/lex/rule_token.hpp>
@@ -16,6 +17,71 @@ namespace lex
 {
     namespace detail
     {
+        //=== literal trie building ===//
+        template <class TokenSpec, class LiteralTokens>
+        struct build_trie_impl;
+
+        template <class TokenSpec>
+        struct build_trie_impl<TokenSpec, type_list<>>
+        {
+            using type = typename trie<TokenSpec>::empty;
+        };
+
+        template <class TokenSpec, typename Head, typename... Tail>
+        struct build_trie_impl<TokenSpec, type_list<Head, Tail...>>
+        {
+            using base = typename build_trie_impl<TokenSpec, type_list<Tail...>>::type;
+            using type = typename trie<TokenSpec>::template insert_literal_str<
+                base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
+        };
+
+        template <class TokenSpec, class LiteralTokens>
+        using literal_trie = typename build_trie_impl<TokenSpec, LiteralTokens>::type;
+
+        //=== keyword and identifier trie ===//
+        template <class TokenSpec, class Identifiers, class Keywords>
+        struct keyword_identifier_matcher
+        {
+            static_assert(Identifiers::size <= 1, "at most one identifier_token token is allowed");
+        };
+
+        template <class TokenSpec, class Identifier, class Keywords>
+        struct keyword_identifier_matcher<TokenSpec, type_list<Identifier>, Keywords>
+        {
+            static constexpr match_result<TokenSpec> try_match(const char* str,
+                                                               const char* end) noexcept
+            {
+                auto identifier = Identifier::try_match(str, end);
+                if (!identifier.is_success())
+                    // not an identifier, so can't be a keyword
+                    return identifier;
+
+                // try to match a keyword in the identifier
+                auto identifier_begin = str;
+                auto identifier_end   = str + identifier.bump;
+                auto keyword = literal_trie<TokenSpec, Keywords>::try_match(identifier_begin,
+                                                                            identifier_end);
+                if (keyword.is_matched() && keyword.bump == identifier.bump)
+                    // we've matched a keyword and it isn't a prefix but the whole string
+                    return keyword;
+                else
+                    // didn't match keyword or it was only a prefix
+                    return identifier;
+            }
+        };
+
+        template <class TokenSpec, class Keywords>
+        struct keyword_identifier_matcher<TokenSpec, type_list<>, Keywords>
+        {
+            static_assert(Keywords::size == 0, "keyword tokens require an identifier_token token");
+
+            static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
+            {
+                // no identifier rule, so will never match
+                return match_result<TokenSpec>::unmatched();
+            }
+        };
+
         //=== try_match ===//
         template <class TokenSpec, class Root, class Rules>
         struct insert_rules

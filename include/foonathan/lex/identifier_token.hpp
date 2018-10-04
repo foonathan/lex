@@ -59,52 +59,6 @@ namespace lex
     : std::integral_constant<bool,
                              is_literal_token<Token>::value && !is_keyword_token<Token>::value>
     {};
-
-    namespace detail
-    {
-        template <class TokenSpec, class Identifiers, class Keywords>
-        struct keyword_identifier_matcher
-        {
-            static_assert(Identifiers::size <= 1, "at most one identifier_token token is allowed");
-        };
-
-        template <class TokenSpec, class Identifier, class Keywords>
-        struct keyword_identifier_matcher<TokenSpec, type_list<Identifier>, Keywords>
-        {
-            static constexpr match_result<TokenSpec> try_match(const char* str,
-                                                               const char* end) noexcept
-            {
-                auto identifier = Identifier::try_match(str, end);
-                if (!identifier.is_success())
-                    // not an identifier, so can't be a keyword
-                    return identifier;
-
-                // try to match a keyword in the identifier
-                auto identifier_begin = str;
-                auto identifier_end   = str + identifier.bump;
-                auto keyword = literal_trie<TokenSpec, Keywords>::try_match(identifier_begin,
-                                                                            identifier_end);
-                if (keyword.is_matched() && keyword.bump == identifier.bump)
-                    // we've matched a keyword and it isn't a prefix but the whole string
-                    return keyword;
-                else
-                    // didn't match keyword or it was only a prefix
-                    return identifier;
-            }
-        };
-
-        template <class TokenSpec, class Keywords>
-        struct keyword_identifier_matcher<TokenSpec, type_list<>, Keywords>
-        {
-            static_assert(Keywords::size == 0, "keyword tokens require an identifier_token token");
-
-            static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
-            {
-                // no identifier rule, so will never match
-                return match_result<TokenSpec>::unmatched();
-            }
-        };
-    } // namespace detail
 } // namespace lex
 } // namespace foonathan
 

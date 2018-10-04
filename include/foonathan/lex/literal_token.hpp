@@ -6,9 +6,7 @@
 #define FOONATHAN_LEX_LITERAL_TOKEN_HPP_INCLUDED
 
 #include <foonathan/lex/detail/string.hpp>
-#include <foonathan/lex/detail/trie.hpp>
-#include <foonathan/lex/match_result.hpp>
-#include <foonathan/lex/token_kind.hpp>
+#include <foonathan/lex/token_spec.hpp>
 
 namespace foonathan
 {
@@ -59,30 +57,6 @@ namespace lex
     template <class Token>
     struct is_literal_token : detail::is_literal_token_impl<literal_token, Token>::value
     {};
-
-    namespace detail
-    {
-        //=== literal trie building ===//
-        template <class TokenSpec, class LiteralTokens>
-        struct build_trie_impl;
-
-        template <class TokenSpec>
-        struct build_trie_impl<TokenSpec, type_list<>>
-        {
-            using type = typename trie<TokenSpec>::empty;
-        };
-
-        template <class TokenSpec, typename Head, typename... Tail>
-        struct build_trie_impl<TokenSpec, type_list<Head, Tail...>>
-        {
-            using base = typename build_trie_impl<TokenSpec, type_list<Tail...>>::type;
-            using type = typename trie<TokenSpec>::template insert_literal_str<
-                base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
-        };
-
-        template <class TokenSpec, class LiteralTokens>
-        using literal_trie = typename build_trie_impl<TokenSpec, LiteralTokens>::type;
-    } // namespace detail
 } // namespace lex
 } // namespace foonathan
 

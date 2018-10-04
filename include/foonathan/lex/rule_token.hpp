@@ -6,7 +6,7 @@
 #define FOONATHAN_LEX_RULE_TOKEN_HPP_INCLUDED
 
 #include <foonathan/lex/match_result.hpp>
-#include <foonathan/lex/token_kind.hpp>
+#include <foonathan/lex/token_spec.hpp>
 
 namespace foonathan
 {

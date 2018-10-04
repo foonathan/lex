@@ -5,27 +5,13 @@
 #ifndef FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 
-#include <cstdint>
-
 #include <foonathan/lex/detail/select_integer.hpp>
-#include <foonathan/lex/detail/type_list.hpp>
+#include <foonathan/lex/token_spec.hpp>
 
 namespace foonathan
 {
 namespace lex
 {
-    template <class... Tokens>
-    using token_spec = detail::type_list<Tokens...>;
-
-    /// Tag type to mark an error token.
-    struct error_token
-    {};
-
-    /// Tag type to mark the EOF token.
-    /// It is generated at the very end.
-    struct eof_token
-    {};
-
     namespace detail
     {
         // id 0: invalid
