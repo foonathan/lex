@@ -15,7 +15,7 @@ namespace lex
     /// A token that has no associated parsing rule.
     ///
     /// It can only be created by some other [lex::rule_token]().
-    struct null_token
+    struct null_token : detail::base_token
     {};
 
     /// Whether or not the given token is a null token.
@@ -39,7 +39,7 @@ namespace lex
     /// own. \notes The rules are tried in an arbitrary order so code should not depend on any
     /// particular ordering.
     template <class Derived, class TokenSpec>
-    struct rule_token
+    struct rule_token : detail::base_token
     {
         using spec         = TokenSpec;
         using token_kind   = lex::token_kind<TokenSpec>;

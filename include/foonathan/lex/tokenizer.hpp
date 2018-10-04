@@ -135,6 +135,8 @@ namespace lex
     class tokenizer
     {
         using trie = detail::token_spec_trie<TokenSpec>;
+        static_assert(detail::all_of<TokenSpec, is_token>::value,
+                      "invalid types in token specifications");
 
     public:
         //=== constructors ===//

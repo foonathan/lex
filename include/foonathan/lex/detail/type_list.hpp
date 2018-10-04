@@ -119,6 +119,54 @@ namespace lex
         template <class List, template <typename> class Predicate>
         using remove_if = typename filter_impl<List, Predicate>::negative;
 
+        //=== all_of/none_of/any_of ===//
+        template <bool... Bools>
+        struct bool_list
+        {};
+
+        template <bool... Bools>
+        using all_true
+            = std::is_same<bool_list<Bools..., true>, bool_list<true, Bools...>>; // neat trick
+        template <bool... Bools>
+        using none_true = all_true<(!Bools)...>; // none are true if all are false
+        template <bool... Bools>
+        using any_true
+            = std::integral_constant<bool, !none_true<Bools...>::value>; // if not none_true, then
+                                                                         // something must be true
+
+        template <class List, template <typename T> class Pred>
+        struct all_of_impl;
+        template <typename... Types, template <typename T> class Pred>
+        struct all_of_impl<type_list<Types...>, Pred>
+        {
+            using type = all_true<Pred<Types>::value...>;
+        };
+
+        template <class List, template <typename T> class Pred>
+        struct none_of_impl;
+        template <typename... Types, template <typename T> class Pred>
+        struct none_of_impl<type_list<Types...>, Pred>
+        {
+            using type = none_true<Pred<Types>::value...>;
+        };
+
+        template <class List, template <typename T> class Pred>
+        struct any_of_impl;
+        template <typename... Types, template <typename T> class Pred>
+        struct any_of_impl<type_list<Types...>, Pred>
+        {
+            using type = any_true<Pred<Types>::value...>;
+        };
+
+        template <class List, template <typename T> class Pred>
+        using all_of = typename all_of_impl<List, Pred>::type;
+
+        template <class List, template <typename T> class Pred>
+        using none_of = typename none_of_impl<List, Pred>::type;
+
+        template <class List, template <typename T> class Pred>
+        using any_of = typename any_of_impl<List, Pred>::type;
+
         //=== for_each ===//
         template <class List, typename Func>
         struct for_each_impl;

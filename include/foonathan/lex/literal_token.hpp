@@ -18,7 +18,7 @@ namespace lex
     /// If there are multiple literal tokens with a common prefix the longest matching will be
     /// selected.
     template <char... Literal>
-    struct literal_token
+    struct literal_token : detail::base_token
     {
         static constexpr const char value[sizeof...(Literal) + 1] = {Literal..., '\0'};
         static_assert(value[sizeof...(Literal) - 1] != '\0', "literal must not be null-terminated");

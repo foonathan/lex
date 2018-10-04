@@ -12,16 +12,30 @@ namespace foonathan
 namespace lex
 {
     /// The specification of the tokens.
+    ///
+    /// Every type must be one of the token classes and describes how one token should be parsed.
+    /// The [lex::tokenizer]() will implement that parsing.
     template <class... Tokens>
     using token_spec = detail::type_list<Tokens...>;
 
+    namespace detail
+    {
+        struct base_token
+        {};
+    } // namespace detail
+
+    /// Whether or not the given type is a token.
+    template <typename T>
+    struct is_token : std::is_base_of<detail::base_token, T>
+    {};
+
     /// Tag type to mark an error token.
-    struct error_token
+    struct error_token : detail::base_token
     {};
 
     /// Tag type to mark the EOF token.
     /// It is generated at the very end.
-    struct eof_token
+    struct eof_token : detail::base_token
     {};
 } // namespace lex
 } // namespace foonathan
