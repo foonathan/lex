@@ -42,10 +42,10 @@ TEST_CASE("tokenizer")
     verify<token_bc>(tokenizer, array + 1, false);
 
     tokenizer.bump();
-    verify<lex::error>(tokenizer, array + 3, false);
+    verify<lex::error_token>(tokenizer, array + 3, false);
 
     auto token = tokenizer.get();
-    REQUIRE(token.is(lex::error{}));
+    REQUIRE(token.is(lex::error_token{}));
     REQUIRE(token.spelling().data() == array + 3);
     verify<token_a>(tokenizer, array + 4, false);
 
@@ -56,8 +56,8 @@ TEST_CASE("tokenizer")
     verify<token_bc>(tokenizer, array + 6, false);
 
     tokenizer.bump();
-    verify<lex::eof>(tokenizer, array + 8, true);
+    verify<lex::eof_token>(tokenizer, array + 8, true);
 
     tokenizer.bump();
-    verify<lex::eof>(tokenizer, array + 8, true);
+    verify<lex::eof_token>(tokenizer, array + 8, true);
 }

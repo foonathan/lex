@@ -101,7 +101,7 @@ namespace lex
         /// If this is `true`, `bump()` will have no effect anymore and `peek()` returns EOF.
         constexpr bool is_done() const noexcept
         {
-            FOONATHAN_LEX_ASSERT(last_result_.bump != 0 || peek().is(eof{}));
+            FOONATHAN_LEX_ASSERT(last_result_.bump != 0 || peek().is(eof_token{}));
             return last_result_.bump == 0;
         }
 

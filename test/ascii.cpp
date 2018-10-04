@@ -104,7 +104,7 @@ TEST_CASE("single_ascii_token and ascii_token")
     REQUIRE(result[3].spelling() == "2");
     REQUIRE(result[3].offset(tokenizer) == 8);
 
-    REQUIRE(result[4].is(lex::error{}));
+    REQUIRE(result[4].is(lex::error_token{}));
     REQUIRE(result[4].spelling() == "a");
     REQUIRE(result[4].offset(tokenizer) == 9);
 

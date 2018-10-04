@@ -72,7 +72,7 @@ TEST_CASE("rule_token")
 
         REQUIRE(result.size() == 1);
 
-        REQUIRE(result[0].is(lex::error{}));
+        REQUIRE(result[0].is(lex::error_token{}));
         REQUIRE(result[0].spelling() == "aaa");
         REQUIRE(result[0].offset(tokenizer) == 0);
     }
@@ -104,7 +104,7 @@ TEST_CASE("rule_token")
 
         REQUIRE(result.size() == 2);
 
-        REQUIRE(result[0].is(lex::error{}));
+        REQUIRE(result[0].is(lex::error_token{}));
         REQUIRE(result[0].spelling() == "b");
         REQUIRE(result[0].offset(tokenizer) == 0);
 
@@ -128,11 +128,11 @@ TEST_CASE("rule_token")
         REQUIRE(result[1].spelling() == "bc");
         REQUIRE(result[1].offset(tokenizer) == 2);
 
-        REQUIRE(result[2].is(lex::error{}));
+        REQUIRE(result[2].is(lex::error_token{}));
         REQUIRE(result[2].spelling() == "a");
         REQUIRE(result[2].offset(tokenizer) == 4);
 
-        REQUIRE(result[3].is(lex::error{}));
+        REQUIRE(result[3].is(lex::error_token{}));
         REQUIRE(result[3].spelling() == "b");
         REQUIRE(result[3].offset(tokenizer) == 5);
 

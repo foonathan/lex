@@ -39,7 +39,7 @@ namespace lex
         static constexpr auto success(token_kind<TokenSpec> kind, std::size_t bump) noexcept
         {
             FOONATHAN_LEX_PRECONDITION(bump > 0, "bump must not be 0");
-            FOONATHAN_LEX_PRECONDITION(!kind.is(lex::error{}) && !kind.is(lex::eof{}),
+            FOONATHAN_LEX_PRECONDITION(!kind.is(error_token{}) && !kind.is(eof_token{}),
                                        "use eof() or error() to match a special token");
             return match_result<TokenSpec>(kind, bump);
         }
@@ -47,7 +47,7 @@ namespace lex
         /// \effects Creates a successful result that reached EOF.
         static constexpr auto eof() noexcept
         {
-            return match_result<TokenSpec>(lex::eof{}, 0);
+            return match_result<TokenSpec>(eof_token{}, 0);
         }
 
         /// \returns Whether or not nothing was matched at all.
@@ -71,7 +71,7 @@ namespace lex
         /// \returns Whether or not the result is EOF.
         constexpr bool is_eof() const noexcept
         {
-            return kind.is(lex::eof{});
+            return kind.is(eof_token{});
         }
 
         /// \returns Whether or not anything was matched.
