@@ -50,9 +50,13 @@ struct minus : lex::literal_token<'-'>
 struct tilde : lex::literal_token<'~'>
 {};
 
-struct whitespace : lex::rule_token<whitespace, token_spec>,
-                    lex::loop_ascii_mixin<whitespace, lex::ascii::is_space>
-{};
+struct whitespace : lex::rule_token<whitespace, token_spec>
+{
+    static constexpr auto rule() noexcept
+    {
+        return lex::token_rule::star(lex::ascii::is_space);
+    }
+};
 } // namespace tokenizer_ns
 
 void tokenizer(const char* str, const char* end, void (*f)(int, foonathan::lex::token_spelling))

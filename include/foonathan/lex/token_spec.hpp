@@ -13,8 +13,8 @@ namespace lex
 {
     /// The specification of the tokens.
     ///
-    /// Every type must be one of the token classes and describes how one token should be parsed.
-    /// The [lex::tokenizer]() will implement that parsing.
+    /// Every type must be derived from one of the token classes and describes how one token should
+    /// be parsed. The [lex::tokenizer]() will implement that parsing.
     template <class... Tokens>
     using token_spec = detail::type_list<Tokens...>;
 

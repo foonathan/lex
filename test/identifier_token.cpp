@@ -13,10 +13,14 @@ namespace
 using test_spec = lex::token_spec<struct whitespace, struct identifier, struct keyword_a,
                                   struct keyword_ab, struct keyword_c>;
 
-struct whitespace : lex::rule_token<whitespace, test_spec>,
-                    lex::loop_ascii_mixin<whitespace, lex::ascii::is_blank>
+struct whitespace : lex::rule_token<whitespace, test_spec>
 {
     static constexpr const char* name = "<whitespace>";
+
+    static constexpr auto rule() noexcept
+    {
+        return lex::token_rule::star(lex::ascii::is_blank);
+    }
 };
 
 struct identifier : lex::identifier_token<identifier, test_spec>

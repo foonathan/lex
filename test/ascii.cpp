@@ -67,17 +67,29 @@ namespace
 {
 using test_spec = lex::token_spec<struct whitespace, struct digit, struct alpha>;
 
-struct whitespace : lex::rule_token<whitespace, test_spec>,
-                    lex::loop_ascii_mixin<whitespace, lex::ascii::is_space>
-{};
+struct whitespace : lex::rule_token<whitespace, test_spec>
+{
+    static constexpr auto rule() noexcept
+    {
+        return lex::token_rule::star(lex::ascii::is_space);
+    }
+};
 
-struct digit : lex::rule_token<digit, test_spec>,
-               lex::single_ascii_mixin<digit, lex::ascii::is_digit>
-{};
+struct digit : lex::rule_token<digit, test_spec>
+{
+    static constexpr auto rule() noexcept
+    {
+        return lex::ascii::is_digit;
+    }
+};
 
-struct alpha : lex::rule_token<alpha, test_spec>,
-               lex::head_tail_ascii_mixin<alpha, lex::ascii::is_upper, lex::ascii::is_lower>
-{};
+struct alpha : lex::rule_token<alpha, test_spec>
+{
+    static constexpr auto rule() noexcept
+    {
+        return lex::ascii::is_upper + lex::token_rule::star(lex::ascii::is_lower);
+    }
+};
 } // namespace
 
 TEST_CASE("single_ascii_token and ascii_token")
