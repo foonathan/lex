@@ -27,8 +27,10 @@ namespace lex
 } // namespace lex
 } // namespace foonathan
 
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#    ifdef __clang__
+#        pragma GCC diagnostic push
+#        pragma GCC diagnostic ignored "-Wgnu-string-literal-operator-template"
+#    endif
 
 template <typename Char, Char... Chars>
 constexpr foonathan::lex::detail::string_literal<Chars...> operator""_foonathan_lex_string_udl()
@@ -40,7 +42,9 @@ constexpr foonathan::lex::detail::string_literal<Chars...> operator""_foonathan_
         foonathan::lex::detail::convert_literal_to<String,                                         \
                                                    decltype(Chars##_foonathan_lex_string_udl)>
 
-#    pragma GCC diagnostic pop
+#    ifdef __clang__
+#        pragma GCC diagnostic pop
+#    endif
 
 #else
 namespace foonathan

@@ -75,6 +75,7 @@ namespace lex
                         && (result = Children::try_match(length_so_far, str, end), true))...,
                        true};
                 (void)dummy;
+                (void)length_so_far;
                 return result;
             }
 
