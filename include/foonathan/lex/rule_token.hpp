@@ -517,6 +517,23 @@ namespace lex
             return detail::neg_lookahead<detail::rule_type<R>>{detail::make_rule(r)};
         }
 
+        namespace detail
+        {
+            template <class R, std::size_t N>
+            struct lookback : rule_base
+            {
+                R r;
+
+                constexpr lookback(R r) noexcept : r(r) {}
+
+                constexpr bool try_match(const char* const& cur, const char* end) const noexcept
+                {
+                    auto dummy = cur - N;
+                    return r.try_match(dummy, end);
+                }
+            };
+        } // namespace detail
+
         //=== convenience ===//
         namespace detail
         {
@@ -570,7 +587,7 @@ namespace lex
         /// Matches `until` until `end` is matched, then matches `end`.
         ///
         /// Equivalent to `star(!end + until) + end`.
-        template <class End, class Until = detail::any<0>>
+        template <class End, class Until = detail::any<1>>
         constexpr auto until(End end, Until until = any) noexcept
         {
             return star(!r(end) + until) + end;
@@ -580,7 +597,7 @@ namespace lex
         /// `end` must still follow aftwards, however.
         ///
         /// Equivalent to `star(!end + until) + lookahead(end)`.
-        template <class End, class Until = detail::any<0>>
+        template <class End, class Until = detail::any<1>>
         constexpr auto until_excluding(End end, Until until = any) noexcept
         {
             return star(!r(end) + until) + lookahead(end);
@@ -610,9 +627,19 @@ namespace lex
         ///
         /// Equivalent to `star(left) + rule + star(right)`.
         template <class PaddingLeft, class Rule, class PaddingRight>
-        constexpr auto padded(PaddingLeft left, Rule rule, PaddingRight right) noexcept
+        constexpr auto opt_padded(PaddingLeft left, Rule rule, PaddingRight right) noexcept
         {
             return star(left) + rule + star(right);
+        }
+
+        /// Matches `rule` with padding `left` and `right`,
+        /// where there must be some padding on at least one side.
+        ///
+        /// Equivalent to `(plus(left) + rule + star(right)) / `(rule + plus(right))`.
+        template <class PaddingLeft, class Rule, class PaddingRight>
+        constexpr auto padded(PaddingLeft left, Rule rule, PaddingRight right) noexcept
+        {
+            return (plus(left) + rule + star(right)) / (rule + plus(right));
         }
 
         namespace detail
@@ -690,21 +717,60 @@ namespace lex
         }
     } // namespace token_rule
 
-    /// Matches a rule.
-    /// \returns If the [lex::token_rule]() `rule` matches `[str, end)` and consumes a non-zero
-    /// amount of characters, returns a [lex::match_result]() success with the given `kind`.
-    /// Otherwise, returns an unmatched result.
-    template <class TokenSpec, class Rule>
-    constexpr match_result<TokenSpec> match_rule(token_kind<TokenSpec> kind, Rule rule,
-                                                 const char* str, const char* end) noexcept
+    /// Matches a [lex::token_rule]().
+    template <class TokenSpec>
+    class rule_matcher
     {
-        auto begin   = str;
-        auto matched = token_rule::r(rule).try_match(str, end);
-        if (matched && begin != str)
-            return match_result<TokenSpec>::success(kind, static_cast<std::size_t>(str - begin));
-        else
-            return match_result<TokenSpec>::unmatched();
-    }
+    public:
+        /// \effects Creates it passing it the string to be matched.
+        explicit constexpr rule_matcher(const char* str, const char* end) noexcept
+        : begin_(str), cur_(str), end_(end)
+        {}
+
+        /// \returns Whether or not the rule would match at the current position.
+        template <class Rule>
+        constexpr bool peek(Rule rule) const noexcept
+        {
+            auto copy = cur_;
+            return token_rule::r(rule).try_match(copy, end_);
+        }
+
+        /// \effects Consumes the characters consumed by matching the rule at the current position.
+        /// \returns Whether the rule matched at the current position.
+        template <class Rule>
+        constexpr bool match(Rule rule) noexcept
+        {
+            return token_rule::r(rule).try_match(cur_, end_);
+        }
+
+        /// \effects Matches the rule at the current position.
+        /// \returns If the rule matched and in total a non-zero amount of characters were consumed,
+        /// returns a success [lex::match_result]() for the given kind.
+        /// If the rule didn't match and a non-zero amount of characters were consumed,
+        /// returns an error result.
+        /// Otherwise, if the rule didn't match but no characters were consumed,
+        /// returns an unmatched result.
+        template <class Rule>
+        constexpr match_result<TokenSpec> finish(token_kind<TokenSpec> kind, Rule rule) noexcept
+        {
+            if (match(rule) && get_bump() > 0)
+                return match_result<TokenSpec>::success(kind, get_bump());
+            else if (get_bump() > 0)
+                return match_result<TokenSpec>::error(get_bump());
+            else
+                return match_result<TokenSpec>::unmatched();
+        }
+
+    private:
+        constexpr std::size_t get_bump() const noexcept
+        {
+            return static_cast<std::size_t>(cur_ - begin_);
+        }
+
+        const char* begin_;
+        const char* cur_;
+        const char* end_;
+    };
 
     /// A token that follows a PEG parsing rule.
     ///
@@ -718,7 +784,7 @@ namespace lex
                                                            const char* end) noexcept
         {
             constexpr auto rule = Derived::rule();
-            return match_rule(token_kind<TokenSpec>(Derived{}), rule, str, end);
+            return rule_matcher<TokenSpec>(str, end).finish(Derived{}, rule);
         }
     };
 } // namespace lex

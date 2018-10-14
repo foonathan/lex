@@ -404,11 +404,21 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("a ", 2));
             REQUIRE(verify<PEG>("b", 0));
         }
+        SECTION("opt_padded")
+        {
+            FOONATHAN_LEX_PEG(opt_padded('l', 'a', 'r'));
+
+            REQUIRE(verify<PEG>("a", 1));
+            REQUIRE(verify<PEG>("lla", 3));
+            REQUIRE(verify<PEG>("arr", 3));
+            REQUIRE(verify<PEG>("larr", 4));
+            REQUIRE(verify<PEG>("lrr", 0));
+        }
         SECTION("padded")
         {
             FOONATHAN_LEX_PEG(padded('l', 'a', 'r'));
 
-            REQUIRE(verify<PEG>("a", 1));
+            REQUIRE(verify<PEG>("a", 0));
             REQUIRE(verify<PEG>("lla", 3));
             REQUIRE(verify<PEG>("arr", 3));
             REQUIRE(verify<PEG>("larr", 4));

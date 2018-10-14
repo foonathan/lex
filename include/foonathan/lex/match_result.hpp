@@ -75,13 +75,7 @@ namespace lex
         }
 
         /// \returns Whether or not anything was matched.
-        /// \group is_matched
         constexpr bool is_matched() const noexcept
-        {
-            return !is_unmatched();
-        }
-        /// \group is_matched
-        explicit constexpr operator bool() const noexcept
         {
             return !is_unmatched();
         }
