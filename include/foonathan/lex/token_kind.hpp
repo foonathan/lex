@@ -47,9 +47,9 @@ namespace lex
     {
     public:
         /// \effects Creates it from the integral id.
-        static constexpr token_kind from_id(detail::id_type<TokenSpec> id) noexcept
+        static constexpr token_kind from_id(std::size_t id) noexcept
         {
-            return token_kind(0, id);
+            return token_kind(0, static_cast<detail::id_type<TokenSpec>>(id));
         }
 
         /// \effects Creates an error token kind.

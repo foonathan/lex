@@ -690,6 +690,22 @@ namespace lex
         }
     } // namespace token_rule
 
+    /// Matches a rule.
+    /// \returns If the [lex::token_rule]() `rule` matches `[str, end)` and consumes a non-zero
+    /// amount of characters, returns a [lex::match_result]() success with the given `kind`.
+    /// Otherwise, returns an unmatched result.
+    template <class TokenSpec, class Rule>
+    constexpr match_result<TokenSpec> match_rule(token_kind<TokenSpec> kind, Rule rule,
+                                                 const char* str, const char* end) noexcept
+    {
+        auto begin   = str;
+        auto matched = token_rule::r(rule).try_match(str, end);
+        if (matched && begin != str)
+            return match_result<TokenSpec>::success(kind, static_cast<std::size_t>(str - begin));
+        else
+            return match_result<TokenSpec>::unmatched();
+    }
+
     /// A token that follows a PEG parsing rule.
     ///
     /// It must provide a function `static constexpr auto rule()` which returns a
@@ -701,14 +717,8 @@ namespace lex
         static constexpr match_result<TokenSpec> try_match(const char* str,
                                                            const char* end) noexcept
         {
-            constexpr auto rule = token_rule::r(Derived::rule());
-
-            auto begin   = str;
-            auto matched = rule.try_match(str, end);
-            if (matched && str != begin)
-                return basic_rule_token<Derived, TokenSpec>::success(str - begin);
-            else
-                return basic_rule_token<Derived, TokenSpec>::unmatched();
+            constexpr auto rule = Derived::rule();
+            return match_rule(token_kind<TokenSpec>(Derived{}), rule, str, end);
         }
     };
 } // namespace lex
