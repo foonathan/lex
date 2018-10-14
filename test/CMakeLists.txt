@@ -39,7 +39,6 @@ target_compile_options(foonathan_lex_test_base INTERFACE
 
 # the unit tests
 set(tests
-    detail/constexpr_vector.cpp
     detail/string.cpp
     detail/trie.cpp
     ascii.cpp

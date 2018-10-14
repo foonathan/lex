@@ -5,15 +5,56 @@
 #ifndef FOONATHAN_LEX_TOKENIZE_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZE_HPP_INCLUDED
 
-#include <foonathan/lex/detail/constexpr_vector.hpp>
+#include <constexpr_vector.hpp>
 #include <foonathan/lex/tokenizer.hpp>
 
 namespace
 {
 namespace lex = foonathan::lex;
 
+// just a minimal interface to provide what's needed
+template <typename T, std::size_t MaxCapacity>
+class constexpr_vector
+{
+    static_assert(std::is_default_constructible<T>::value, "type must be default constructible");
+
+public:
+    constexpr constexpr_vector() : array_{}, size_(0u) {}
+
+    //=== access ===//
+    constexpr bool empty() const noexcept
+    {
+        return size_ != 0;
+    }
+
+    constexpr std::size_t size() const noexcept
+    {
+        return size_;
+    }
+
+    constexpr T& operator[](std::size_t i) noexcept
+    {
+        return array_[i];
+    }
+    constexpr const T& operator[](std::size_t i) const noexcept
+    {
+        return array_[i];
+    }
+
+    //=== modifiers ===//
+    constexpr void push_back(T element) noexcept
+    {
+        array_[size_] = element;
+        ++size_;
+    }
+
+private:
+    T           array_[MaxCapacity];
+    std::size_t size_;
+};
+
 template <class Spec>
-using vector = lex::detail::constexpr_vector<lex::token<Spec>, 32>;
+using vector = constexpr_vector<lex::token<Spec>, 32>;
 
 template <class Spec>
 constexpr vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)
