@@ -150,16 +150,16 @@ namespace lex
 
                 static constexpr auto try_match(const char* str, const char* end) noexcept
                 {
-                    // match all literals
-                    auto child_result = try_match_children(ChildNodes{}, 0, str, end);
-                    if (child_result.is_matched())
-                        return child_result;
-
-                    // match all rules
+                    // match all rules first
                     auto rule_result
                         = try_match_children(type_list<rule_wrapper<Rules>...>{}, 0, str, end);
                     if (rule_result.is_matched())
                         return rule_result;
+
+                    // then match all literals
+                    auto child_result = try_match_children(ChildNodes{}, 0, str, end);
+                    if (child_result.is_matched())
+                        return child_result;
 
                     // nothing matched, error
                     return match_result<TokenSpec>::error(1);

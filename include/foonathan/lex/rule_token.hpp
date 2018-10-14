@@ -40,6 +40,7 @@ namespace lex
     ///
     /// \notes The rules are tried in an arbitrary order so code should not depend on any
     /// particular ordering.
+    /// However, the rules will be tried before any literal tokens.
     template <class Derived, class TokenSpec>
     struct basic_rule_token : detail::base_token
     {
