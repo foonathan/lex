@@ -68,3 +68,7 @@ if(${FOONATHAN_LEX_BUILD_TEST} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURC
     add_subdirectory(benchmark)
 endif()
 
+option(FOONATHAN_LEX_BUILD_EXAMPLE "build examples of foonathan/lex" OFF)
+if(${FOONATHAN_LEX_BUILD_EXAMPLE} OR (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
+    add_subdirectory(example)
+endif()

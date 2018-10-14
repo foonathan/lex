@@ -2,6 +2,7 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
+# get Catch
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
     file(DOWNLOAD
          https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
@@ -18,6 +19,25 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
     endif()
 endif()
 
+# define dummy target with all the options
+add_library(foonathan_lex_test_base INTERFACE)
+target_sources(foonathan_lex_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
+target_include_directories(foonathan_lex_test_base SYSTEM INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(foonathan_lex_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(foonathan_lex_test_base INTERFACE foonathan_lex)
+target_compile_definitions(foonathan_lex_test_base INTERFACE
+                               FOONATHAN_LEX_TEST
+                               FOONATHAN_LEX_ENABLE_ASSERTIONS=1
+                               FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
+target_compile_options(foonathan_lex_test_base INTERFACE
+                           # clang/GCC warnings
+                           $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
+                           -pedantic-errors -Werror -Wall -Wextra -Wconversion>
+                           # MSVC warnings
+                           $<$<CXX_COMPILER_ID:MSVC>:
+                           /WX /W4>)
+
+# the unit tests
 set(tests
     detail/constexpr_vector.cpp
     detail/string.cpp
@@ -28,21 +48,11 @@ set(tests
     rule_token.cpp
     tokenizer.cpp)
 
-add_executable(foonathan_lex_test
-               test.cpp
-               tokenize.hpp
-               ${tests})
-target_include_directories(foonathan_lex_test SYSTEM PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex)
-target_compile_definitions(foonathan_lex_test PUBLIC
-                                FOONATHAN_LEX_ENABLE_ASSERTIONS=1
-                                FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
-target_compile_options(foonathan_lex_test PUBLIC
-                            # clang/GCC warnings
-                            $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
-                                -pedantic-errors -Werror -Wall -Wextra -Wconversion>
-                            # MSVC warnings
-                            $<$<CXX_COMPILER_ID:MSVC>:
-                                /WX /W4>)
-
+add_executable(foonathan_lex_test tokenize.hpp ${tests})
+target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex_test_base)
 add_test(NAME test COMMAND foonathan_lex_test)
+
+# test case to ensure the ctokenizer works
+add_executable(foonathan_lex_ctokenizer_test ../example/ctokenizer.cpp)
+target_link_libraries(foonathan_lex_ctokenizer_test PUBLIC foonathan_lex_test_base)
+add_test(NAME ctokenizer COMMAND foonathan_lex_ctokenizer_test)

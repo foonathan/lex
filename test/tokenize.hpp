@@ -13,7 +13,7 @@ namespace
 namespace lex = foonathan::lex;
 
 template <class Spec>
-using vector = lex::detail::constexpr_vector<lex::token<Spec>, 16>;
+using vector = lex::detail::constexpr_vector<lex::token<Spec>, 32>;
 
 template <class Spec>
 constexpr vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)

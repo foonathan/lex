@@ -44,6 +44,13 @@ namespace lex
             return kind_.is(token);
         }
 
+        /// \returns `kind().is_category<Category>()`.
+        template <template <typename> class Category>
+        constexpr bool is_category() const noexcept
+        {
+            return kind_.template is_category<Category>();
+        }
+
         /// \returns `kind().name()`.
         constexpr const char* name() const noexcept
         {

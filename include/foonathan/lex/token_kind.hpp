@@ -81,6 +81,23 @@ namespace lex
             return id_ == detail::get_id<TokenSpec>(token);
         }
 
+        template <template <typename> class Category>
+        constexpr bool is_category() const noexcept
+        {
+            auto result = false;
+            detail::for_each(TokenSpec{}, [&](auto tag) {
+                using type = typename decltype(tag)::type;
+                if (!is(type{}))
+                    return true;
+                else
+                {
+                    result = Category<type>::value;
+                    return false;
+                }
+            });
+            return result;
+        }
+
         /// \returns The underlying integer value of the token.
         constexpr auto get() const noexcept
         {
@@ -121,27 +138,6 @@ namespace lex
             return lhs.id_ == rhs.id_;
         }
         friend constexpr bool operator!=(token_kind lhs, token_kind rhs) noexcept
-        {
-            return !(lhs == rhs);
-        }
-
-        template <class Token>
-        friend constexpr bool operator==(token_kind lhs, Token rhs) noexcept
-        {
-            return lhs.is(rhs);
-        }
-        template <class Token>
-        friend constexpr bool operator==(Token lhs, token_kind rhs) noexcept
-        {
-            return rhs == lhs;
-        }
-        template <class Token>
-        friend constexpr bool operator!=(token_kind lhs, Token rhs) noexcept
-        {
-            return !(lhs == rhs);
-        }
-        template <class Token>
-        friend constexpr bool operator!=(Token lhs, token_kind rhs) noexcept
         {
             return !(lhs == rhs);
         }
