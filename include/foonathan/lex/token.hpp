@@ -72,11 +72,11 @@ namespace lex
     private:
         explicit constexpr token(token_kind<TokenSpec> kind, const char* ptr,
                                  std::size_t size) noexcept
-        : ptr_(ptr), size_(static_cast<std::uint32_t>(size)), kind_(kind)
+        : ptr_(ptr), size_(size), kind_(kind)
         {}
 
         const char*           ptr_;
-        std::uint32_t         size_;
+        std::size_t           size_;
         token_kind<TokenSpec> kind_;
 
         friend tokenizer<TokenSpec>;
