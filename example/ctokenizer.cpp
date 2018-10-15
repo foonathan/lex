@@ -59,6 +59,13 @@ struct whitespace : lex::rule_token<whitespace, spec>
 // Likewise, we can define a comment.
 struct comment : lex::rule_token<comment, spec>
 {
+    // As comments start with `/` they conflict with the `/` literal.
+    // So we have to tell the tokenizer that it has to check for a comment, after matching `/`.
+    static constexpr bool is_conflicting_literal(token_kind kind) noexcept
+    {
+        return kind == token_kind::of<div>();
+    }
+
     static constexpr auto rule() noexcept
     {
         namespace tr = lex::token_rule;
@@ -119,6 +126,12 @@ struct int_literal : lex::null_token
 // provide the matching implementation for us.
 struct float_literal : lex::basic_rule_token<float_literal, spec>
 {
+    // As floating point numbers can start with `.`, they conflict with the `.` token.
+    static constexpr bool is_conflicting_literal(token_kind kind) noexcept
+    {
+        return kind == token_kind::of<dot>();
+    }
+
     // The rule for an integer suffix (i.e. the `u` in `0u`).
     static constexpr auto integer_suffix() noexcept
     {

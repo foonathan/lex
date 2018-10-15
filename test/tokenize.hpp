@@ -5,7 +5,6 @@
 #ifndef FOONATHAN_LEX_TOKENIZE_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKENIZE_HPP_INCLUDED
 
-#include <constexpr_vector.hpp>
 #include <foonathan/lex/tokenizer.hpp>
 
 namespace

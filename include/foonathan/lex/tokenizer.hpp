@@ -48,6 +48,11 @@ namespace lex
         template <class TokenSpec, class Identifier, class Keywords>
         struct keyword_identifier_matcher<TokenSpec, type_list<Identifier>, Keywords>
         {
+            static constexpr bool is_conflicting_literal(token_kind<TokenSpec> kind) noexcept
+            {
+                return Identifier::is_conflicting_literal(kind);
+            }
+
             static constexpr match_result<TokenSpec> try_match(const char* str,
                                                                const char* end) noexcept
             {
@@ -74,6 +79,11 @@ namespace lex
         struct keyword_identifier_matcher<TokenSpec, type_list<>, Keywords>
         {
             static_assert(Keywords::size == 0, "keyword tokens require an identifier_token token");
+
+            static constexpr bool is_conflicting_literal(token_kind<TokenSpec>) noexcept
+            {
+                return false;
+            }
 
             static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
             {

@@ -20,24 +20,39 @@ namespace lex
         using id_type = detail::select_integer<TokenSpec::size + 2>;
 
         template <class TokenSpec, class Token>
-        constexpr id_type<TokenSpec> get_id(Token) noexcept
+        struct get_id_impl
         {
-            constexpr auto index = detail::index_of<TokenSpec, Token>::value;
-            static_assert(detail::contains<TokenSpec, Token>::value,
-                          "not one of the specified tokens");
-            return static_cast<id_type<TokenSpec>>(index + 2);
-        }
+            static constexpr id_type<TokenSpec> get() noexcept
+            {
+                constexpr auto index = detail::index_of<TokenSpec, Token>::value;
+                static_assert(detail::contains<TokenSpec, Token>::value,
+                              "not one of the specified tokens");
+                return static_cast<id_type<TokenSpec>>(index + 2);
+            }
+        };
 
         template <class TokenSpec>
-        constexpr id_type<TokenSpec> get_id(error_token) noexcept
+        struct get_id_impl<TokenSpec, error_token>
         {
-            return 0;
-        }
+            static constexpr id_type<TokenSpec> get() noexcept
+            {
+                return 0;
+            }
+        };
 
         template <class TokenSpec>
-        constexpr id_type<TokenSpec> get_id(eof_token) noexcept
+        struct get_id_impl<TokenSpec, eof_token>
         {
-            return 1;
+            static constexpr id_type<TokenSpec> get() noexcept
+            {
+                return 1;
+            }
+        };
+
+        template <class TokenSpec, class Token>
+        constexpr id_type<TokenSpec> get_id() noexcept
+        {
+            return get_id_impl<TokenSpec, Token>::get();
         }
     } // namespace detail
 
@@ -52,20 +67,28 @@ namespace lex
             return token_kind(0, static_cast<detail::id_type<TokenSpec>>(id));
         }
 
+        /// \effects Creates it from an incomplete token type.
+        /// But otherwise behaves like the constructor.
+        template <class Token>
+        static constexpr token_kind of() noexcept
+        {
+            return token_kind(0, detail::get_id<TokenSpec, Token>());
+        }
+
         /// \effects Creates an error token kind.
         /// \group ctor_error
         constexpr token_kind() noexcept : token_kind(error_token{}) {}
         /// \group ctor_error
-        constexpr token_kind(error_token) noexcept : id_(detail::get_id<TokenSpec>(error_token{}))
+        constexpr token_kind(error_token) noexcept : id_(detail::get_id<TokenSpec, error_token>())
         {}
 
         /// \effects Creates the EOF token kind.
-        constexpr token_kind(eof_token) noexcept : id_(detail::get_id<TokenSpec>(eof_token{})) {}
+        constexpr token_kind(eof_token) noexcept : id_(detail::get_id<TokenSpec, eof_token>()) {}
 
         /// \effects Creates the specified token kind.
         /// \requires The token must be one of the specified tokens.
         template <class Token>
-        constexpr token_kind(Token) noexcept : id_(detail::get_id<TokenSpec>(Token{}))
+        constexpr token_kind(Token) noexcept : id_(detail::get_id<TokenSpec, Token>())
         {}
 
         /// \returns Whether or not it is the error token.
@@ -76,9 +99,9 @@ namespace lex
 
         /// \returns Whether or not it is the specified token kind.
         template <class Token>
-        constexpr bool is(Token token = {}) const noexcept
+        constexpr bool is(Token = {}) const noexcept
         {
-            return id_ == detail::get_id<TokenSpec>(token);
+            return id_ == detail::get_id<TokenSpec, Token>();
         }
 
         template <template <typename> class Category>

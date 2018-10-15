@@ -40,7 +40,8 @@ namespace lex
     ///
     /// \notes The rules are tried in an arbitrary order so code should not depend on any
     /// particular ordering.
-    /// However, the rules will be tried before any literal tokens.
+    /// If a literal token is a prefix of another rule, the `is_conflicting_literal()` function has
+    /// to be implemented, informing about the conflicting literal.
     template <class Derived, class TokenSpec>
     struct basic_rule_token : detail::base_token
     {
@@ -81,6 +82,13 @@ namespace lex
         static constexpr match_result success(Integer bump) noexcept
         {
             return match_result::success(token_kind(Token{}), static_cast<std::size_t>(bump));
+        }
+
+        /// Whether or not the given literal token is conflicting with the rule.
+        /// \returns Always `false`, but can be overriden by hiding this function.
+        static constexpr bool is_conflicting_literal(token_kind) noexcept
+        {
+            return false;
         }
     };
 

@@ -47,18 +47,19 @@ namespace lex
                 = concat<remove_if<Nodes, node_finder<NewNode::character>::template predicate>,
                          NewNode>;
 
-            //=== nodes ===//
-            // wraps a rule token for the interface required here
-            template <class Rule>
-            struct rule_wrapper
+            template <class Rule, class Children>
+            struct insert_rule_into_children_impl;
+            template <class Rule, class... Children>
+            struct insert_rule_into_children_impl<Rule, type_list<Children...>>
             {
-                static constexpr auto try_match(std::size_t, const char* str,
-                                                const char* end) noexcept
-                {
-                    return Rule::try_match(str, end);
-                }
+                using type = type_list<typename Children::template insert_rule<Rule>...>;
             };
 
+            template <class Rule, class Children>
+            using insert_rule_into_children =
+                typename insert_rule_into_children_impl<Rule, Children>::type;
+
+            //=== nodes ===//
             // tries to match all children
             template <class... Children>
             static constexpr auto try_match_children(type_list<Children...>,
@@ -79,6 +80,23 @@ namespace lex
                 return result;
             }
 
+            // tries to match all rules
+            template <class... Rules>
+            static constexpr auto try_match_rules(type_list<Rules...>, std::size_t length_so_far,
+                                                  const char* str, const char* end) noexcept
+            {
+                // no need to check for EOF, only called after literal tokens
+
+                str -= length_so_far;
+
+                auto result = match_result<TokenSpec>::unmatched();
+                bool dummy[]
+                    = {(result.is_unmatched() && (result = Rules::try_match(str, end), true))...,
+                       true};
+                (void)dummy;
+                return result;
+            }
+
             // a non-terminal node matching the given character
             template <char C, class ChildNodes>
             struct non_terminal_node
@@ -89,6 +107,11 @@ namespace lex
 
                 template <class Child>
                 using insert = non_terminal_node<C, insert_node<Child, ChildNodes>>;
+
+                template <class Rule>
+                using insert_rule
+                    // just insert the rule into all children
+                    = non_terminal_node<C, insert_rule_into_children<Rule, ChildNodes>>;
 
                 static constexpr auto try_match(std::size_t length_so_far, const char* str,
                                                 const char* end) noexcept
@@ -101,7 +124,7 @@ namespace lex
             };
 
             // a terminal node terminating token Id with the given character
-            template <char C, id_type<TokenSpec> Id, class ChildNodes>
+            template <char C, id_type<TokenSpec> Id, class ChildNodes, class... Rules>
             struct terminal_node
             {
                 static constexpr auto is_terminal = true;
@@ -109,7 +132,16 @@ namespace lex
                 static constexpr auto character   = C;
 
                 template <class Child>
-                using insert = terminal_node<C, Id, insert_node<Child, ChildNodes>>;
+                using insert = terminal_node<C, Id, insert_node<Child, ChildNodes>, Rules...>;
+
+                template <class Rule>
+                using insert_rule = std::conditional_t<
+                    Rule::is_conflicting_literal(token_kind<TokenSpec>::from_id(Id)),
+                    // if it is conflicting: inserto into *this and children
+                    terminal_node<C, Id, insert_rule_into_children<Rule, ChildNodes>, Rules...,
+                                  Rule>,
+                    // otherwise just into children
+                    terminal_node<C, Id, insert_rule_into_children<Rule, ChildNodes>, Rules...>>;
 
                 static constexpr auto try_match(std::size_t length_so_far, const char* str,
                                                 const char* end) noexcept
@@ -127,10 +159,18 @@ namespace lex
                         if (child_result.is_success())
                             // found a longer match
                             return child_result;
-                        else
-                            return match_result<TokenSpec>::success(token_kind<TokenSpec>::from_id(
-                                                                        Id),
-                                                                    length_so_far);
+
+                        // check the conflicting rules
+                        // if a longer token match happened, longer token was also conflicting
+                        auto rule_result
+                            = try_match_rules(type_list<Rules...>{}, length_so_far, str, end);
+                        if (rule_result.is_matched())
+                            // rule matched something
+                            return rule_result;
+
+                        // only then match the token
+                        return match_result<TokenSpec>::success(token_kind<TokenSpec>::from_id(Id),
+                                                                length_so_far);
                     }
                 }
             };
@@ -146,20 +186,20 @@ namespace lex
                 using insert = root_node<insert_node<Child, ChildNodes>, Rules...>;
 
                 template <class Rule>
-                using insert_rule = root_node<ChildNodes, Rules..., Rule>;
+                using insert_rule
+                    = root_node<insert_rule_into_children<Rule, ChildNodes>, Rules..., Rule>;
 
                 static constexpr auto try_match(const char* str, const char* end) noexcept
                 {
-                    // match all rules first
-                    auto rule_result
-                        = try_match_children(type_list<rule_wrapper<Rules>...>{}, 0, str, end);
-                    if (rule_result.is_matched())
-                        return rule_result;
-
-                    // then match all literals
+                    // match all literals
                     auto child_result = try_match_children(ChildNodes{}, 0, str, end);
                     if (child_result.is_matched())
                         return child_result;
+
+                    // now match all rules
+                    auto rule_result = try_match_rules(type_list<Rules...>{}, 0, str, end);
+                    if (rule_result.is_matched())
+                        return rule_result;
 
                     // nothing matched, error
                     return match_result<TokenSpec>::error(1);
