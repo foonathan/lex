@@ -75,8 +75,27 @@ namespace lex
                                  && (result = Children::match(length_so_far, str, end), true))...,
                                 true};
                 (void)dummy;
-                (void)length_so_far;
                 return result;
+            }
+            // optimizations for 0 and 1
+            static constexpr auto try_match_children(type_list<>, std::size_t, const char* str,
+                                                     const char* end) noexcept
+            {
+                if (str == end)
+                    return match_result<TokenSpec>::eof();
+                else
+                    return match_result<TokenSpec>::unmatched();
+            }
+            template <class Child>
+            static constexpr auto try_match_children(type_list<Child>, std::size_t length_so_far,
+                                                     const char* str, const char* end) noexcept
+            {
+                if (str == end)
+                    return match_result<TokenSpec>::eof();
+                else if (*str == Child::character)
+                    return Child::match(length_so_far, str, end);
+                else
+                    return match_result<TokenSpec>::unmatched();
             }
 
             // tries to match all rules
@@ -93,8 +112,19 @@ namespace lex
                     = {(result.is_unmatched() && (result = Rules::try_match(str, end), true))...,
                        true};
                 (void)dummy;
-                (void)end;
                 return result;
+            }
+            // optimizations for 0 and 1
+            static constexpr auto try_match_rules(type_list<>, std::size_t, const char*,
+                                                  const char*) noexcept
+            {
+                return match_result<TokenSpec>::unmatched();
+            }
+            template <class Rule>
+            static constexpr auto try_match_rules(type_list<Rule>, std::size_t length_so_far,
+                                                  const char* str, const char* end) noexcept
+            {
+                return Rule::try_match(str - length_so_far, end);
             }
 
             // a non-terminal node matching the given character
