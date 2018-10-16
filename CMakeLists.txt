@@ -32,7 +32,7 @@ add_library(foonathan_lex INTERFACE)
 add_library(foonathan::foonathan_lex ALIAS foonathan_lex)
 target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:${detail_header_files} ${header_files}>)
 target_compile_features(foonathan_lex INTERFACE cxx_std_14)
-target_include_directories(foonathan_lex INTERFACE
+target_include_directories(foonathan_lex SYSTEM INTERFACE
                                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
                                 $<INSTALL_INTERFACE:include/>)
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
