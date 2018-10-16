@@ -70,11 +70,10 @@ namespace lex
                 if (str == end)
                     return match_result<TokenSpec>::eof();
 
-                auto result = match_result<TokenSpec>::unmatched();
-                bool dummy[]
-                    = {(result.is_unmatched()
-                        && (result = Children::try_match(length_so_far, str, end), true))...,
-                       true};
+                auto result  = match_result<TokenSpec>::unmatched();
+                bool dummy[] = {(result.is_unmatched() && *str == Children::character
+                                 && (result = Children::match(length_so_far, str, end), true))...,
+                                true};
                 (void)dummy;
                 (void)length_so_far;
                 return result;
@@ -94,6 +93,7 @@ namespace lex
                     = {(result.is_unmatched() && (result = Rules::try_match(str, end), true))...,
                        true};
                 (void)dummy;
+                (void)end;
                 return result;
             }
 
@@ -113,13 +113,10 @@ namespace lex
                     // just insert the rule into all children
                     = non_terminal_node<C, insert_rule_into_children<Rule, ChildNodes>>;
 
-                static constexpr auto try_match(std::size_t length_so_far, const char* str,
-                                                const char* end) noexcept
+                static constexpr auto match(std::size_t length_so_far, const char* str,
+                                            const char* end) noexcept
                 {
-                    if (*str != C)
-                        return match_result<TokenSpec>::unmatched();
-                    else
-                        return try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
+                    return try_match_children(ChildNodes{}, length_so_far + 1, str + 1, end);
                 }
             };
 
@@ -143,35 +140,29 @@ namespace lex
                     // otherwise just into children
                     terminal_node<C, Id, insert_rule_into_children<Rule, ChildNodes>, Rules...>>;
 
-                static constexpr auto try_match(std::size_t length_so_far, const char* str,
-                                                const char* end) noexcept
+                static constexpr auto match(std::size_t length_so_far, const char* str,
+                                            const char* end) noexcept
                 {
-                    if (*str != C)
-                        return match_result<TokenSpec>::unmatched();
-                    else
-                    {
-                        ++length_so_far;
-                        ++str;
+                    ++length_so_far;
+                    ++str;
 
-                        // check for a longer match
-                        auto child_result
-                            = try_match_children(ChildNodes{}, length_so_far, str, end);
-                        if (child_result.is_success())
-                            // found a longer match
-                            return child_result;
+                    // check for a longer match
+                    auto child_result = try_match_children(ChildNodes{}, length_so_far, str, end);
+                    if (child_result.is_success())
+                        // found a longer match
+                        return child_result;
 
-                        // check the conflicting rules
-                        // if a longer token match happened, longer token was also conflicting
-                        auto rule_result
-                            = try_match_rules(type_list<Rules...>{}, length_so_far, str, end);
-                        if (rule_result.is_matched())
-                            // rule matched something
-                            return rule_result;
+                    // check the conflicting rules
+                    // if a longer token match happened, longer token was also conflicting
+                    auto rule_result
+                        = try_match_rules(type_list<Rules...>{}, length_so_far, str, end);
+                    if (rule_result.is_matched())
+                        // rule matched something
+                        return rule_result;
 
-                        // only then match the token
-                        return match_result<TokenSpec>::success(token_kind<TokenSpec>::from_id(Id),
-                                                                length_so_far);
-                    }
+                    // only then match the token
+                    return match_result<TokenSpec>::success(token_kind<TokenSpec>::from_id(Id),
+                                                            length_so_far);
                 }
             };
 
