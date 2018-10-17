@@ -283,12 +283,12 @@ namespace lex
 
         /// If there are characters left, matches and consumes one.
         /// Otherwise, it doesn't match.
-        constexpr detail::any<1> any;
+        constexpr detail::any<1> any = {};
 
         /// If there are `N` characters left, matches and consumes `N`.
         /// Otherwise, it doesn't match.
         template <std::size_t N>
-        constexpr detail::any<N> skip;
+        constexpr detail::any<N> skip = {};
 
         namespace detail
         {
@@ -302,7 +302,7 @@ namespace lex
         } // namespace detail
 
         /// Matches the end of input.
-        constexpr detail::eof eof;
+        constexpr detail::eof eof = {};
 
         namespace detail
         {
@@ -316,7 +316,7 @@ namespace lex
         } // namespace detail
 
         /// Matches nothing.
-        constexpr detail::fail fail;
+        constexpr detail::fail fail = {};
 
         //=== combinators ===//
         namespace detail
