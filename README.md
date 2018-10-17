@@ -1,5 +1,7 @@
 # lex
 
+[![Build Status](https://dev.azure.com/foonathan/lex/_apis/build/status/foonathan.lex)](https://dev.azure.com/foonathan/lex/_build/latest?definitionId=2)
+
 > Note: This project is currently WIP, no guarantees are made until an 0.1 release.
 
 This library is a C++14 `constexpr` tokenization and (in the future) parsing library.
@@ -97,9 +99,22 @@ A: Thanks. I do have a Patreon page, so consider checking it out:
 
 > A full reference documentation is WIP, look at the comments in the header files for now.
 
+### Compiler Support
+
+The library requires a C++14 compiler with reasonable `constexpr` support.
+Compilers that are being tested on CI:
+
+* Linux:
+    * GCC 5 to 8, but compile-time tokenization is not support for GCC < 8 (still works at runtime)
+    * clang 4 to 7
+* MacOS:
+    * XCode 9 and 10
+* Windows:
+    * Visual Studio 2017
+
 ### Installation
 
-The library is header-only and requires a C++14 compiler as well as my [debug_assert](https://github.com/foonathan/debug_assert) library.
+The library is header-only and has only my [debug_assert](https://github.com/foonathan/debug_assert) library as dependency.
 
 If you use CMake, `debug_assert` will be cloned automatically if not installed on the system.
 You can use it with `add_subdirectory()` or install it and use `find_package(foonathan_lex)`,

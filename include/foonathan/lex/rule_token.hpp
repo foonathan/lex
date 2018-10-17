@@ -283,12 +283,12 @@ namespace lex
 
         /// If there are characters left, matches and consumes one.
         /// Otherwise, it doesn't match.
-        constexpr detail::any<1> any;
+        constexpr detail::any<1> any = {};
 
         /// If there are `N` characters left, matches and consumes `N`.
         /// Otherwise, it doesn't match.
         template <std::size_t N>
-        constexpr detail::any<N> skip;
+        constexpr detail::any<N> skip = {};
 
         namespace detail
         {
@@ -302,7 +302,7 @@ namespace lex
         } // namespace detail
 
         /// Matches the end of input.
-        constexpr detail::eof eof;
+        constexpr detail::eof eof = {};
 
         namespace detail
         {
@@ -316,7 +316,7 @@ namespace lex
         } // namespace detail
 
         /// Matches nothing.
-        constexpr detail::fail fail;
+        constexpr detail::fail fail = {};
 
         //=== combinators ===//
         namespace detail
@@ -664,7 +664,7 @@ namespace lex
                 {
                     auto copy = cur;
 
-                    for (auto i = 0; i != Min; ++i)
+                    for (auto i = std::size_t(0); i != Min; ++i)
                         if (!rule.try_match(copy, end))
                             // didn't match if rule didn't occur at least min times
                             return false;
@@ -789,8 +789,8 @@ namespace lex
     template <class Derived, class TokenSpec>
     struct rule_token : basic_rule_token<Derived, TokenSpec>
     {
-        static constexpr match_result<TokenSpec> try_match(const char* str,
-                                                           const char* end) noexcept
+        static constexpr lex::match_result<TokenSpec> try_match(const char* str,
+                                                                const char* end) noexcept
         {
             constexpr auto rule = Derived::rule();
             return rule_matcher<TokenSpec>(str, end).finish(Derived{}, rule);

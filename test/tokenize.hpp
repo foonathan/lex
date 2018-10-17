@@ -55,8 +55,14 @@ private:
 template <class Spec>
 using vector = constexpr_vector<lex::token<Spec>, 32>;
 
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 8
+#    define FOONATHAN_LEX_TEST_CONSTEXPR
+#else
+#    define FOONATHAN_LEX_TEST_CONSTEXPR constexpr
+#endif
+
 template <class Spec>
-constexpr vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)
+FOONATHAN_LEX_TEST_CONSTEXPR vector<Spec> tokenize(lex::tokenizer<Spec> tokenizer)
 {
     vector<Spec> result;
 

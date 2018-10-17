@@ -40,7 +40,7 @@ struct token_bc : lex::basic_rule_token<token_bc, test_spec>
 {
     static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-        if (*str == 'b' & str + 1 != end && str[1] == 'c')
+        if (*str == 'b' && str + 1 != end && str[1] == 'c')
             return success(2);
         else if (*str == 'c')
             return success<token_c>(1);
@@ -54,9 +54,9 @@ TEST_CASE("basic_rule_token")
 {
     SECTION("token_a")
     {
-        static constexpr const char array[]   = "aaaa";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "aaaa";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 1);
 
@@ -66,9 +66,9 @@ TEST_CASE("basic_rule_token")
     }
     SECTION("token_a error")
     {
-        static constexpr const char array[]   = "aaa";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "aaa";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 1);
 
@@ -78,9 +78,9 @@ TEST_CASE("basic_rule_token")
     }
     SECTION("token_bc")
     {
-        static constexpr const char array[]   = "bccbc";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "bccbc";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 3);
 
@@ -98,9 +98,9 @@ TEST_CASE("basic_rule_token")
     }
     SECTION("token_bc error")
     {
-        static constexpr const char array[]   = "bbc";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "bbc";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 2);
 
@@ -114,9 +114,9 @@ TEST_CASE("basic_rule_token")
     }
     SECTION("mixed")
     {
-        static constexpr const char array[]   = "aabcabaa";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "aabcabaa";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 5);
 

@@ -6,13 +6,11 @@
 
 #include "tokenize.hpp"
 #include <catch.hpp>
-#include <locale>
-
-namespace lex = foonathan::lex;
+#include <cctype>
 
 TEST_CASE("ascii predicates")
 {
-    using namespace lex::ascii;
+    using namespace foonathan::lex::ascii;
 
     auto verify = [&](char c) {
         REQUIRE(is_ascii(c));
@@ -46,17 +44,16 @@ TEST_CASE("ascii predicates")
         else
             REQUIRE(!is_print(c));
 
-        auto& c_locale = std::locale::classic();
-        REQUIRE(is_blank(c) == std::isblank(c, c_locale));
-        REQUIRE(is_digit(c) == std::isdigit(c, c_locale));
-        REQUIRE(is_lower(c) == std::islower(c, c_locale));
-        REQUIRE(is_upper(c) == std::isupper(c, c_locale));
-        REQUIRE(is_punct(c) == std::ispunct(c, c_locale));
-        REQUIRE(is_space(c) == std::isspace(c, c_locale));
-        REQUIRE(is_alpha(c) == std::isalpha(c, c_locale));
-        REQUIRE(is_alnum(c) == std::isalnum(c, c_locale));
-        REQUIRE(is_graph(c) == std::isgraph(c, c_locale));
-        REQUIRE(is_print(c) == std::isprint(c, c_locale));
+        REQUIRE(is_blank(c) == !!std::isblank(c));
+        REQUIRE(is_digit(c) == !!std::isdigit(c));
+        REQUIRE(is_lower(c) == !!std::islower(c));
+        REQUIRE(is_upper(c) == !!std::isupper(c));
+        REQUIRE(is_punct(c) == !!std::ispunct(c));
+        REQUIRE(is_space(c) == !!std::isspace(c));
+        REQUIRE(is_alpha(c) == !!std::isalpha(c));
+        REQUIRE(is_alnum(c) == !!std::isalnum(c));
+        REQUIRE(is_graph(c) == !!std::isgraph(c));
+        REQUIRE(is_print(c) == !!std::isprint(c));
     };
 
     for (auto c = 0; c <= 127; ++c)
@@ -94,9 +91,9 @@ struct alpha : lex::rule_token<alpha, test_spec>
 
 TEST_CASE("single_ascii_token and ascii_token")
 {
-    static constexpr const char array[]   = "Abcde  12aBB";
-    constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-    constexpr auto              result    = tokenize<test_spec>(tokenizer);
+    static constexpr const char       array[]   = "Abcde  12aBB";
+    constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
     REQUIRE(result.size() == 7);
 

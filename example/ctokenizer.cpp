@@ -7,11 +7,11 @@
 #include <foonathan/lex/ascii.hpp>     // utilities for ASCII matching
 #include <foonathan/lex/tokenizer.hpp> // the main header for tokenization
 
-namespace lex = foonathan::lex;
-
 // A namespace for the token grammar.
 namespace C
 {
+namespace lex = foonathan::lex;
+
 // Every token is a class inheriting from a special base that will specify the kind of token it is.
 // The specification is then just an alias of `lex::token_spec` passing it all the tokens.
 // As some token types need to refer to the token specification, we have to alias it first,
@@ -444,9 +444,12 @@ struct question_mark : FOONATHAN_LEX_LITERAL("?")
 // A simple driver program that tokenizes the standard input.
 
 #    include <iostream>
+#    include <string>
 
 int main()
 {
+    namespace lex = foonathan::lex;
+
     // We need to read the input a string.
     // This is required because the tokens are just string views into that string.
     std::string input(std::istreambuf_iterator<char>{std::cin}, std::istreambuf_iterator<char>{});
@@ -493,13 +496,13 @@ void check_token(lex::token<C::spec> token, lex::token_kind<C::spec> kind, const
 
 TEST_CASE("whitespace and comments")
 {
-    static constexpr const char array[]   = R"(int int/* C comment */
+    static constexpr const char       array[]   = R"(int int/* C comment */
 
 int // C++ comment
 int
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 11);
     check_token(result[0], C::int_{}, "int");
@@ -517,15 +520,15 @@ int
 
 TEST_CASE("identifier and keywords")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 int
 integer
 Foo_bar123
 __reserved
 12anumber
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 12);
     check_token(result[1], C::int_{}, "int");
@@ -538,7 +541,7 @@ __reserved
 
 TEST_CASE("int and float literals")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 1234567890
 0x1234567890ABCDEFabcdefl
 0X42LU
@@ -551,8 +554,8 @@ TEST_CASE("int and float literals")
 1.
 09
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 24);
     check_token(result[1], C::int_literal{}, "1234567890");
@@ -571,7 +574,7 @@ TEST_CASE("int and float literals")
 
 TEST_CASE("string and char literals")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 'a'
 '\n'
 L'\''
@@ -580,8 +583,8 @@ L'\''
 "hello world!"
 L"hello \"world\""
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 15);
     check_token(result[1], C::char_literal{}, R"('a')");
