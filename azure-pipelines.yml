@@ -9,6 +9,15 @@ trigger:
     - README.md
 
 jobs:
+- job: windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+    - script: |
+        mkdir build && cd build/
+        cmake ../ && cmake --build . && ctest -C Debug --output-on-failure
+      displayName: "Compiling using Visual Studio 2017"
+
 - job: linux
   pool:
     vmImage: 'Ubuntu 16.04'
@@ -47,12 +56,9 @@ jobs:
         XCODE: '10'
       XCode9:
         XCODE: '9.4.1'
-
   steps:
     - script: |
         sudo xcode-select -s /Applications/Xcode_$(XCODE).app/Contents/Developer
         mkdir build && cd build/
-        cmake ../
-        cmake --build .
-        ctest --output-on-failure
+        cmake ../ && cmake --build . && ctest --output-on-failure
       displayName: "Compiling using XCode $(XCODE)"
