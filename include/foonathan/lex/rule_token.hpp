@@ -664,7 +664,7 @@ namespace lex
                 {
                     auto copy = cur;
 
-                    for (auto i = 0; i != Min; ++i)
+                    for (auto i = std::size_t(0); i != Min; ++i)
                         if (!rule.try_match(copy, end))
                             // didn't match if rule didn't occur at least min times
                             return false;

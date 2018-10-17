@@ -37,7 +37,7 @@ target_compile_definitions(foonathan_lex_test_base INTERFACE
 target_compile_options(foonathan_lex_test_base INTERFACE
                            # clang/GCC warnings
                            $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
-                           -pedantic-errors -Werror -Wall -Wextra -Wconversion>
+                           -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion>
                            # MSVC warnings
                            $<$<CXX_COMPILER_ID:MSVC>:
                            /WX /W4>)
