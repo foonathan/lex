@@ -110,13 +110,11 @@ namespace lex
             auto result = false;
             detail::for_each(TokenSpec{}, [&](auto tag) {
                 using type = typename decltype(tag)::type;
-                if (!is(type{}))
+                if (!this->is(type{}))
                     return true;
-                else
-                {
-                    result = Category<type>::value;
-                    return false;
-                }
+
+                result = Category<type>::value;
+                return false;
             });
             return result;
         }
@@ -143,13 +141,11 @@ namespace lex
                 const char* result = nullptr;
                 detail::for_each(TokenSpec{}, [&](auto tag) {
                     using type = typename decltype(tag)::type;
-                    if (!is(type{}))
+                    if (!this->is(type{}))
                         return true;
-                    else
-                    {
-                        result = type::name;
-                        return false;
-                    }
+
+                    result = type::name;
+                    return false;
                 });
                 FOONATHAN_LEX_ASSERT(result);
                 return result;
