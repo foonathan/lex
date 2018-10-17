@@ -789,8 +789,8 @@ namespace lex
     template <class Derived, class TokenSpec>
     struct rule_token : basic_rule_token<Derived, TokenSpec>
     {
-        static constexpr match_result<TokenSpec> try_match(const char* str,
-                                                           const char* end) noexcept
+        static constexpr lex::match_result<TokenSpec> try_match(const char* str,
+                                                                const char* end) noexcept
         {
             constexpr auto rule = Derived::rule();
             return rule_matcher<TokenSpec>(str, end).finish(Derived{}, rule);

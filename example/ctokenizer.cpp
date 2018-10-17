@@ -444,6 +444,7 @@ struct question_mark : FOONATHAN_LEX_LITERAL("?")
 // A simple driver program that tokenizes the standard input.
 
 #    include <iostream>
+#    include <string>
 
 int main()
 {

@@ -120,7 +120,7 @@ namespace lex
         }
 
         /// \returns The underlying integer value of the token.
-        constexpr auto get() const noexcept
+        constexpr detail::id_type<TokenSpec> get() const noexcept
         {
             return id_;
         }

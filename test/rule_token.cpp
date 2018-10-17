@@ -40,7 +40,7 @@ struct token_bc : lex::basic_rule_token<token_bc, test_spec>
 {
     static constexpr match_result try_match(const char* str, const char* end) noexcept
     {
-        if (*str == 'b' & str + 1 != end && str[1] == 'c')
+        if (*str == 'b' && str + 1 != end && str[1] == 'c')
             return success(2);
         else if (*str == 'c')
             return success<token_c>(1);

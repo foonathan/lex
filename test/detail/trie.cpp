@@ -27,7 +27,7 @@ struct bc
 {};
 
 template <typename T>
-constexpr auto id_of()
+constexpr detail::id_type<tokens> id_of()
 {
     return token_kind<tokens>(T{}).get();
 }
