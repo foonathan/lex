@@ -7,11 +7,11 @@
 #include <foonathan/lex/ascii.hpp>     // utilities for ASCII matching
 #include <foonathan/lex/tokenizer.hpp> // the main header for tokenization
 
-namespace lex = foonathan::lex;
-
 // A namespace for the token grammar.
 namespace C
 {
+namespace lex = foonathan::lex;
+
 // Every token is a class inheriting from a special base that will specify the kind of token it is.
 // The specification is then just an alias of `lex::token_spec` passing it all the tokens.
 // As some token types need to refer to the token specification, we have to alias it first,
@@ -447,6 +447,8 @@ struct question_mark : FOONATHAN_LEX_LITERAL("?")
 
 int main()
 {
+    namespace lex = foonathan::lex;
+
     // We need to read the input a string.
     // This is required because the tokens are just string views into that string.
     std::string input(std::istreambuf_iterator<char>{std::cin}, std::istreambuf_iterator<char>{});

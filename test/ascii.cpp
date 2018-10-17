@@ -8,11 +8,9 @@
 #include <catch.hpp>
 #include <locale>
 
-namespace lex = foonathan::lex;
-
 TEST_CASE("ascii predicates")
 {
-    using namespace lex::ascii;
+    using namespace foonathan::lex::ascii;
 
     auto verify = [&](char c) {
         REQUIRE(is_ascii(c));
