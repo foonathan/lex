@@ -495,13 +495,13 @@ void check_token(lex::token<C::spec> token, lex::token_kind<C::spec> kind, const
 
 TEST_CASE("whitespace and comments")
 {
-    static constexpr const char array[]   = R"(int int/* C comment */
+    static constexpr const char       array[]   = R"(int int/* C comment */
 
 int // C++ comment
 int
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 11);
     check_token(result[0], C::int_{}, "int");
@@ -519,15 +519,15 @@ int
 
 TEST_CASE("identifier and keywords")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 int
 integer
 Foo_bar123
 __reserved
 12anumber
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 12);
     check_token(result[1], C::int_{}, "int");
@@ -540,7 +540,7 @@ __reserved
 
 TEST_CASE("int and float literals")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 1234567890
 0x1234567890ABCDEFabcdefl
 0X42LU
@@ -553,8 +553,8 @@ TEST_CASE("int and float literals")
 1.
 09
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 24);
     check_token(result[1], C::int_literal{}, "1234567890");
@@ -573,7 +573,7 @@ TEST_CASE("int and float literals")
 
 TEST_CASE("string and char literals")
 {
-    static constexpr const char array[]   = R"(
+    static constexpr const char       array[]   = R"(
 'a'
 '\n'
 L'\''
@@ -582,8 +582,8 @@ L'\''
 "hello world!"
 L"hello \"world\""
 )";
-    constexpr auto              tokenizer = lex::tokenizer<C::spec>(array);
-    constexpr auto              result    = tokenize<C::spec>(tokenizer);
+    constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
     REQUIRE(result.size() == 15);
     check_token(result[1], C::char_literal{}, R"('a')");

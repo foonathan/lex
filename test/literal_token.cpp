@@ -25,9 +25,9 @@ TEST_CASE("literal_token")
 {
     SECTION("token_a")
     {
-        static constexpr const char array[]   = "aaa";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "aaa";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 3);
 
@@ -46,9 +46,9 @@ TEST_CASE("literal_token")
     }
     SECTION("mixed")
     {
-        static constexpr const char array[]   = "abcaabbc";
-        constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-        constexpr auto              result    = tokenize<test_spec>(tokenizer);
+        static constexpr const char       array[]   = "abcaabbc";
+        constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+        FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
         REQUIRE(result.size() == 5);
 

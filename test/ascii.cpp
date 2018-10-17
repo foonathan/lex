@@ -92,9 +92,9 @@ struct alpha : lex::rule_token<alpha, test_spec>
 
 TEST_CASE("single_ascii_token and ascii_token")
 {
-    static constexpr const char array[]   = "Abcde  12aBB";
-    constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-    constexpr auto              result    = tokenize<test_spec>(tokenizer);
+    static constexpr const char       array[]   = "Abcde  12aBB";
+    constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
     REQUIRE(result.size() == 7);
 

@@ -52,9 +52,9 @@ struct keyword_c : lex::keyword_token<'c'>
 
 TEST_CASE("identifier_token and keyword_token")
 {
-    static constexpr const char array[]   = "dd a ab abc c";
-    constexpr auto              tokenizer = lex::tokenizer<test_spec>(array);
-    constexpr auto              result    = tokenize<test_spec>(tokenizer);
+    static constexpr const char       array[]   = "dd a ab abc c";
+    constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
+    FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
     REQUIRE(result.size() == 9);
 
