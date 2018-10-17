@@ -9,15 +9,31 @@ trigger:
     - README.md
 
 jobs:
-- job: default
+- job: linux
   pool:
     vmImage: 'Ubuntu 16.04'
   strategy:
     matrix:
+      GCC5:
+         IMAGE: 'conanio/gcc5'
+      GCC6:
+         IMAGE: 'conanio/gcc6'
+      GCC7:
+         IMAGE: 'conanio/gcc7'
+      GCC8:
+         IMAGE: 'conanio/gcc8'
+      clang4:
+         IMAGE: 'conanio/clang40'
+      clang5:
+         IMAGE: 'conanio/clang50'
+      clang6:
+         IMAGE: 'conanio/clang60'
+      clang7:
+         IMAGE: 'conanio/clang7'
       DefaultGCC:
          IMAGE: 'foonathan/micro_cpp_gcc'
       DefaultClang:
          IMAGE: 'foonathan/micro_cpp_clang'
   steps:
-    - script: docker run -v "$PWD:/root/lex" $(IMAGE) bash -c "cmake lex/ && cmake --build . && ctest --output-on-failure"
+    - script: docker run -u root -v "$PWD:/lex" $(IMAGE) bash -c "cmake /lex/ && cmake --build . && ctest --output-on-failure"
       displayName: "Compiling using $(IMAGE)"
