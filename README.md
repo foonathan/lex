@@ -45,6 +45,13 @@ The parser can then decide how an error should be handled.
 
 ## FAQ
 
+**Q: Isn't the name [lex](https://en.wikipedia.org/wiki/Lex_(software)) already taken?**
+
+A: It is. That's why the library is called `foonathan/lex`.
+In my defense, naming is hard.
+I could come up with some cute name, but then its not really descriptive.
+If you know `foonathan/lex`, you know what the project is about.
+
 **Q: Sounds great, but what about compile-time?**
 
 A: Compiling the `foonathan_lex_ctokenizer` target, which contains an implementation of a tokenizer for C (modulo some details),
