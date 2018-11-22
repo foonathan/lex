@@ -52,7 +52,7 @@ if(NOT dependency_via_submodule)
     install(FILES foonathan_lex-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/foonathan_lex-config-version.cmake
                 DESTINATION lib/cmake/foonathan_lex)
 else()
-    message(STATUS "dependency installed via submodule, installation unavailable")
+    message(STATUS "Dependency installed via submodule, installation unavailable")
 endif()
 
 # subdirectories

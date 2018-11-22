@@ -1,4 +1,4 @@
-# lex
+# foonathan/lex
 
 [![Build Status](https://dev.azure.com/foonathan/lex/_apis/build/status/foonathan.lex)](https://dev.azure.com/foonathan/lex/_build/latest?definitionId=2)
 
