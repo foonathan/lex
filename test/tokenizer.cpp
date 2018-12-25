@@ -19,10 +19,10 @@ struct token_bc : FOONATHAN_LEX_LITERAL("bc")
 {};
 
 template <class Token>
-void verify(const lex::tokenizer<test_spec>& tokenizer, const char* ptr, bool is_donene)
+void verify(const lex::tokenizer<test_spec>& tokenizer, const char* ptr, bool is_done)
 {
     REQUIRE(tokenizer.current_ptr() == ptr);
-    REQUIRE(tokenizer.is_done() == is_donene);
+    REQUIRE(tokenizer.is_done() == is_done);
 
     REQUIRE(tokenizer.peek().is(Token{}));
     REQUIRE(tokenizer.peek().spelling().data() == tokenizer.current_ptr());

@@ -41,8 +41,11 @@ using spec = lex::token_spec<
 // whether a given input matches. This function returns a combination of `lex::token_rule` that are
 // PEG (parsing expression grammar) rules.
 //
+// We also inherit from `lex::whitespace_token`.
+// This means that the token will be skipped when iterating over all tokens later on.
+//
 // Note that rule tokens will be tried in arbitrary order, so they have to be mutually exclusive.
-struct whitespace : lex::rule_token<whitespace, spec>
+struct whitespace : lex::rule_token<whitespace, spec>, lex::whitespace_token
 {
     static constexpr auto rule() noexcept
     {
@@ -57,7 +60,8 @@ struct whitespace : lex::rule_token<whitespace, spec>
 };
 
 // Likewise, we can define a comment.
-struct comment : lex::rule_token<comment, spec>
+// It is also considered whitespace so will be skipped.
+struct comment : lex::rule_token<comment, spec>, lex::whitespace_token
 {
     // As comments start with `/` they conflict with the `/` literal.
     // So we have to tell the tokenizer that it has to check for a comment, after matching `/`.
@@ -462,10 +466,7 @@ int main()
         // Match and consume the current token.
         auto token = tokenizer.get();
 
-        if (token.is(C::whitespace{}))
-            // Don't print anything if it is whitespace.
-            continue;
-        else if (token.is_category<lex::is_literal_token>())
+        if (token.is_category<lex::is_literal_token>())
             // If it is a literal token, just print the spelling.
             std::cout << '`' << std::string(token.spelling().data(), token.spelling().size())
                       << "`\n";
@@ -504,18 +505,11 @@ int
     constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
     FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
-    REQUIRE(result.size() == 11);
+    REQUIRE(result.size() == 4);
     check_token(result[0], C::int_{}, "int");
-    check_token(result[1], C::whitespace{}, " ");
+    check_token(result[1], C::int_{}, "int");
     check_token(result[2], C::int_{}, "int");
-    check_token(result[3], C::comment{}, "/* C comment */");
-    check_token(result[4], C::whitespace{}, "\n\n");
-    check_token(result[5], C::int_{}, "int");
-    check_token(result[6], C::whitespace{}, " ");
-    check_token(result[7], C::comment{}, "// C++ comment");
-    check_token(result[8], C::whitespace{}, "\n");
-    check_token(result[9], C::int_{}, "int");
-    check_token(result[10], C::whitespace{}, "\n");
+    check_token(result[3], C::int_{}, "int");
 }
 
 TEST_CASE("identifier and keywords")
@@ -530,13 +524,13 @@ __reserved
     constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
     FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
-    REQUIRE(result.size() == 12);
-    check_token(result[1], C::int_{}, "int");
-    check_token(result[3], C::identifier{}, "integer");
-    check_token(result[5], C::identifier{}, "Foo_bar123");
-    check_token(result[7], C::identifier{}, "__reserved");
-    check_token(result[9], lex::error_token{}, "12");
-    check_token(result[10], C::identifier{}, "anumber");
+    REQUIRE(result.size() == 6);
+    check_token(result[0], C::int_{}, "int");
+    check_token(result[1], C::identifier{}, "integer");
+    check_token(result[2], C::identifier{}, "Foo_bar123");
+    check_token(result[3], C::identifier{}, "__reserved");
+    check_token(result[4], lex::error_token{}, "12");
+    check_token(result[5], C::identifier{}, "anumber");
 }
 
 TEST_CASE("int and float literals")
@@ -557,19 +551,19 @@ TEST_CASE("int and float literals")
     constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
     FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
-    REQUIRE(result.size() == 24);
-    check_token(result[1], C::int_literal{}, "1234567890");
-    check_token(result[3], C::int_literal{}, "0x1234567890ABCDEFabcdefl");
-    check_token(result[5], C::int_literal{}, "0X42LU");
-    check_token(result[7], C::int_literal{}, "01234567");
-    check_token(result[9], C::int_literal{}, "0u");
-    check_token(result[11], C::float_literal{}, ".123");
-    check_token(result[13], C::float_literal{}, "1.23");
-    check_token(result[15], C::float_literal{}, "123e45f");
-    check_token(result[17], C::float_literal{}, "1.23E-4");
-    check_token(result[19], C::float_literal{}, "1.");
-    check_token(result[21], lex::error_token{}, "0");
-    check_token(result[22], C::int_literal{}, "9");
+    REQUIRE(result.size() == 12);
+    check_token(result[0], C::int_literal{}, "1234567890");
+    check_token(result[1], C::int_literal{}, "0x1234567890ABCDEFabcdefl");
+    check_token(result[2], C::int_literal{}, "0X42LU");
+    check_token(result[3], C::int_literal{}, "01234567");
+    check_token(result[4], C::int_literal{}, "0u");
+    check_token(result[5], C::float_literal{}, ".123");
+    check_token(result[6], C::float_literal{}, "1.23");
+    check_token(result[7], C::float_literal{}, "123e45f");
+    check_token(result[8], C::float_literal{}, "1.23E-4");
+    check_token(result[9], C::float_literal{}, "1.");
+    check_token(result[10], lex::error_token{}, "0");
+    check_token(result[11], C::int_literal{}, "9");
 }
 
 TEST_CASE("string and char literals")
@@ -586,14 +580,14 @@ L"hello \"world\""
     constexpr auto                    tokenizer = lex::tokenizer<C::spec>(array);
     FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<C::spec>(tokenizer);
 
-    REQUIRE(result.size() == 15);
-    check_token(result[1], C::char_literal{}, R"('a')");
-    check_token(result[3], C::char_literal{}, R"('\n')");
-    check_token(result[5], C::char_literal{}, R"(L'\'')");
-    check_token(result[7], C::char_literal{}, R"('\0')");
-    check_token(result[9], C::char_literal{}, R"('\x42')");
-    check_token(result[11], C::string_literal{}, R"("hello world!")");
-    check_token(result[13], C::string_literal{}, R"(L"hello \"world\"")");
+    REQUIRE(result.size() == 7);
+    check_token(result[0], C::char_literal{}, R"('a')");
+    check_token(result[1], C::char_literal{}, R"('\n')");
+    check_token(result[2], C::char_literal{}, R"(L'\'')");
+    check_token(result[3], C::char_literal{}, R"('\0')");
+    check_token(result[4], C::char_literal{}, R"('\x42')");
+    check_token(result[5], C::string_literal{}, R"("hello world!")");
+    check_token(result[6], C::string_literal{}, R"(L"hello \"world\"")");
 }
 
 #endif

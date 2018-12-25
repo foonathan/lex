@@ -52,7 +52,8 @@ set(tests
     identifier_token.cpp
     literal_token.cpp
     rule_token.cpp
-    tokenizer.cpp)
+    tokenizer.cpp
+    whitespace_token.cpp)
 
 add_executable(foonathan_lex_test tokenize.hpp ${tests})
 target_link_libraries(foonathan_lex_test PUBLIC foonathan_lex_test_base)

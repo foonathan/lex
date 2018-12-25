@@ -54,6 +54,25 @@ namespace lex
         {
             return get_id_impl<TokenSpec, Token>::get();
         }
+
+        template <class TokenSpec, template <typename> class Category>
+        struct category_matcher
+        {
+            id_type<TokenSpec> id;
+            bool               result = false;
+
+            template <typename T>
+            constexpr bool operator()(type_list<T>)
+            {
+                if (id != get_id<TokenSpec, T>())
+                    return true;
+                else
+                {
+                    result = Category<T>::value;
+                    return false;
+                }
+            }
+        };
     } // namespace detail
 
     /// Information about the kind of a token.
@@ -107,16 +126,9 @@ namespace lex
         template <template <typename> class Category>
         constexpr bool is_category() const noexcept
         {
-            auto result = false;
-            detail::for_each(TokenSpec{}, [&](auto tag) {
-                using type = typename decltype(tag)::type;
-                if (!this->is(type{}))
-                    return true;
-
-                result = Category<type>::value;
-                return false;
-            });
-            return result;
+            detail::category_matcher<TokenSpec, Category> matcher{id_, false};
+            detail::for_each(TokenSpec{}, matcher);
+            return matcher.result;
         }
 
         /// \returns The underlying integer value of the token.

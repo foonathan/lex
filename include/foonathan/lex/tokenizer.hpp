@@ -10,6 +10,7 @@
 #include <foonathan/lex/literal_token.hpp>
 #include <foonathan/lex/rule_token.hpp>
 #include <foonathan/lex/token.hpp>
+#include <foonathan/lex/whitespace_token.hpp>
 
 namespace foonathan
 {
@@ -159,7 +160,7 @@ namespace lex
         explicit constexpr tokenizer(const char* begin, const char* end)
         : begin_(begin), ptr_(begin), end_(end), last_result_(match_result<TokenSpec>::unmatched())
         {
-            reset(begin);
+            bump();
         }
 
         /// \effects Creates a tokenizer that will tokenize the given array *excluding* a null
@@ -198,7 +199,9 @@ namespace lex
         /// EOF.
         constexpr void bump() noexcept
         {
+            using any_whitespace = detail::any_of<TokenSpec, is_whitespace>;
             reset(ptr_ + last_result_.bump);
+            skip_whitespace(any_whitespace{});
         }
 
         /// \effects Resets the tokenizer to the specified position and parses that token
@@ -233,6 +236,13 @@ namespace lex
         }
 
     private:
+        constexpr void skip_whitespace(std::true_type)
+        {
+            while (last_result_.kind.template is_category<is_whitespace>())
+                reset(ptr_ + last_result_.bump);
+        }
+        constexpr void skip_whitespace(std::false_type) {}
+
         const char* begin_{};
         const char* ptr_{};
         const char* end_{};

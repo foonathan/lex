@@ -41,6 +41,7 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_spec.hpp
                 ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/whitespace_token.hpp
                >)
 
 # installation

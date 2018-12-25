@@ -168,30 +168,33 @@ namespace lex
         using any_of = typename any_of_impl<List, Pred>::type;
 
         //=== for_each ===//
-        template <class List, typename Func>
+        template <class List>
         struct for_each_impl;
 
-        template <typename Func>
-        struct for_each_impl<type_list<>, Func>
+        template <>
+        struct for_each_impl<type_list<>>
         {
-            static constexpr void apply(const Func&) noexcept {}
+            template <typename Func>
+            static constexpr void apply(const Func&) noexcept
+            {}
         };
 
-        template <typename Head, typename... Tail, typename Func>
-        struct for_each_impl<type_list<Head, Tail...>, Func>
+        template <typename Head, typename... Tail>
+        struct for_each_impl<type_list<Head, Tail...>>
         {
-            static constexpr void apply(const Func& f) noexcept
+            template <typename Func>
+            static constexpr void apply(Func&& f) noexcept
             {
                 if (!f(type_list<Head>{}))
                     return;
-                for_each_impl<type_list<Tail...>, Func>::apply(f);
+                for_each_impl<type_list<Tail...>>::apply(f);
             }
         };
 
         template <class List, typename Func>
-        constexpr void for_each(List, Func f) noexcept
+        constexpr void for_each(List, Func&& f) noexcept
         {
-            for_each_impl<List, Func>::apply(f);
+            for_each_impl<List>::apply(f);
         }
     } // namespace detail
 } // namespace lex
