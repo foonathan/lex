@@ -2,8 +2,8 @@
 // This file is subject to the license terms in the LICENSE file
 // found in the top-level directory of this distribution.
 
-#ifndef FOONATHAN_LEX_RULES_HPP_INCLUDED
-#define FOONATHAN_LEX_RULES_HPP_INCLUDED
+#ifndef FOONATHAN_LEX_ASCII_HPP_INCLUDED
+#define FOONATHAN_LEX_ASCII_HPP_INCLUDED
 
 #include <climits>
 #include <foonathan/lex/rule_token.hpp>
@@ -154,4 +154,4 @@ namespace lex
 } // namespace lex
 } // namespace foonathan
 
-#endif // FOONATHAN_LEX_RULES_HPP_INCLUDED
+#endif // FOONATHAN_LEX_ASCII_HPP_INCLUDED
