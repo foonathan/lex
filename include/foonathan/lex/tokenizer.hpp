@@ -37,7 +37,8 @@ namespace lex
         };
 
         template <class TokenSpec, class LiteralTokens>
-        using literal_trie = typename build_trie_impl<TokenSpec, LiteralTokens>::type;
+        using literal_trie =
+            typename build_trie_impl<TokenSpec, typename LiteralTokens::list>::type;
 
         //=== keyword and identifier trie ===//
         template <class TokenSpec, class Identifiers, class Keywords>

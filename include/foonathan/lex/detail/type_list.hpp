@@ -17,6 +17,8 @@ namespace lex
         struct type_list
         {
             static constexpr auto size = sizeof...(Types);
+
+            using list = type_list<Types...>;
         };
 
         template <typename T>
@@ -27,6 +29,8 @@ namespace lex
 
             template <typename>
             using type_or = T;
+
+            using list = type_list<T>;
         };
 
         template <>
@@ -36,6 +40,8 @@ namespace lex
 
             template <typename T>
             using type_or = T;
+
+            using list = type_list<>;
         };
 
         //=== cat ===//
@@ -61,7 +67,7 @@ namespace lex
         };
 
         template <class List, typename... Ts>
-        using concat = typename cat_impl<List, Ts...>::type;
+        using concat = typename cat_impl<typename List::list, Ts...>::type;
 
         //=== index_of ===//
         template <class List, typename T>
@@ -81,7 +87,7 @@ namespace lex
         {};
 
         template <class List, typename T>
-        using index_of = index_of_impl<List, T>;
+        using index_of = index_of_impl<typename List::list, T>;
 
         template <class List, typename T>
         using contains = std::integral_constant<bool, (index_of<List, T>::value < List::size)>;
@@ -114,10 +120,10 @@ namespace lex
         };
 
         template <class List, template <typename> class Predicate>
-        using keep_if = typename filter_impl<List, Predicate>::positive;
+        using keep_if = typename filter_impl<typename List::list, Predicate>::positive;
 
         template <class List, template <typename> class Predicate>
-        using remove_if = typename filter_impl<List, Predicate>::negative;
+        using remove_if = typename filter_impl<typename List::list, Predicate>::negative;
 
         //=== all_of/none_of/any_of ===//
         template <bool... Bools>
@@ -159,13 +165,13 @@ namespace lex
         };
 
         template <class List, template <typename T> class Pred>
-        using all_of = typename all_of_impl<List, Pred>::type;
+        using all_of = typename all_of_impl<typename List::list, Pred>::type;
 
         template <class List, template <typename T> class Pred>
-        using none_of = typename none_of_impl<List, Pred>::type;
+        using none_of = typename none_of_impl<typename List::list, Pred>::type;
 
         template <class List, template <typename T> class Pred>
-        using any_of = typename any_of_impl<List, Pred>::type;
+        using any_of = typename any_of_impl<typename List::list, Pred>::type;
 
         //=== for_each ===//
         template <class List>
@@ -194,7 +200,7 @@ namespace lex
         template <class List, typename Func>
         constexpr void for_each(List, Func&& f) noexcept
         {
-            for_each_impl<List>::apply(f);
+            for_each_impl<typename List::list>::apply(f);
         }
     } // namespace detail
 } // namespace lex

@@ -13,27 +13,30 @@ namespace C
 namespace lex = foonathan::lex;
 
 // Every token is a class inheriting from a special base that will specify the kind of token it is.
-// The specification is then just an alias of `lex::token_spec` passing it all the tokens.
-// As some token types need to refer to the token specification, we have to alias it first,
+// The specification is then just an alias or inheritance of `lex::token_spec` passing it all the
+// tokens. As some token types need to refer to the token specification, we have to alias it first,
 // and thus need to pass forward declarations.
 //
 // Note that the order of tokens in the specification doesn't matter.
-using spec = lex::token_spec<
-    struct whitespace, struct comment, struct identifier, struct int_literal, struct float_literal,
-    struct char_literal, struct string_literal, struct auto_, struct break_, struct case_,
-    struct char_, struct const_, struct continue_, struct default_, struct do_, struct double_,
-    struct else_, struct enum_, struct extern_, struct float_, struct for_, struct goto_,
-    struct if_, struct int_, struct long_, struct register_, struct return_, struct short_,
-    struct signed_, struct sizeof_, struct switch_, struct typedef_, struct union_, struct void_,
-    struct volatile_, struct while_, struct open_paren, struct close_paren, struct open_curly,
-    struct close_curly, struct open_square, struct close_square, struct add, struct sub, struct mul,
-    struct div, struct mod, struct and_, struct xor_, struct or_, struct shift_right,
-    struct shift_left, struct inc, struct dec, struct assign, struct add_assign, struct sub_assign,
-    struct mul_assign, struct div_assign, struct mod_assign, struct and_assign, struct xor_assign,
-    struct or_assign, struct shift_right_assign, struct shift_left_assign, struct equal,
-    struct not_equal, struct less, struct greater, struct less_equal, struct greater_equal,
-    struct logical_and, struct logical_or, struct semicolon, struct comma, struct colon, struct dot,
-    struct ellipsis, struct arrow, struct tilde, struct exclamation_mark, struct question_mark>;
+struct spec
+: lex::token_spec<
+      struct whitespace, struct comment, struct identifier, struct int_literal,
+      struct float_literal, struct char_literal, struct string_literal, struct auto_, struct break_,
+      struct case_, struct char_, struct const_, struct continue_, struct default_, struct do_,
+      struct double_, struct else_, struct enum_, struct extern_, struct float_, struct for_,
+      struct goto_, struct if_, struct int_, struct long_, struct register_, struct return_,
+      struct short_, struct signed_, struct sizeof_, struct switch_, struct typedef_, struct union_,
+      struct void_, struct volatile_, struct while_, struct open_paren, struct close_paren,
+      struct open_curly, struct close_curly, struct open_square, struct close_square, struct add,
+      struct sub, struct mul, struct div, struct mod, struct and_, struct xor_, struct or_,
+      struct shift_right, struct shift_left, struct inc, struct dec, struct assign,
+      struct add_assign, struct sub_assign, struct mul_assign, struct div_assign, struct mod_assign,
+      struct and_assign, struct xor_assign, struct or_assign, struct shift_right_assign,
+      struct shift_left_assign, struct equal, struct not_equal, struct less, struct greater,
+      struct less_equal, struct greater_equal, struct logical_and, struct logical_or,
+      struct semicolon, struct comma, struct colon, struct dot, struct ellipsis, struct arrow,
+      struct tilde, struct exclamation_mark, struct question_mark>
+{};
 
 //=== comments and whitespace ===//
 // `lex::rule_token` is the base class for tokens that follow a more complex grammar rule.
