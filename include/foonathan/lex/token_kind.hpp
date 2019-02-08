@@ -12,7 +12,7 @@ namespace foonathan
 {
 namespace lex
 {
-    namespace detail
+    namespace token_kind_detail
     {
         // id 0: invalid
         // id 1: EOF
@@ -62,7 +62,7 @@ namespace lex
             bool               result = false;
 
             template <typename T>
-            constexpr bool operator()(type_list<T>)
+            constexpr bool operator()(detail::type_list<T>)
             {
                 if (id != get_id<TokenSpec, T>())
                     return true;
@@ -73,7 +73,7 @@ namespace lex
                 }
             }
         };
-    } // namespace detail
+    } // namespace token_kind_detail
 
     /// Information about the kind of a token.
     template <class TokenSpec>
@@ -83,7 +83,7 @@ namespace lex
         /// \effects Creates it from the integral id.
         static constexpr token_kind from_id(std::size_t id) noexcept
         {
-            return token_kind(0, static_cast<detail::id_type<TokenSpec>>(id));
+            return token_kind(0, static_cast<token_kind_detail::id_type<TokenSpec>>(id));
         }
 
         /// \effects Creates it from an incomplete token type.
@@ -91,23 +91,26 @@ namespace lex
         template <class Token>
         static constexpr token_kind of() noexcept
         {
-            return token_kind(0, detail::get_id<TokenSpec, Token>());
+            return token_kind(0, token_kind_detail::get_id<TokenSpec, Token>());
         }
 
         /// \effects Creates an error token kind.
         /// \group ctor_error
         constexpr token_kind() noexcept : token_kind(error_token{}) {}
         /// \group ctor_error
-        constexpr token_kind(error_token) noexcept : id_(detail::get_id<TokenSpec, error_token>())
+        constexpr token_kind(error_token) noexcept
+        : id_(token_kind_detail::get_id<TokenSpec, error_token>())
         {}
 
         /// \effects Creates the EOF token kind.
-        constexpr token_kind(eof_token) noexcept : id_(detail::get_id<TokenSpec, eof_token>()) {}
+        constexpr token_kind(eof_token) noexcept
+        : id_(token_kind_detail::get_id<TokenSpec, eof_token>())
+        {}
 
         /// \effects Creates the specified token kind.
         /// \requires The token must be one of the specified tokens.
         template <class Token>
-        constexpr token_kind(Token) noexcept : id_(detail::get_id<TokenSpec, Token>())
+        constexpr token_kind(Token) noexcept : id_(token_kind_detail::get_id<TokenSpec, Token>())
         {}
 
         /// \returns Whether or not it is the error token.
@@ -120,19 +123,19 @@ namespace lex
         template <class Token>
         constexpr bool is(Token = {}) const noexcept
         {
-            return id_ == detail::get_id<TokenSpec, Token>();
+            return id_ == token_kind_detail::get_id<TokenSpec, Token>();
         }
 
         template <template <typename> class Category>
         constexpr bool is_category() const noexcept
         {
-            detail::category_matcher<TokenSpec, Category> matcher{id_, false};
+            token_kind_detail::category_matcher<TokenSpec, Category> matcher{id_, false};
             detail::for_each(TokenSpec{}, matcher);
             return matcher.result;
         }
 
         /// \returns The underlying integer value of the token.
-        constexpr detail::id_type<TokenSpec> get() const noexcept
+        constexpr token_kind_detail::id_type<TokenSpec> get() const noexcept
         {
             return id_;
         }
@@ -174,9 +177,11 @@ namespace lex
         }
 
     private:
-        explicit constexpr token_kind(int, detail::id_type<TokenSpec> id) noexcept : id_(id) {}
+        explicit constexpr token_kind(int, token_kind_detail::id_type<TokenSpec> id) noexcept
+        : id_(id)
+        {}
 
-        detail::id_type<TokenSpec> id_;
+        token_kind_detail::id_type<TokenSpec> id_;
     };
 
     namespace detail

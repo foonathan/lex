@@ -151,7 +151,8 @@ namespace lex
             };
 
             // a terminal node terminating token Id with the given character
-            template <char C, id_type<TokenSpec> Id, class ChildNodes, class... Rules>
+            template <char C, token_kind_detail::id_type<TokenSpec> Id, class ChildNodes,
+                      class... Rules>
             struct terminal_node
             {
                 static constexpr auto is_terminal = true;
@@ -233,10 +234,10 @@ namespace lex
             };
 
             //=== trie construction ===//
-            template <class CurNode, id_type<TokenSpec> Id, char... Chars>
+            template <class CurNode, token_kind_detail::id_type<TokenSpec> Id, char... Chars>
             struct insert_literal_impl;
 
-            template <class CurNode, id_type<TokenSpec> Id, char C>
+            template <class CurNode, token_kind_detail::id_type<TokenSpec> Id, char C>
             struct insert_literal_impl<CurNode, Id, C>
             {
                 // the target is the C-child of the current node
@@ -249,7 +250,8 @@ namespace lex
                 using type = typename CurNode::template insert<new_node>;
             };
 
-            template <class CurNode, id_type<TokenSpec> Id, char Head, char Second, char... Rest>
+            template <class CurNode, token_kind_detail::id_type<TokenSpec> Id, char Head,
+                      char Second, char... Rest>
             struct insert_literal_impl<CurNode, Id, Head, Second, Rest...>
             {
                 // the target is the Head-child of the current node
@@ -269,11 +271,11 @@ namespace lex
                 using type = typename CurNode::template insert<inserted>;
             };
 
-            template <class CurNode, id_type<TokenSpec> Id, typename String>
+            template <class CurNode, token_kind_detail::id_type<TokenSpec> Id, typename String>
             struct insert_literal_str_impl;
 
-            template <class CurNode, id_type<TokenSpec> Id, template <char...> class String,
-                      char... Char>
+            template <class CurNode, token_kind_detail::id_type<TokenSpec> Id,
+                      template <char...> class String, char... Char>
             struct insert_literal_str_impl<CurNode, Id, String<Char...>>
             {
                 using type = typename insert_literal_impl<CurNode, Id, Char...>::type;
@@ -284,11 +286,11 @@ namespace lex
             using empty = root_node<type_list<>>;
 
             // inserts a literal token into the trie
-            template <class Root, id_type<TokenSpec> Id, char... Chars>
+            template <class Root, token_kind_detail::id_type<TokenSpec> Id, char... Chars>
             using insert_literal = typename insert_literal_impl<Root, Id, Chars...>::type;
 
             // inserts a literal token where `String = StringTemplate<Chars...>`
-            template <class Root, id_type<TokenSpec> Id, typename String>
+            template <class Root, token_kind_detail::id_type<TokenSpec> Id, typename String>
             using insert_literal_str = typename insert_literal_str_impl<Root, Id, String>::type;
 
             // inserts a rule
