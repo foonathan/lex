@@ -5,9 +5,6 @@
 cmake_minimum_required(VERSION 3.8)
 if(POLICY CMP0076)
     cmake_policy(SET CMP0076 NEW)
-    set(source_prefix ".")
-else()
-    set(source_prefix "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
 project(foonathan_lex VERSION 0.0.0)
@@ -25,27 +22,29 @@ target_include_directories(foonathan_lex SYSTEM INTERFACE
                            $<INSTALL_INTERFACE:include/>)
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
 
-target_sources(foonathan_lex INTERFACE 
-                ${source_prefix}/include/foonathan/lex/detail/assert.hpp
-                ${source_prefix}/include/foonathan/lex/detail/assert.hpp
-                ${source_prefix}/include/foonathan/lex/detail/select_integer.hpp
-                ${source_prefix}/include/foonathan/lex/detail/string.hpp
-                ${source_prefix}/include/foonathan/lex/detail/trie.hpp
-                ${source_prefix}/include/foonathan/lex/detail/type_list.hpp
-               )
-target_sources(foonathan_lex INTERFACE
-                ${source_prefix}/include/foonathan/lex/ascii.hpp
-                ${source_prefix}/include/foonathan/lex/identifier_token.hpp
-                ${source_prefix}/include/foonathan/lex/literal_token.hpp
-                ${source_prefix}/include/foonathan/lex/match_result.hpp
-                ${source_prefix}/include/foonathan/lex/rule_token.hpp
-                ${source_prefix}/include/foonathan/lex/spelling.hpp
-                ${source_prefix}/include/foonathan/lex/token.hpp
-                ${source_prefix}/include/foonathan/lex/token_kind.hpp
-                ${source_prefix}/include/foonathan/lex/token_spec.hpp
-                ${source_prefix}/include/foonathan/lex/tokenizer.hpp
-                ${source_prefix}/include/foonathan/lex/whitespace_token.hpp
-               )
+target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
+               >)
+target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/grammar.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_spec.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/whitespace_token.hpp
+               >)
 
 # installation
 if(NOT dependency_via_submodule)
