@@ -270,7 +270,8 @@ namespace lex
             {
                 constexpr bool try_match(const char*& cur, const char* end) const noexcept
                 {
-                    if (static_cast<std::size_t>(end - cur) < N)
+                    auto remaining = end - cur;
+                    if (static_cast<std::size_t>(remaining) < N)
                         return false;
                     else
                     {
