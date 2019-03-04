@@ -5,7 +5,7 @@
 #ifndef FOONATHAN_LEX_GRAMMAR_HPP_INCLUDED
 #define FOONATHAN_LEX_GRAMMAR_HPP_INCLUDED
 
-#include <foonathan/lex/detail/type_list.hpp>
+#include <foonathan/lex/token_spec.hpp>
 
 namespace foonathan
 {
@@ -14,11 +14,13 @@ namespace lex
     /// A grammar that is parsed.
     template <class TokenSpec, class StartProduction, class... OtherProductions>
     struct grammar : detail::type_list<StartProduction, OtherProductions...>
-    {};
+    {
+        using token_spec = TokenSpec;
+    };
 
     namespace detail
     {
-        struct base_production
+        struct base_production : production_rule::production_adl
         {};
     } // namespace detail
 

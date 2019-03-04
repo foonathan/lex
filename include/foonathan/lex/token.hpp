@@ -81,6 +81,81 @@ namespace lex
 
         friend tokenizer<TokenSpec>;
     };
+
+    /// A single token whose kind is statically known.
+    ///
+    /// It has a similar interface to [lex::token]() otherwise,
+    /// just a lot of the results are statically determined.
+    /// \notes `Token` is one of the token classes that are also passed to [lex::token_spec]().
+    template <class Token>
+    class static_token
+    {
+        static_assert(is_token<Token>::value, "must be a token");
+
+    public:
+        /// Constructs it from a generic token container.
+        /// \requires `token.is(Token{})`.
+        template <class TokenSpec>
+        explicit constexpr static_token(const token<TokenSpec>& token) : spelling_(token.spelling())
+        {
+            FOONATHAN_LEX_PRECONDITION(token.is(Token{}), "token kind must match");
+        }
+
+        /// \returns `Token{}`.
+        constexpr operator Token() const noexcept
+        {
+            return Token{};
+        }
+
+        /// \returns The kind of token it is.
+        template <class TokenSpec>
+        constexpr token_kind<TokenSpec> kind() const noexcept
+        {
+            return token_kind<TokenSpec>::template of<Token>();
+        }
+
+        /// \returns `std::is_same<Token, error_token>::value`.
+        explicit constexpr operator bool() const noexcept
+        {
+            return std::is_same<Token, error_token>::value;
+        }
+
+        /// \returns `std::is_same<Token, Other>::value`.
+        template <class Other>
+        constexpr bool is(Other = {}) const noexcept
+        {
+            return std::is_same<Token, Other>::value;
+        }
+
+        /// \returns `Category<Token>::value`.
+        template <template <typename> class Category>
+        constexpr bool is_category() const noexcept
+        {
+            return Category<Token>::value;
+        }
+
+        /// \returns `Token::name`.
+        constexpr const char* name() const noexcept
+        {
+            return Token::name;
+        }
+
+        /// \returns The spelling of the token.
+        constexpr token_spelling spelling() const noexcept
+        {
+            return spelling_;
+        }
+
+        /// \returns The offset of the token inside the character range of the tokenizer.
+        template <class TokenSpec>
+        constexpr std::size_t offset(const tokenizer<TokenSpec>& tokenizer) const noexcept
+        {
+            return static_cast<std::size_t>(spelling_.data() - tokenizer.begin_ptr());
+        }
+
+    private:
+        token_spelling spelling_;
+    };
 } // namespace lex
 } // namespace foonathan
 

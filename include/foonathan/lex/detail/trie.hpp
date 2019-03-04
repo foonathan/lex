@@ -165,7 +165,7 @@ namespace lex
                 template <class Rule>
                 using insert_rule = std::conditional_t<
                     Rule::is_conflicting_literal(token_kind<TokenSpec>::from_id(Id)),
-                    // if it is conflicting: inserto into *this and children
+                    // if it is conflicting: insert into *this and children
                     terminal_node<C, Id, insert_rule_into_children<Rule, ChildNodes>, Rules...,
                                   Rule>,
                     // otherwise just into children

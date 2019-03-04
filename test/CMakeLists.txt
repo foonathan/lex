@@ -51,6 +51,7 @@ set(tests
     ascii.cpp
     identifier_token.cpp
     literal_token.cpp
+    production_rule_token.cpp
     rule_token.cpp
     tokenizer.cpp
     whitespace_token.cpp)

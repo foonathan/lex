@@ -25,7 +25,7 @@ namespace lex
                 constexpr auto index = detail::index_of<Grammar, Production>::value;
                 static_assert(detail::contains<Grammar, Production>::value,
                               "not one of the specified productions");
-                return static_cast<id_type<Production>>(index);
+                return static_cast<id_type<Grammar>>(index);
             }
         };
 

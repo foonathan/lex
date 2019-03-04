@@ -23,12 +23,13 @@ target_include_directories(foonathan_lex SYSTEM INTERFACE
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
 
 target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
-                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_base.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
                >)
 target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
@@ -36,7 +37,10 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_error.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_result.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp

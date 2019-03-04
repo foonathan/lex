@@ -18,9 +18,16 @@ namespace lex
     template <class... Tokens>
     using token_spec = detail::type_list<Tokens...>;
 
+    /// \exclude
+    namespace production_rule
+    {
+        struct production_adl
+        {};
+    } // namespace production_rule
+
     namespace detail
     {
-        struct base_token
+        struct base_token : production_rule::production_adl
         {};
     } // namespace detail
 
