@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_RULE_PRODUCTION_HPP_INCLUDED
 #define FOONATHAN_LEX_RULE_PRODUCTION_HPP_INCLUDED
 
+#include <foonathan/lex/detail/production_rule_production.hpp>
 #include <foonathan/lex/detail/production_rule_token.hpp>
 #include <foonathan/lex/grammar.hpp>
 #include <foonathan/lex/parse_error.hpp>
@@ -32,6 +33,12 @@ namespace lex
             struct make_rule_impl<Token, std::enable_if_t<is_token<Token>::value>>
             {
                 using type = token<Token>;
+            };
+
+            template <class Production>
+            struct make_rule_impl<Production, std::enable_if_t<is_production<Production>::value>>
+            {
+                using type = production<Production>;
             };
 
             template <typename T>
@@ -70,11 +77,24 @@ namespace lex
             }
 
             template <class Rule1, class Rule2>
-            constexpr auto make_choice(
+            constexpr auto make_sequence(
                 Rule1, Rule2,
-                std::enable_if_t<is_token_rule<Rule1>::value && is_token_rule<Rule2>::value,
-                                 int*> = 0)
+                std::enable_if_t<!is_token_rule<Rule1>::value || !is_token_rule<Rule2>::value,
+                                 short*> = 0)
             {
+                return sequence<Rule1, Rule2>{};
+            }
+            template <class... Rules, class Rule2>
+            constexpr auto make_sequence(sequence<Rules...>, Rule2)
+            {
+                return sequence<Rules..., Rule2>{};
+            }
+
+            template <class Rule1, class Rule2>
+            constexpr auto make_token_choice(Rule1, Rule2)
+            {
+                static_assert(is_token_rule<Rule1>::value && is_token_rule<Rule2>::value,
+                              "/ can note be used with productions, use | instead");
                 return typename Rule1::template choice_with<Rule2>{};
             }
         } // namespace detail
@@ -102,14 +122,15 @@ namespace lex
         constexpr auto operator/(Rule1 rule1, Rule2 rule2) noexcept
         {
             (void)rule1, (void)rule2;
-            return detail::make_choice(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
+            return detail::make_token_choice(detail::make_rule<Rule1>{},
+                                             detail::make_rule<Rule2>{});
         }
 
         template <class Rule>
         constexpr auto opt(Rule rule) noexcept
         {
             (void)rule;
-            return detail::make_choice(detail::make_rule<Rule>{}, detail::token_sequence<>{});
+            return detail::make_token_choice(detail::make_rule<Rule>{}, detail::token_sequence<>{});
         }
     } // namespace production_rule
 
