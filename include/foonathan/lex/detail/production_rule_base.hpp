@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_PRODUCTION_RULE_BASE_HPP_INCLUDED
 #define FOONATHAN_LEX_PRODUCTION_RULE_BASE_HPP_INCLUDED
 
+#include <foonathan/lex/grammar.hpp>
 #include <foonathan/lex/parse_result.hpp>
 #include <foonathan/lex/tokenizer.hpp>
 
@@ -48,6 +49,29 @@ namespace lex
                 static constexpr auto parse(tokenizer<TokenSpec>&, Func& f, Args&&... args)
                 {
                     return lex::detail::apply_parse_result(f, TLP{}, static_cast<Args&&>(args)...);
+                }
+            };
+
+            /// A parsing callback that ignores all arguments.
+            struct ignore_callback
+            {
+                template <typename... Args>
+                constexpr void operator()(Args&&...) const
+                {}
+            };
+
+            /// A parser that just returns success or not if it matched.
+            template <class TokenSpec>
+            struct test_parser
+            {
+                // actual production type does not matter here
+                using grammar = lex::grammar<TokenSpec, int>;
+                using tlp     = int;
+
+                template <class Func, typename... Args>
+                static constexpr auto parse(tokenizer<TokenSpec>&, Func&, Args&&...)
+                {
+                    return lex::parse_result<void>::success();
                 }
             };
         } // namespace detail

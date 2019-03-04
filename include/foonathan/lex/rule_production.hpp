@@ -97,6 +97,21 @@ namespace lex
                               "/ can note be used with productions, use | instead");
                 return typename Rule1::template choice_with<Rule2>{};
             }
+
+            template <class Rule1, class Rule2>
+            constexpr auto make_choice(Rule1, Rule2)
+            {
+                static_assert(is_choice_rule<Rule1>::value && is_choice_rule<Rule2>::value,
+                              "need to use >> to use this rule in a choice");
+                return choice<Rule1, Rule2>{};
+            }
+            template <class... Alternatives, class Rule2>
+            constexpr auto make_choice(choice<Alternatives...>, Rule2)
+            {
+                static_assert(is_choice_rule<Rule2>::value,
+                              "need to use >> to use this rule in a choice");
+                return choice<Alternatives..., Rule2>{};
+            }
         } // namespace detail
 
         //=== atomic rules ===//
@@ -118,6 +133,7 @@ namespace lex
             return detail::make_sequence(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
         }
 
+        // TODO: check for ambiguity
         template <class Rule1, class Rule2>
         constexpr auto operator/(Rule1 rule1, Rule2 rule2) noexcept
         {
@@ -131,6 +147,27 @@ namespace lex
         {
             (void)rule;
             return detail::make_token_choice(detail::make_rule<Rule>{}, detail::token_sequence<>{});
+        }
+
+        template <class TokenRule, class Rule>
+        constexpr auto operator>>(TokenRule if_peek, Rule then)
+        {
+            (void)if_peek;
+            (void)then;
+
+            using token_rule = detail::make_rule<TokenRule>;
+            static_assert(detail::is_token_rule<token_rule>::value, "can not peek for productions");
+
+            using rule = detail::make_rule<Rule>;
+            return detail::choice_alternative<token_rule, rule>{};
+        }
+
+        template <class Rule1, class Rule2>
+        constexpr auto operator|(Rule1 rule1, Rule2 rule2)
+        {
+            (void)rule1;
+            (void)rule2;
+            return detail::make_choice(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
         }
     } // namespace production_rule
 
