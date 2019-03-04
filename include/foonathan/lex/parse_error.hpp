@@ -12,27 +12,65 @@ namespace foonathan
 {
 namespace lex
 {
-    /// While trying to parse `Production`, it expected `Token` but a different one occurred.
+    //=== unexpected_token ===//
+    /// While trying to parse `Production`, it expected `Token` but a different one was next.
     template <class Grammar, class Production = void, class Token = void>
-    struct unexpected_token_error;
+    struct unexpected_token;
 
     template <class Grammar>
-    struct unexpected_token_error<Grammar, void, void>
+    struct unexpected_token<Grammar, void, void>
     {
         production_kind<Grammar>                 production;
         token_kind<typename Grammar::token_spec> expected;
 
         template <class Production, class Token>
-        constexpr unexpected_token_error(Production p, Token t) noexcept
-        : production(p), expected(t)
+        constexpr unexpected_token(Production p, Token t) noexcept : production(p), expected(t)
         {}
     };
 
     template <class Grammar, class Production, class Token>
-    struct unexpected_token_error : unexpected_token_error<Grammar>
+    struct unexpected_token : unexpected_token<Grammar>
     {
-        constexpr unexpected_token_error(Production p, Token t) noexcept
-        : unexpected_token_error<Grammar>(p, t)
+        constexpr unexpected_token(Production p, Token t) noexcept : unexpected_token<Grammar>(p, t)
+        {}
+    };
+
+    //=== exhausted_token_choice ===//
+    /// While trying to parse `Production`, it expected one of `Alternatives` but none were next.
+    template <class Grammar, class Production = void, class... Alternatives>
+    struct exhausted_token_choice;
+
+    template <class Grammar>
+    struct exhausted_token_choice<Grammar, void>
+    {
+        production_kind<Grammar>                        production;
+        const token_kind<typename Grammar::token_spec>* alternative_array;
+        std::size_t                                     number_of_alternatives;
+
+        template <class Production, std::size_t N>
+        constexpr exhausted_token_choice(
+            Production p, const token_kind<typename Grammar::token_spec> (&array)[N]) noexcept
+        : production(p), alternative_array(array), number_of_alternatives(N)
+        {}
+
+        constexpr auto begin() const noexcept
+        {
+            return alternative_array;
+        }
+
+        constexpr auto end() const noexcept
+        {
+            return alternative_array + number_of_alternatives;
+        }
+    };
+
+    template <class Grammar, class Production, class... Alternatives>
+    struct exhausted_token_choice : exhausted_token_choice<Grammar>
+    {
+        template <std::size_t N>
+        constexpr exhausted_token_choice(
+            Production p, const token_kind<typename Grammar::token_spec> (&array)[N]) noexcept
+        : exhausted_token_choice<Grammar>(p, array)
         {}
     };
 
