@@ -89,6 +89,11 @@ namespace lex
             template <class... Choices>
             struct choice : base_choice_rule
             {
+                using peek_tokens = lex::detail::concat<lex::detail::type_list<>,
+                                                        typename Choices::peek_tokens...>;
+                static_assert(lex::detail::is_unique<peek_tokens>::value,
+                              "choice cannot be resolved with one token lookahead");
+
                 template <class Cont>
                 struct parser : Cont
                 {

@@ -133,7 +133,6 @@ namespace lex
             return detail::make_sequence(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
         }
 
-        // TODO: check for ambiguity
         template <class Rule1, class Rule2>
         constexpr auto operator/(Rule1 rule1, Rule2 rule2) noexcept
         {

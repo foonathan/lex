@@ -190,6 +190,8 @@ namespace lex
 
                 using peek_tokens = lex::detail::concat<lex::detail::type_list<>,
                                                         typename Choices::peek_tokens...>;
+                static_assert(lex::detail::is_unique<peek_tokens>::value,
+                              "token choice cannot be resolved with one token lookahead");
 
                 template <class TokenSpec>
                 static constexpr bool peek_impl(token_choice<>, const tokenizer<TokenSpec>&)
