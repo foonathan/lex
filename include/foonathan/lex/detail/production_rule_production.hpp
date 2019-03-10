@@ -22,6 +22,15 @@ namespace lex
             struct is_choice_rule : std::is_base_of<base_choice_rule, T>
             {};
 
+            template <class Rule>
+            std::true_type check_peekable(int, typename Rule::peek_tokens = {});
+            template <class Rule>
+            std::false_type check_peekable(short);
+
+            template <typename T>
+            struct is_peekable_rule : decltype(check_peekable<T>(0))
+            {};
+
             template <class Production>
             struct production : base_rule
             {
@@ -60,7 +69,7 @@ namespace lex
             };
 
             template <class TokenRule, class Rule>
-            struct choice_alternative : base_choice_rule
+            struct choice_alternative : base_rule
             {
                 using peek_tokens = typename TokenRule::peek_tokens;
 

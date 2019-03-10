@@ -101,14 +101,14 @@ namespace lex
             template <class Rule1, class Rule2>
             constexpr auto make_choice(Rule1, Rule2)
             {
-                static_assert(is_choice_rule<Rule1>::value && is_choice_rule<Rule2>::value,
+                static_assert(is_peekable_rule<Rule1>::value && is_peekable_rule<Rule2>::value,
                               "need to use >> to use this rule in a choice");
                 return choice<Rule1, Rule2>{};
             }
             template <class... Alternatives, class Rule2>
             constexpr auto make_choice(choice<Alternatives...>, Rule2)
             {
-                static_assert(is_choice_rule<Rule2>::value,
+                static_assert(is_peekable_rule<Rule2>::value,
                               "need to use >> to use this rule in a choice");
                 return choice<Alternatives..., Rule2>{};
             }
