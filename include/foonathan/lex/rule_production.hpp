@@ -117,6 +117,9 @@ namespace lex
         //=== atomic rules ===//
         constexpr auto eof = detail::silent_token<eof_token>{};
 
+        template <class Production>
+        constexpr auto recurse = detail::recurse_production<Production>{};
+
         /// Can either be used as `silent<Token>` or `silent(Token{} + Token{})`.
         template <class Rule>
         constexpr auto silent(Rule rule)
@@ -173,14 +176,33 @@ namespace lex
     template <class Derived, class Grammar>
     class rule_production : public detail::base_production
     {
-    public:
         template <class Func>
-        static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
+        static constexpr auto parse_impl(int, tokenizer<typename Grammar::token_spec>& tokenizer,
+                                         Func&& f)
+            -> parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>
         {
             using rule         = production_rule::detail::make_rule<decltype(Derived::rule())>;
             using final_parser = production_rule::detail::final_parser<Grammar, Derived>;
             using parser       = production_rule::detail::parser_for<rule, final_parser>;
             return parser::parse(tokenizer, f);
+        }
+
+        template <class Func>
+        static constexpr auto parse_impl(short, tokenizer<typename Grammar::token_spec>& tokenizer,
+                                         Func&& f)
+        {
+            using rule         = production_rule::detail::make_rule<decltype(Derived::rule())>;
+            using final_parser = production_rule::detail::final_parser<Grammar, Derived>;
+            using parser       = production_rule::detail::parser_for<rule, final_parser>;
+            return parser::parse(tokenizer, f);
+        }
+
+    public:
+        template <class Func>
+        static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
+            -> decltype(parse_impl(0, tokenizer, f))
+        {
+            return parse_impl(0, tokenizer, f);
         }
     };
 } // namespace lex

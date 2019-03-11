@@ -13,6 +13,10 @@ namespace foonathan
 {
 namespace lex
 {
+    template <class Production>
+    struct callback_result_of
+    {};
+
     /// The result of parsing a production.
     ///
     /// It either matched resulting in `T` or was not matched.

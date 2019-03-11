@@ -16,6 +16,7 @@ namespace lex
     {
         namespace detail
         {
+            //=== traits ===//
             struct base_choice_rule : base_rule
             {};
             template <typename T>
@@ -31,6 +32,7 @@ namespace lex
             struct is_peekable_rule : decltype(check_peekable<T>(0))
             {};
 
+            //=== rules ===//
             template <class Production>
             struct production : base_rule
             {
@@ -46,6 +48,51 @@ namespace lex
                         -> decltype(Cont::parse(
                             tokenizer, f, static_cast<Args&&>(args)...,
                             Production::parse(tokenizer, f).template value_or_tag<Production>()))
+                    {
+                        auto result = Production::parse(tokenizer, f);
+                        if (result.is_success())
+                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
+                                               result.template value_or_tag<Production>());
+                        else
+                            return {};
+                    }
+                };
+            };
+
+            template <class Production>
+            constexpr bool for_production = false;
+
+            template <class Func, class Production>
+            struct missing_callback_result_of
+            {
+                static_assert(for_production<Production>, "need a callback_result_of overload");
+            };
+
+            template <class Production>
+            struct recurse_production : base_rule
+            {
+                template <class Cont>
+                struct parser : Cont
+                {
+                    static_assert(is_production<Production>::value,
+                                  "only a production can be used in this context");
+
+                    template <typename Func>
+                    static constexpr auto callback_return_type(int, Func& f)
+                        -> parse_result<decltype(f(callback_result_of<Production>{}))>;
+
+                    template <typename Func>
+                    static constexpr auto callback_return_type(short, Func&)
+                    {
+                        return missing_callback_result_of<Func, Production>{};
+                    }
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                Args&&... args)
+                        -> decltype(Cont::parse(
+                            tokenizer, f, static_cast<Args&&>(args)...,
+                            callback_return_type(0, f).template value_or_tag<Production>()))
                     {
                         auto result = Production::parse(tokenizer, f);
                         if (result.is_success())

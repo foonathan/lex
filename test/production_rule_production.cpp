@@ -191,3 +191,63 @@ TEST_CASE("rule_production: choice with tokens")
     constexpr auto r3 = parse<P>(visitor{}, "a");
     verify(r3, -1);
 }
+
+TEST_CASE("rule_production: indirect recursion")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct Q>;
+    FOONATHAN_LEX_P(Q, B{} >> B{} + recurse<P> | C{});
+    FOONATHAN_LEX_P(P, A{} + Q{});
+
+    struct visitor
+    {
+        constexpr int operator()(Q, lex::static_token<B>, int value) const
+        {
+            return 1 + value;
+        }
+        constexpr int operator()(Q, lex::static_token<C>) const
+        {
+            return 0;
+        }
+
+        int           operator()(lex::callback_result_of<P>);
+        constexpr int operator()(P, lex::static_token<A>, int value) const
+        {
+            return 10 * value;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, Q, B>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, Q, C>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+
+        constexpr void operator()(lex::exhausted_token_choice<grammar, Q, B, C>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "");
+    verify(r0, -1);
+
+    constexpr auto r1 = parse<P>(visitor{}, "ac");
+    verify(r1, 0);
+
+    constexpr auto r2 = parse<P>(visitor{}, "abac");
+    verify(r2, 10);
+
+    constexpr auto r3 = parse<P>(visitor{}, "ababac");
+    verify(r3, 110);
+
+    constexpr auto r4 = parse<P>(visitor{}, "abababac");
+    verify(r4, 1110);
+
+    constexpr auto r5 = parse<P>(visitor{}, "ab");
+    verify(r5, -1);
+
+    constexpr auto r6 = parse<P>(visitor{}, "abc");
+    verify(r6, -1);
+}
