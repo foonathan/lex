@@ -74,6 +74,28 @@ namespace lex
         {}
     };
 
+    //=== exhausted_choice ===>
+    /// While trying to parse `Production`, it expected one of its alternatives, but failed.
+    template <class Grammar, class Production = void>
+    struct exhausted_choice;
+
+    template <class Grammar>
+    struct exhausted_choice<Grammar, void>
+    {
+        production_kind<Grammar> production;
+
+        template <class Production>
+        constexpr exhausted_choice(Production p) noexcept : production(p)
+        {}
+    };
+
+    template <class Grammar, class Production>
+    struct exhausted_choice : exhausted_choice<Grammar>
+    {
+        constexpr exhausted_choice(Production p) noexcept : exhausted_choice<Grammar>(p)
+        {}
+    };
+
     namespace detail
     {
         template <class Func, class Error, class Tokenizer>

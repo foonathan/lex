@@ -134,12 +134,22 @@ namespace lex
                     using tlp     = typename Cont::tlp;
 
                     template <class... Tokens, class TokenSpec, typename Func>
-                    static constexpr void report_error(lex::detail::type_list<Tokens...>,
+                    static constexpr auto report_error(lex::detail::type_list<Tokens...> list,
                                                        tokenizer<TokenSpec>& tokenizer, Func& f)
+                        -> std::enable_if_t<lex::detail::is_unique<decltype(list)>::value>
                     {
                         token_kind<TokenSpec> alternatives[] = {Tokens{}...};
                         auto                  error
                             = exhausted_token_choice<grammar, tlp, Tokens...>(tlp{}, alternatives);
+                        lex::detail::report_error(f, error, tokenizer);
+                    }
+                    template <class... Tokens, class TokenSpec, typename Func>
+                    static constexpr auto report_error(lex::detail::type_list<Tokens...> list,
+                                                       tokenizer<TokenSpec>& tokenizer, Func& f)
+                        -> std::enable_if_t<!lex::detail::is_unique<decltype(list)>::value>
+                    {
+                        // list is not unique, we can only report a more generic error
+                        auto error = exhausted_choice<grammar, tlp>(tlp{});
                         lex::detail::report_error(f, error, tokenizer);
                     }
                     template <class Token, class TokenSpec, typename Func>

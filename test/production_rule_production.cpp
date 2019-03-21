@@ -227,7 +227,7 @@ TEST_CASE("rule_production: choice with complex peek")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, A, A>, // TODO
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
