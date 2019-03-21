@@ -98,18 +98,29 @@ namespace lex
                 return typename Rule1::template choice_with<Rule2>{};
             }
 
+            template <class Rule>
+            constexpr auto make_choice_alternative(Rule)
+                -> std::enable_if_t<is_token_rule<Rule>::value, choice_alternative<Rule, Rule>>
+            {
+                return {};
+            }
+            template <class Rule>
+            constexpr auto make_choice_alternative(Rule rule)
+                -> std::enable_if_t<!is_token_rule<Rule>::value, Rule>
+            {
+                static_assert(is_choice_rule<Rule>::value,
+                              "need to use >> to use this rule in a choice");
+                return rule;
+            }
+
             template <class Rule1, class Rule2>
             constexpr auto make_choice(Rule1, Rule2)
             {
-                static_assert(is_peekable_rule<Rule1>::value && is_peekable_rule<Rule2>::value,
-                              "need to use >> to use this rule in a choice");
                 return choice<Rule1, Rule2>{};
             }
             template <class... Alternatives, class Rule2>
             constexpr auto make_choice(choice<Alternatives...>, Rule2)
             {
-                static_assert(is_peekable_rule<Rule2>::value,
-                              "need to use >> to use this rule in a choice");
                 return choice<Alternatives..., Rule2>{};
             }
         } // namespace detail
@@ -169,7 +180,9 @@ namespace lex
         {
             (void)rule1;
             (void)rule2;
-            return detail::make_choice(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
+
+            return detail::make_choice(detail::make_choice_alternative(detail::make_rule<Rule1>{}),
+                                       detail::make_choice_alternative(detail::make_rule<Rule2>{}));
         }
     } // namespace production_rule
 

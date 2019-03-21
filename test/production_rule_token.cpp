@@ -33,8 +33,8 @@ void verify(lex::parse_result<int> result, int expected)
     }
     else
     {
-        CHECK(result.is_success());
-        CHECK(result.value() == expected);
+        REQUIRE(result.is_success());
+        REQUIRE(result.value() == expected);
     }
 }
 

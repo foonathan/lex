@@ -37,6 +37,34 @@ namespace lex
             template <class... Rules>
             using parser_for = typename parser_for_impl<Rules...>::type;
 
+            //=== token check ===//
+            /// Tag type to mark any token.
+            struct any_token
+            {};
+
+            template <class TokenSpec>
+            constexpr bool peek_token_is(lex::detail::type_list<>, const tokenizer<TokenSpec>&)
+            {
+                return false;
+            }
+
+            template <class Head, class... Tail, class TokenSpec>
+            constexpr bool peek_token_is(lex::detail::type_list<Head, Tail...>,
+                                         const tokenizer<TokenSpec>& tokenizer)
+            {
+                if (tokenizer.peek().is(Head{}))
+                    return true;
+                else
+                    return peek_token_is(lex::detail::type_list<Tail...>{}, tokenizer);
+            }
+
+            template <class... Tail, class TokenSpec>
+            constexpr bool peek_token_is(lex::detail::type_list<any_token, Tail...>,
+                                         const tokenizer<TokenSpec>&)
+            {
+                return true;
+            }
+
             //=== parser implementations ===//
             /// The final parser that invokes the callback.
             template <class Grammar, class TLP>

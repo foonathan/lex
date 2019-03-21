@@ -146,7 +146,7 @@ TEST_CASE("rule_production: choice with tokens")
 {
     using grammar = lex::grammar<test_spec, struct P, struct Q1>;
     FOONATHAN_LEX_P(Q1, A{});
-    FOONATHAN_LEX_P(P, A{} >> Q1{} + C{} | B{} + C{});
+    FOONATHAN_LEX_P(P, A{} >> Q1{} + C{} | B{} + C{} | C{});
 
     struct visitor
     {
@@ -163,6 +163,10 @@ TEST_CASE("rule_production: choice with tokens")
         {
             return 11;
         }
+        constexpr int operator()(P, lex::static_token<C>) const
+        {
+            return 12;
+        }
 
         constexpr void operator()(lex::unexpected_token<grammar, Q1, A>,
                                   const lex::tokenizer<test_spec>&) const
@@ -174,7 +178,7 @@ TEST_CASE("rule_production: choice with tokens")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
+        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -186,9 +190,58 @@ TEST_CASE("rule_production: choice with tokens")
     verify(r1, 11);
 
     constexpr auto r2 = parse<P>(visitor{}, "c");
-    verify(r2, -1);
+    verify(r2, 12);
 
     constexpr auto r3 = parse<P>(visitor{}, "a");
+    verify(r3, -1);
+}
+
+TEST_CASE("rule_production: choice with complex peek")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    FOONATHAN_LEX_P(P, A{} + B{} >> A{} + B{} + C{} | A{} + C{} | A{});
+
+    struct visitor
+    {
+        constexpr int operator()(P, lex::static_token<A>, lex::static_token<B>,
+                                 lex::static_token<C>) const
+        {
+            return 1;
+        }
+        constexpr int operator()(P, lex::static_token<A>, lex::static_token<C>) const
+        {
+            return 2;
+        }
+        constexpr int operator()(P, lex::static_token<A>) const
+        {
+            return 3;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+
+        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, A, A>, // TODO
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "abc");
+    verify(r0, 1);
+
+    constexpr auto r1 = parse<P>(visitor{}, "ac");
+    verify(r1, 2);
+
+    constexpr auto r2 = parse<P>(visitor{}, "a");
+    verify(r2, 3);
+
+    constexpr auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, -1);
 }
 

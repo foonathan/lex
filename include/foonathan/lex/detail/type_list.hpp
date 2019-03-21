@@ -147,6 +147,16 @@ namespace lex
         template <class List, template <typename> class Predicate>
         using remove_if = typename filter_impl<typename List::list, Predicate>::negative;
 
+        template <typename T>
+        struct is_same_as
+        {
+            template <typename Other>
+            using predicate = std::is_same<Other, T>;
+        };
+
+        template <class List, typename T>
+        using remove = remove_if<List, is_same_as<T>::template predicate>;
+
         //=== all_of/none_of/any_of ===//
         template <bool... Bools>
         struct bool_list

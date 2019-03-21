@@ -41,13 +41,7 @@ namespace lex
                 template <class Other>
                 using choice_with = token_choice<token<Token>, Other>;
 
-                using peek_tokens = lex::detail::type_list<Token>;
-
-                template <class TokenSpec>
-                static constexpr bool peek(const tokenizer<TokenSpec>& tokenizer)
-                {
-                    return tokenizer.peek().is(Token{});
-                }
+                using leading_tokens = lex::detail::type_list<Token>;
 
                 template <class Cont>
                 struct parser : Cont
@@ -90,13 +84,7 @@ namespace lex
                 template <class Other>
                 using choice_with = token_choice<silent_token<Token>, Other>;
 
-                using peek_tokens = lex::detail::type_list<Token>;
-
-                template <class TokenSpec>
-                static constexpr bool peek(const tokenizer<TokenSpec>& tokenizer)
-                {
-                    return tokenizer.peek().is(Token{});
-                }
+                using leading_tokens = lex::detail::type_list<Token>;
 
                 template <class Cont>
                 struct parser : Cont
@@ -137,13 +125,7 @@ namespace lex
                 template <class Other>
                 using choice_with = token_choice<token_sequence<>, Other>;
 
-                using peek_tokens = lex::detail::type_list<>;
-
-                template <class TokenSpec>
-                static constexpr bool peek(const tokenizer<TokenSpec>&)
-                {
-                    return true;
-                }
+                using leading_tokens = lex::detail::type_list<any_token>;
 
                 template <class Cont>
                 using parser = Cont;
@@ -162,13 +144,7 @@ namespace lex
                 template <class Other>
                 using choice_with = token_choice<token_sequence<Head, Tail...>, Other>;
 
-                using peek_tokens = typename Head::peek_tokens;
-
-                template <class TokenSpec>
-                static constexpr bool peek(const tokenizer<TokenSpec>& tokenizer)
-                {
-                    return Head::peek(tokenizer);
-                }
+                using leading_tokens = typename Head::leading_tokens;
 
                 template <class Cont>
                 using parser = parser_for<Head, Tail..., Cont>;
@@ -188,28 +164,10 @@ namespace lex
                 template <class Other>
                 using choice_with = token_choice<Choices..., Other>;
 
-                using peek_tokens = lex::detail::concat<lex::detail::type_list<>,
-                                                        typename Choices::peek_tokens...>;
-                static_assert(lex::detail::is_unique<peek_tokens>::value,
+                using leading_tokens = lex::detail::concat<lex::detail::type_list<>,
+                                                           typename Choices::leading_tokens...>;
+                static_assert(lex::detail::is_unique<leading_tokens>::value,
                               "token choice cannot be resolved with one token lookahead");
-
-                template <class TokenSpec>
-                static constexpr bool peek_impl(token_choice<>, const tokenizer<TokenSpec>&)
-                {
-                    return false;
-                }
-                template <class Head, class... Tail, class TokenSpec>
-                static constexpr bool peek_impl(token_choice<Head, Tail...>,
-                                                const tokenizer<TokenSpec>& tokenizer)
-                {
-                    return Head::peek(tokenizer) || peek_impl(token_choice<Tail...>{}, tokenizer);
-                }
-
-                template <class TokenSpec>
-                static constexpr bool peek(const tokenizer<TokenSpec>& tokenizer)
-                {
-                    return peek_impl(token_choice<Choices...>{}, tokenizer);
-                }
 
                 template <class Cont>
                 struct parser : Cont
@@ -239,7 +197,9 @@ namespace lex
                     static constexpr R parse_impl(token_choice<>, tokenizer<TokenSpec>& tokenizer,
                                                   Func& f, Args&&...)
                     {
-                        report_error(peek_tokens{}, tokenizer, f);
+                        // need to remove the tag any_token, as it is not part of the token spec
+                        report_error(lex::detail::remove<leading_tokens, any_token>{}, tokenizer,
+                                     f);
                         return {};
                     }
                     template <class R, class Head, class... Tail, class TokenSpec, typename Func,
@@ -248,7 +208,7 @@ namespace lex
                                                   tokenizer<TokenSpec>& tokenizer, Func& f,
                                                   Args&&... args)
                     {
-                        if (Head::peek(tokenizer))
+                        if (peek_token_is(typename Head::leading_tokens{}, tokenizer))
                             return parser_for<Head, Cont>::parse(tokenizer, f,
                                                                  static_cast<Args&&>(args)...);
                         else

@@ -23,15 +23,6 @@ namespace lex
             struct is_choice_rule : std::is_base_of<base_choice_rule, T>
             {};
 
-            template <class Rule>
-            std::true_type check_peekable(int, typename Rule::peek_tokens = {});
-            template <class Rule>
-            std::false_type check_peekable(short);
-
-            template <typename T>
-            struct is_peekable_rule : decltype(check_peekable<T>(0))
-            {};
-
             //=== rules ===//
             template <class Production>
             struct production : base_rule
@@ -116,9 +107,9 @@ namespace lex
             };
 
             template <class TokenRule, class Rule>
-            struct choice_alternative : base_rule
+            struct choice_alternative : base_choice_rule
             {
-                using peek_tokens = typename TokenRule::peek_tokens;
+                using leading_tokens = typename TokenRule::leading_tokens;
 
                 template <class TokenSpec>
                 static constexpr bool peek(tokenizer<TokenSpec> tokenizer)
@@ -136,11 +127,6 @@ namespace lex
             template <class... Choices>
             struct choice : base_choice_rule
             {
-                using peek_tokens = lex::detail::concat<lex::detail::type_list<>,
-                                                        typename Choices::peek_tokens...>;
-                static_assert(lex::detail::is_unique<peek_tokens>::value,
-                              "choice cannot be resolved with one token lookahead");
-
                 template <class Cont>
                 struct parser : Cont
                 {
@@ -156,13 +142,22 @@ namespace lex
                             = exhausted_token_choice<grammar, tlp, Tokens...>(tlp{}, alternatives);
                         lex::detail::report_error(f, error, tokenizer);
                     }
+                    template <class Token, class TokenSpec, typename Func>
+                    static constexpr void report_error(lex::detail::type_list<Token>,
+                                                       tokenizer<TokenSpec>& tokenizer, Func& f)
+                    {
+                        // if there is only a single token this is an unexpected token error
+                        auto error = unexpected_token<grammar, tlp, Token>(tlp{}, Token{});
+                        lex::detail::report_error(f, error, tokenizer);
+                    }
 
                     template <class R, class TokenSpec, typename Func, typename... Args>
                     static constexpr R parse_impl(choice<>, tokenizer<TokenSpec>& tokenizer,
                                                   Func& f, Args&&...)
                     {
-                        using all_tokens = lex::detail::concat<lex::detail::type_list<>,
-                                                               typename Choices::peek_tokens...>;
+                        using all_tokens = lex::detail::concat<
+                            lex::detail::type_list<>,
+                            lex::detail::remove<typename Choices::leading_tokens, any_token>...>;
                         report_error(all_tokens{}, tokenizer, f);
                         return {};
                     }
