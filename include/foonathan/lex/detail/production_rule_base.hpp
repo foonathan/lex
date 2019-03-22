@@ -6,6 +6,7 @@
 #define FOONATHAN_LEX_PRODUCTION_RULE_BASE_HPP_INCLUDED
 
 #include <foonathan/lex/grammar.hpp>
+#include <foonathan/lex/parse_error.hpp>
 #include <foonathan/lex/parse_result.hpp>
 #include <foonathan/lex/tokenizer.hpp>
 
@@ -102,6 +103,45 @@ namespace lex
                     return lex::parse_result<void>::success();
                 }
             };
+
+            /// A parsing callback that ignores errors, but forwards everything else.
+            template <class Func>
+            struct ignore_error_callback
+            {
+                Func& f;
+
+                constexpr ignore_error_callback(Func& f) : f(f) {}
+
+                template <typename... Args>
+                constexpr auto operator()(Args&&... args) const
+                    -> decltype(f(static_cast<Args&&>(args)...))
+                {
+                    return f(static_cast<Args&&>(args)...);
+                }
+
+                template <class Grammar, class Production, class Token>
+                constexpr void operator()(unexpected_token<Grammar, Production, Token>,
+                                          const tokenizer<typename Grammar::token_spec>&) const
+                {}
+                template <class Grammar, class Production, class... Alternatives>
+                constexpr void operator()(
+                    exhausted_token_choice<Grammar, Production, Alternatives...>,
+                    const tokenizer<typename Grammar::token_spec>&) const
+                {}
+                template <class Grammar, class Production>
+                constexpr void operator()(exhausted_choice<Grammar, Production>,
+                                          const tokenizer<typename Grammar::token_spec>&) const
+                {}
+            };
+
+            /// Tries to parse using the parser.
+            /// If it fails, no error is reported.
+            template <class Parser, class TokenSpec, class Func, typename... Args>
+            constexpr auto try_parse(tokenizer<TokenSpec>& tokenizer, Func& f, Args&&... args)
+            {
+                ignore_error_callback<Func> callback(f);
+                return Parser::parse(tokenizer, callback, static_cast<Args&&>(args)...);
+            }
         } // namespace detail
     }     // namespace production_rule
 } // namespace lex

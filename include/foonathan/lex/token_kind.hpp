@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 
+#include <foonathan/lex/detail/assert.hpp>
 #include <foonathan/lex/detail/select_integer.hpp>
 #include <foonathan/lex/token_spec.hpp>
 
