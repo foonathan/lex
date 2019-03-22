@@ -29,7 +29,7 @@ void verify(lex::parse_result<int> result, int expected)
 {
     if (expected == -1)
     {
-        CHECK(!result.is_success());
+        REQUIRE(!result.is_success());
     }
     else
     {
@@ -86,6 +86,44 @@ TEST_CASE("rule_production: production")
 
     constexpr auto r2 = parse<P>(visitor{}, "abc");
     verify(r2, 4);
+
+    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    verify(r3, -1);
+}
+
+TEST_CASE("rule_production: inline")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct Q>;
+    FOONATHAN_LEX_P(P, A{} + inline_<Q> + C{});
+    FOONATHAN_LEX_P(Q, B{} + B{});
+
+    struct visitor
+    {
+        constexpr int operator()(P, lex::static_token<A>, lex::static_token<B>,
+                                 lex::static_token<B>, lex::static_token<C>) const
+        {
+            return 0;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, Q, B>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "");
+    verify(r0, -1);
+
+    constexpr auto r1 = parse<P>(visitor{}, "bb");
+    verify(r1, -1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "abbc");
+    verify(r2, 0);
 
     constexpr auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, -1);

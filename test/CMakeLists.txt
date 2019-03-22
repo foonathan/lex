@@ -28,7 +28,7 @@ target_include_directories(foonathan_lex_test_base INTERFACE
                                 ${CMAKE_CURRENT_SOURCE_DIR}/../include
                             SYSTEM INTERFACE
                                 ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_features(foonathan_lex_test_base INTERFACE cxx_std_14)
+target_compile_features(foonathan_lex_test_base INTERFACE cxx_std_17)
 target_link_libraries(foonathan_lex_test_base INTERFACE debug_assert)
 target_compile_definitions(foonathan_lex_test_base INTERFACE
                                FOONATHAN_LEX_TEST

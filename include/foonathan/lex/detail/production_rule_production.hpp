@@ -103,6 +103,43 @@ namespace lex
                                          parser_impl<Cont>>;
             };
 
+            template <class Production>
+            struct inline_production : base_rule
+            {
+                template <class Cont>
+                struct parser : Cont
+                {
+                    static_assert(is_production<Production>::value,
+                                  "only a production can be used in this context");
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                Args&&... args)
+                    {
+                        // TODO: requires C++17
+                        auto capture_callback = [&](auto&&... inline_args) {
+                            // forward the inlined arguments
+                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
+                                               static_cast<decltype(inline_args)&&>(
+                                                   inline_args)...);
+                        };
+
+                        // parse the production but capture success
+                        capture_success_callback<Func, Production, decltype(capture_callback)>
+                             callback{f, capture_callback};
+                        auto result = Production::parse(tokenizer, callback);
+                        if (result.is_success())
+                            // we've matched the production, return the parse result from the
+                            // continuation
+                            return result.value();
+                        else
+                            // we did not match the production, return an unmatched parse result of
+                            // the type of result
+                            return std::decay_t<decltype(result.value())>{};
+                    }
+                };
+            };
+
             template <class... Rules>
             struct sequence : base_rule
             {
@@ -123,9 +160,7 @@ namespace lex
                 static constexpr bool peek(tokenizer<TokenSpec> tokenizer)
                 {
                     // use alternative if rule matched
-                    ignore_callback f;
-                    return parser_for<PeekRule, test_parser<TokenSpec>>::parse(tokenizer, f)
-                        .is_success();
+                    return is_rule_parsed<PeekRule>(tokenizer);
                 }
 
                 template <class Cont>

@@ -131,6 +131,9 @@ namespace lex
         template <class Production>
         constexpr auto recurse = detail::recurse_production<Production>{};
 
+        template <class Production>
+        constexpr auto inline_ = detail::inline_production<Production>{};
+
         /// Can either be used as `silent<Token>` or `silent(Token{} + Token{})`.
         template <class Rule>
         constexpr auto silent(Rule rule)

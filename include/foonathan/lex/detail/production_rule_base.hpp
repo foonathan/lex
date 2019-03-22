@@ -104,13 +104,26 @@ namespace lex
                 }
             };
 
+            /// Whether not the parser would parse the input.
+            template <class Parser, class TokenSpec>
+            constexpr auto is_parsed(tokenizer<TokenSpec> tokenizer)
+            {
+                ignore_callback callback;
+                return Parser::parse(tokenizer, callback).is_success();
+            }
+
+            /// Whether or not the rule would parse the input.
+            template <class Rule, class TokenSpec>
+            constexpr auto is_rule_parsed(const tokenizer<TokenSpec>& tokenizer)
+            {
+                return is_parsed<parser_for<Rule, test_parser<TokenSpec>>>(tokenizer);
+            }
+
             /// A parsing callback that ignores errors, but forwards everything else.
             template <class Func>
             struct ignore_error_callback
             {
                 Func& f;
-
-                constexpr ignore_error_callback(Func& f) : f(f) {}
 
                 template <typename... Args>
                 constexpr auto operator()(Args&&... args) const
@@ -141,7 +154,7 @@ namespace lex
             {
                 auto cur_state = tokenizer;
 
-                ignore_error_callback<Func> callback(f);
+                ignore_error_callback<Func> callback{f};
                 auto result = Parser::parse(tokenizer, callback, static_cast<Args&&>(args)...);
 
                 // reset tokenizer if necessary
@@ -150,6 +163,28 @@ namespace lex
 
                 return result;
             }
+
+            /// A parsing callback that handles success of a certain production by forwarding to
+            /// another function.
+            template <class Func, class TargetProduction, class CapturedFunc>
+            struct capture_success_callback
+            {
+                Func&         f;
+                CapturedFunc& captured;
+
+                template <typename... Args>
+                constexpr auto operator()(TargetProduction, Args&&... args) const
+                {
+                    return captured(static_cast<Args&&>(args)...);
+                }
+
+                template <typename... Args>
+                constexpr auto operator()(Args&&... args) const
+                    -> decltype(f(static_cast<Args&&>(args)...))
+                {
+                    return f(static_cast<Args&&>(args)...);
+                }
+            };
         } // namespace detail
     }     // namespace production_rule
 } // namespace lex
