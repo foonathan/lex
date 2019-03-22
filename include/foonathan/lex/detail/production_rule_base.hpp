@@ -139,8 +139,16 @@ namespace lex
             template <class Parser, class TokenSpec, class Func, typename... Args>
             constexpr auto try_parse(tokenizer<TokenSpec>& tokenizer, Func& f, Args&&... args)
             {
+                auto cur_state = tokenizer;
+
                 ignore_error_callback<Func> callback(f);
-                return Parser::parse(tokenizer, callback, static_cast<Args&&>(args)...);
+                auto result = Parser::parse(tokenizer, callback, static_cast<Args&&>(args)...);
+
+                // reset tokenizer if necessary
+                if (result.is_unmatched())
+                    tokenizer = cur_state;
+
+                return result;
             }
         } // namespace detail
     }     // namespace production_rule

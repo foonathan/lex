@@ -124,7 +124,7 @@ TEST_CASE("rule_production: choice")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -178,7 +178,7 @@ TEST_CASE("rule_production: choice with tokens")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B, C>,
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -198,8 +198,9 @@ TEST_CASE("rule_production: choice with tokens")
 
 TEST_CASE("rule_production: choice with complex peek")
 {
-    using grammar = lex::grammar<test_spec, struct P>;
-    FOONATHAN_LEX_P(P, A{} + B{} >> A{} + B{} + C{} | A{} + C{} | A{});
+    using grammar = lex::grammar<test_spec, struct P, struct Q>;
+    FOONATHAN_LEX_P(Q, A{} + C{});
+    FOONATHAN_LEX_P(P, A{} + B{} >> A{} + B{} + C{} | Q{} >> A{} + C{} | A{});
 
     struct visitor
     {
@@ -269,7 +270,7 @@ TEST_CASE("rule_production: right recursion")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -320,7 +321,7 @@ TEST_CASE("rule_production: middle recursion")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -374,7 +375,7 @@ TEST_CASE("rule_production: left recursion")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
+        constexpr void operator()(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -434,7 +435,7 @@ TEST_CASE("rule_production: indirect recursion")
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_token_choice<grammar, Q, B, C>,
+        constexpr void operator()(lex::exhausted_choice<grammar, Q>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };

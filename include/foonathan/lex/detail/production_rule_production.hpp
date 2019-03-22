@@ -114,18 +114,17 @@ namespace lex
                 using parser = parser_for<Rules..., Cont>;
             };
 
-            template <class TokenRule, class Rule>
+            template <class PeekRule, class Rule>
             struct choice_alternative : base_choice_rule
             {
-                using rule           = Rule;
-                using leading_tokens = typename TokenRule::leading_tokens;
+                using rule = Rule;
 
                 template <class TokenSpec>
                 static constexpr bool peek(tokenizer<TokenSpec> tokenizer)
                 {
                     // use alternative if rule matched
                     ignore_callback f;
-                    return parser_for<TokenRule, test_parser<TokenSpec>>::parse(tokenizer, f)
+                    return parser_for<PeekRule, test_parser<TokenSpec>>::parse(tokenizer, f)
                         .is_success();
                 }
 
@@ -142,42 +141,12 @@ namespace lex
                     using grammar = typename Cont::grammar;
                     using tlp     = typename Cont::tlp;
 
-                    template <class... Tokens, class TokenSpec, typename Func>
-                    static constexpr auto report_error(lex::detail::type_list<Tokens...> list,
-                                                       tokenizer<TokenSpec>& tokenizer, Func& f)
-                        -> std::enable_if_t<lex::detail::is_unique<decltype(list)>::value>
-                    {
-                        token_kind<TokenSpec> alternatives[] = {Tokens{}...};
-                        auto                  error
-                            = exhausted_token_choice<grammar, tlp, Tokens...>(tlp{}, alternatives);
-                        lex::detail::report_error(f, error, tokenizer);
-                    }
-                    template <class... Tokens, class TokenSpec, typename Func>
-                    static constexpr auto report_error(lex::detail::type_list<Tokens...> list,
-                                                       tokenizer<TokenSpec>& tokenizer, Func& f)
-                        -> std::enable_if_t<!lex::detail::is_unique<decltype(list)>::value>
-                    {
-                        // list is not unique, we can only report a more generic error
-                        auto error = exhausted_choice<grammar, tlp>(tlp{});
-                        lex::detail::report_error(f, error, tokenizer);
-                    }
-                    template <class Token, class TokenSpec, typename Func>
-                    static constexpr void report_error(lex::detail::type_list<Token>,
-                                                       tokenizer<TokenSpec>& tokenizer, Func& f)
-                    {
-                        // if there is only a single token this is an unexpected token error
-                        auto error = unexpected_token<grammar, tlp, Token>(tlp{}, Token{});
-                        lex::detail::report_error(f, error, tokenizer);
-                    }
-
                     template <class R, class TokenSpec, typename Func>
                     static constexpr R parse_impl(choice<>, tokenizer<TokenSpec>& tokenizer,
                                                   Func& f)
                     {
-                        using all_tokens = lex::detail::concat<
-                            lex::detail::type_list<>,
-                            lex::detail::remove<typename Choices::leading_tokens, any_token>...>;
-                        report_error(all_tokens{}, tokenizer, f);
+                        auto error = exhausted_choice<grammar, tlp>(tlp{});
+                        lex::detail::report_error(f, error, tokenizer);
                         return {};
                     }
                     template <class R, class Head, class... Tail, class TokenSpec, typename Func>

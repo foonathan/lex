@@ -164,17 +164,16 @@ namespace lex
 
         constexpr auto else_ = detail::token_sequence<>{};
 
-        template <class TokenRule, class Rule>
-        constexpr auto operator>>(TokenRule if_peek, Rule then)
+        template <class PeekRule, class Rule>
+        constexpr auto operator>>(PeekRule if_peek, Rule then)
         {
             (void)if_peek;
             (void)then;
 
-            using token_rule = detail::make_rule<TokenRule>;
-            static_assert(detail::is_token_rule<token_rule>::value, "can not peek for productions");
+            using peek_rule = detail::make_rule<PeekRule>;
 
             using rule = detail::make_rule<Rule>;
-            return detail::choice_alternative<token_rule, rule>{};
+            return detail::choice_alternative<peek_rule, rule>{};
         }
 
         template <class Rule1, class Rule2>
