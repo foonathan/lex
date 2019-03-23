@@ -39,6 +39,7 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/operator_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_error.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_result.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
@@ -57,15 +58,15 @@ if(NOT dependency_via_submodule)
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(foonathan_lex-config-version.cmake COMPATIBILITY ExactVersion)
     install(TARGETS foonathan_lex EXPORT foonathan_lex_targets
-                INCLUDES DESTINATION include)
+            INCLUDES DESTINATION include)
     install(EXPORT foonathan_lex_targets
-                DESTINATION lib/cmake/foonathan_lex
-                FILE foonathan_lex-targets.cmake
-                NAMESPACE foonathan::)
+            DESTINATION lib/cmake/foonathan_lex
+            FILE foonathan_lex-targets.cmake
+            NAMESPACE foonathan::)
     install(DIRECTORY include/
-                DESTINATION include)
+            DESTINATION include)
     install(FILES foonathan_lex-config.cmake ${CMAKE_CURRENT_BINARY_DIR}/foonathan_lex-config-version.cmake
-                DESTINATION lib/cmake/foonathan_lex)
+            DESTINATION lib/cmake/foonathan_lex)
 else()
     message(STATUS "Dependency installed via submodule, installation unavailable")
 endif()

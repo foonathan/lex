@@ -145,6 +145,14 @@ namespace lex
             static_assert(required_signature<Args...>, "missing callback overload");
         };
 
+        template <class Production>
+        constexpr bool for_production = false;
+        template <class Func, class Production>
+        struct missing_callback_result_of
+        {
+            static_assert(for_production<Production>, "need a callback_result_of overload");
+        };
+
         template <typename Func, typename... Args>
         auto apply_return_type(int, Func& f, Args&&... args)
             -> decltype(f(static_cast<Args&&>(args)...));

@@ -25,15 +25,6 @@ namespace lex
 
             //=== rules ===//
             template <class Production>
-            constexpr bool for_production = false;
-
-            template <class Func, class Production>
-            struct missing_callback_result_of
-            {
-                static_assert(for_production<Production>, "need a callback_result_of overload");
-            };
-
-            template <class Production>
             struct recurse_production : base_rule
             {
                 template <class Cont>
@@ -49,7 +40,7 @@ namespace lex
                     template <typename Func>
                     static constexpr auto callback_return_type(short, Func&)
                     {
-                        return missing_callback_result_of<Func, Production>{};
+                        return lex::detail::missing_callback_result_of<Func, Production>{};
                     }
 
                     template <class TokenSpec, typename Func, typename... Args>
