@@ -69,20 +69,20 @@ void verify(lex::parse_result<int> result, int expected)
 TEST_CASE("operator_production: bin_op_single")
 {
     namespace r   = lex::operator_rule;
-    using grammar = lex::grammar<test_spec, struct P, struct primary_prod>;
-    struct primary_prod : lex::token_production<primary_prod, grammar, number>
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
     {};
     struct P : lex::operator_production<P, grammar>
     {
         using multiplication = r::bin_op_single<star>;
         using addition       = r::bin_op_single<plus, multiplication>;
 
-        using expression = r::expression<r::primary<primary_prod>, addition>;
+        using expression = r::expression<primary, addition>;
     };
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary_prod,
+        constexpr lex::static_token<number> operator()(primary,
                                                        lex::static_token<number> number) const
         {
             return number;
@@ -102,7 +102,7 @@ TEST_CASE("operator_production: bin_op_single")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary_prod, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
         constexpr void operator()(lex::unexpected_token<grammar, P, star>,

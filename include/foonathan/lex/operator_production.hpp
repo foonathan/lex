@@ -97,12 +97,34 @@ namespace lex
                                                  lhs.template value_or_tag<tlp>());
                 }
             };
+
+            template <class Production>
+            struct primary
+            {
+                template <class OpProduction>
+                struct parser
+                {
+                    template <class R, class TokenSpec, class Func>
+                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    {
+                        auto operand = Production::parse(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return {};
+                        else
+                            return lex::detail::apply_parse_result(f, OpProduction{},
+                                                                   operand.template value_or_tag<
+                                                                       Production>());
+                    }
+                };
+            };
         } // namespace detail
 
         template <class Primary, class... LowestOperators>
         struct expression
         {
-            using primary = Primary;
+            static_assert(is_production<Primary>::value, "primary must be a production");
+
+            using primary = detail::primary<Primary>;
 
             template <class OpProduction>
             struct parser
@@ -114,26 +136,6 @@ namespace lex
                 {
                     return impl::template parse_operands<
                         R>(lex::detail::type_list<LowestOperators...>{}, tokenizer, f);
-                }
-            };
-        };
-
-        template <class Production>
-        struct primary
-        {
-            template <class OpProduction>
-            struct parser
-            {
-                template <class R, class TokenSpec, class Func>
-                static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                {
-                    auto operand = Production::parse(tokenizer, f);
-                    if (operand.is_unmatched())
-                        return {};
-                    else
-                        return lex::detail::apply_parse_result(f, OpProduction{},
-                                                               operand.template value_or_tag<
-                                                                   Production>());
                 }
             };
         };
