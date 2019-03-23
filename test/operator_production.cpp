@@ -7,7 +7,7 @@
 #include <catch.hpp>
 
 #include <foonathan/lex/ascii.hpp>
-#include <foonathan/lex/rule_production.hpp>
+#include <foonathan/lex/token_production.hpp>
 
 namespace lex = foonathan::lex;
 
@@ -70,13 +70,8 @@ TEST_CASE("operator_production: bin_op_single")
 {
     namespace r   = lex::operator_rule;
     using grammar = lex::grammar<test_spec, struct P, struct primary_prod>;
-    struct primary_prod : lex::rule_production<primary_prod, grammar>
-    {
-        static constexpr auto rule()
-        {
-            return number{};
-        }
-    };
+    struct primary_prod : lex::token_production<primary_prod, grammar, number>
+    {};
     struct P : lex::operator_production<P, grammar>
     {
         using multiplication = r::bin_op_single<star>;

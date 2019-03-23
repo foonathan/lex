@@ -11,8 +11,6 @@ project(foonathan_lex VERSION 0.0.0)
 
 include(external/external.cmake)
 
-# source files
-
 # main target
 add_library(foonathan_lex INTERFACE)
 add_library(foonathan::foonathan_lex ALIAS foonathan_lex)
@@ -48,6 +46,7 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_spec.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/whitespace_token.hpp
