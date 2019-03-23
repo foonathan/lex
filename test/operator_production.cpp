@@ -68,16 +68,20 @@ void verify(lex::parse_result<int> result, int expected)
 
 TEST_CASE("operator_production: bin_op_single")
 {
-    namespace r   = lex::operator_rule;
     using grammar = lex::grammar<test_spec, struct P, struct primary>;
     struct primary : lex::token_production<primary, grammar, number>
     {};
     struct P : lex::operator_production<P, grammar>
     {
-        using multiplication = r::bin_op_single<star>;
-        using addition       = r::bin_op_single<plus, multiplication>;
+        static constexpr auto expression()
+        {
+            namespace r = lex::operator_rule;
 
-        using expression = r::expression<primary, addition>;
+            auto multiplication = r::bin_op_single<star>();
+            auto addition       = r::bin_op_single<plus>(multiplication);
+
+            return r::expression<primary>(addition);
+        }
     };
 
     struct visitor

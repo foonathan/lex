@@ -42,7 +42,7 @@ namespace lex
             {
                 using grammar = typename OpProduction::grammar;
                 using tlp     = OpProduction;
-                using primary = typename OpProduction::expression::primary;
+                using primary = typename decltype(OpProduction::expression())::primary;
 
                 template <class Operator, class TokenSpec, class Func>
                 static constexpr token<TokenSpec> parse_operator(Operator,
@@ -117,28 +117,95 @@ namespace lex
                     }
                 };
             };
+
+            template <class Primary, class... LowestOperators>
+            struct expression
+            {
+                static_assert(is_production<Primary>::value, "primary must be a production");
+
+                using primary = primary<Primary>;
+
+                template <class OpProduction>
+                struct parser
+                {
+                    using impl = parser_impl<OpProduction>;
+
+                    template <class R, class TokenSpec, class Func>
+                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    {
+                        return impl::template parse_operands<
+                            R>(lex::detail::type_list<LowestOperators...>{}, tokenizer, f);
+                    }
+                };
+            };
+
+            template <class Operator, class... Operands>
+            struct bin_op_single
+            {
+                static_assert(is_token<Operator>::value, "operator must be a token");
+
+                using leading_tokens = lex::detail::concat<lex::detail::type_list<Operator>,
+                                                           typename Operands::leading_tokens...>;
+                static_assert(lex::detail::is_unique<leading_tokens>::value,
+                              "multiple operators use the same leading operand");
+
+                template <class OpProduction>
+                struct parser
+                {
+                    using impl = parser_impl<OpProduction>;
+
+                    template <class R, class TokenSpec, class Func, class Arg>
+                    static constexpr R parse_self(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                  Arg&& lhs)
+                    {
+                        auto op = impl::parse_operator(Operator{}, tokenizer, f);
+                        if (!op)
+                            return R::success(static_cast<Arg&&>(lhs));
+
+                        auto operand = impl::template parse_operands<
+                            R>(lex::detail::type_list<Operands...>{}, tokenizer, f);
+                        if (operand.is_unmatched())
+                            return {};
+
+                        return lex::detail::apply_parse_result(f, OpProduction{},
+                                                               static_cast<Arg&&>(lhs),
+                                                               lex::static_token<Operator>(op),
+                                                               operand.template value_or_tag<
+                                                                   OpProduction>());
+                    }
+
+                    template <class R, class TokenSpec, class Func, class Arg>
+                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f, Arg&& lhs)
+                    {
+                        if (tokenizer.peek().is(Operator{}))
+                            return parse_self<R>(tokenizer, f, static_cast<Arg&&>(lhs));
+                        else
+                        {
+                            auto real_lhs = impl::template parse_operands<
+                                R>(lex::detail::type_list<Operands...>{}, tokenizer, f,
+                                   static_cast<Arg&&>(lhs));
+                            if (real_lhs.is_unmatched())
+                                return {};
+
+                            return parse_self<R>(tokenizer, f,
+                                                 real_lhs.template value_or_tag<OpProduction>());
+                        }
+                    }
+                };
+            };
         } // namespace detail
 
         template <class Primary, class... LowestOperators>
-        struct expression
+        constexpr auto expression(LowestOperators...)
         {
-            static_assert(is_production<Primary>::value, "primary must be a production");
+            return detail::expression<Primary, LowestOperators...>{};
+        }
 
-            using primary = detail::primary<Primary>;
-
-            template <class OpProduction>
-            struct parser
-            {
-                using impl = detail::parser_impl<OpProduction>;
-
-                template <class R, class TokenSpec, class Func>
-                static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                {
-                    return impl::template parse_operands<
-                        R>(lex::detail::type_list<LowestOperators...>{}, tokenizer, f);
-                }
-            };
-        };
+        template <class Operator, class... Operands>
+        constexpr auto bin_op_single(Operands...)
+        {
+            return detail::bin_op_single<Operator, Operands...>{};
+        }
 
 #if 0 // TODO
         template <class TokenOpen, class TokenClose>
@@ -189,61 +256,6 @@ namespace lex
             };
         };
 #endif
-
-        template <class Operator, class... Operands>
-        struct bin_op_single
-        {
-            static_assert(is_token<Operator>::value, "operator must be a token");
-
-            using leading_tokens = lex::detail::concat<lex::detail::type_list<Operator>,
-                                                       typename Operands::leading_tokens...>;
-            static_assert(lex::detail::is_unique<leading_tokens>::value,
-                          "multiple operators use the same leading operand");
-
-            template <class OpProduction>
-            struct parser
-            {
-                using impl = detail::parser_impl<OpProduction>;
-
-                template <class R, class TokenSpec, class Func, class Arg>
-                static constexpr R parse_self(tokenizer<TokenSpec>& tokenizer, Func& f, Arg&& lhs)
-                {
-                    auto op = impl::parse_operator(Operator{}, tokenizer, f);
-                    if (!op)
-                        return R::success(static_cast<Arg&&>(lhs));
-
-                    auto operand
-                        = impl::template parse_operands<R>(lex::detail::type_list<Operands...>{},
-                                                           tokenizer, f);
-                    if (operand.is_unmatched())
-                        return {};
-
-                    return lex::detail::apply_parse_result(f, OpProduction{},
-                                                           static_cast<Arg&&>(lhs),
-                                                           lex::static_token<Operator>(op),
-                                                           operand.template value_or_tag<
-                                                               OpProduction>());
-                }
-
-                template <class R, class TokenSpec, class Func, class Arg>
-                static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f, Arg&& lhs)
-                {
-                    if (tokenizer.peek().is(Operator{}))
-                        return parse_self<R>(tokenizer, f, static_cast<Arg&&>(lhs));
-                    else
-                    {
-                        auto real_lhs = impl::template parse_operands<
-                            R>(lex::detail::type_list<Operands...>{}, tokenizer, f,
-                               static_cast<Arg&&>(lhs));
-                        if (real_lhs.is_unmatched())
-                            return {};
-
-                        return parse_self<R>(tokenizer, f,
-                                             real_lhs.template value_or_tag<OpProduction>());
-                    }
-                }
-            };
-        };
     } // namespace operator_rule
 
     template <class Derived, class Grammar>
@@ -256,8 +268,9 @@ namespace lex
         {
             using return_type
                 = parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>;
-            return operator_rule::detail::parser_for<
-                typename Derived::expression, Derived>::template parse<return_type>(tokenizer, f);
+            using expr = decltype(Derived::expression());
+            return operator_rule::detail::parser_for<expr, Derived>::template parse<
+                return_type>(tokenizer, f);
         }
 
         template <class Func>
