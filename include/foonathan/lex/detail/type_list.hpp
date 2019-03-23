@@ -202,7 +202,7 @@ namespace lex
         template <class List, template <typename T> class Pred>
         using none_of = typename none_of_impl<typename List::list, Pred>::type;
 
-        template <class List, template <typename T> class Pred>
+        template <class List, template <typename> class Pred>
         using any_of = typename any_of_impl<typename List::list, Pred>::type;
 
         //=== for_each ===//

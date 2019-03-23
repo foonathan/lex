@@ -154,7 +154,8 @@ namespace lex
             template <class PeekRule, class Rule>
             struct choice_alternative : base_choice_rule
             {
-                using rule = Rule;
+                using peek_rule = PeekRule;
+                using rule      = Rule;
 
                 template <class TokenSpec>
                 static constexpr bool peek(tokenizer<TokenSpec> tokenizer)
@@ -170,6 +171,10 @@ namespace lex
             template <class... Choices>
             struct choice : base_choice_rule
             {
+                static_assert(lex::detail::is_unique<
+                                  lex::detail::type_list<typename Choices::peek_rule...>>::value,
+                              "duplicate alternatives in a choice");
+
                 template <class Cont>
                 struct parser : Cont
                 {
@@ -240,92 +245,6 @@ namespace lex
                 };
             };
 
-            //=== left recursion transformation ===//
-            template <class TLP, class Rule>
-            struct has_left_recursion : std::false_type
-            {
-                using tail = Rule;
-            };
-            template <class TLP>
-            struct has_left_recursion<TLP, production<TLP>> : std::true_type
-            {
-                using tail = sequence<>;
-            };
-            template <class TLP>
-            struct has_left_recursion<TLP, recurse_production<TLP>> : std::true_type
-            {
-                using tail = sequence<>;
-            };
-            template <class TLP, class Head, class... Tail>
-            struct has_left_recursion<TLP, sequence<Head, Tail...>> : has_left_recursion<TLP, Head>
-            {
-                using tail = sequence<Tail...>;
-            };
-            template <class TLP, class PeekRule, class Rule>
-            struct has_left_recursion<TLP, choice_alternative<PeekRule, Rule>>
-            : has_left_recursion<TLP, Rule>
-            {
-                using tail
-                    = choice_alternative<PeekRule, typename has_left_recursion<TLP, Rule>::tail>;
-            };
-
-            // RecursionList: all alternatives with left recursion
-            // AlternativeList:: all alternatives without
-            template <class TLP, class RecursionList, class AlternativeList>
-            struct eliminate_left_recursion_impl;
-
-            // no alternative has recursion
-            template <class TLP, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<>,
-                                                 lex::detail::type_list<Alternatives...>>
-            {
-                // just a choice of the alternatives
-                using type = choice<Alternatives...>;
-            };
-
-            // single rule has recursion
-            template <class TLP, class Rule, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<Rule>,
-                                                 lex::detail::type_list<Alternatives...>>
-            {
-                // use left_recursion_choice, passing it the tail of that rule
-                using type = left_recursion_choice<choice<Alternatives...>,
-                                                   typename has_left_recursion<TLP, Rule>::tail>;
-            };
-
-            // multiple rules have recursion, not allowed
-            template <class TLP, class... Rules, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<Rules...>,
-                                                 lex::detail::type_list<Alternatives...>>
-            {
-                static_assert(sizeof...(Rules) == 1,
-                              "only a single alternative may have left recursion");
-            };
-
-            template <class TLP, class Rule>
-            struct eliminate_left_recursion
-            {
-                // base case, nothing needs to be done
-                using type = Rule;
-            };
-
-            // only a choice, which must be a top-level rule, can be subject to left recursion,
-            // (otherwise it is infinite anyway)
-            template <class TLP, class... Alternatives>
-            struct eliminate_left_recursion<TLP, choice<Alternatives...>>
-            {
-                using alternative_rules = lex::detail::type_list<Alternatives...>;
-
-                template <class Rule>
-                using has_recursion = has_left_recursion<TLP, Rule>;
-                using left_recursion_alternatives
-                    = lex::detail::keep_if<alternative_rules, has_recursion>;
-                using other_alternatives = lex::detail::remove_if<alternative_rules, has_recursion>;
-
-                using type =
-                    typename eliminate_left_recursion_impl<TLP, left_recursion_alternatives,
-                                                           other_alternatives>::type;
-            };
         } // namespace detail
     }     // namespace production_rule
 } // namespace lex

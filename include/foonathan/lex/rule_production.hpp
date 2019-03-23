@@ -5,6 +5,7 @@
 #ifndef FOONATHAN_LEX_RULE_PRODUCTION_HPP_INCLUDED
 #define FOONATHAN_LEX_RULE_PRODUCTION_HPP_INCLUDED
 
+#include <foonathan/lex/detail/production_rule_postprocess.hpp>
 #include <foonathan/lex/detail/production_rule_production.hpp>
 #include <foonathan/lex/detail/production_rule_token.hpp>
 #include <foonathan/lex/grammar.hpp>
@@ -198,9 +199,8 @@ namespace lex
                                          Func&& f)
             -> parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>
         {
-            using rule_ = production_rule::detail::make_rule<decltype(Derived::rule())>;
-            using rule =
-                typename production_rule::detail::eliminate_left_recursion<Derived, rule_>::type;
+            using rule_        = production_rule::detail::make_rule<decltype(Derived::rule())>;
+            using rule         = production_rule::detail::postprocess<Derived, rule_>;
             using final_parser = production_rule::detail::final_parser<Grammar, Derived>;
             using parser       = production_rule::detail::parser_for<rule, final_parser>;
             return parser::parse(tokenizer, f);
@@ -210,9 +210,8 @@ namespace lex
         static constexpr auto parse_impl(short, tokenizer<typename Grammar::token_spec>& tokenizer,
                                          Func&& f)
         {
-            using rule_ = production_rule::detail::make_rule<decltype(Derived::rule())>;
-            using rule =
-                typename production_rule::detail::eliminate_left_recursion<Derived, rule_>::type;
+            using rule_        = production_rule::detail::make_rule<decltype(Derived::rule())>;
+            using rule         = production_rule::detail::postprocess<Derived, rule_>;
             using final_parser = production_rule::detail::final_parser<Grammar, Derived>;
             using parser       = production_rule::detail::parser_for<rule, final_parser>;
             return parser::parse(tokenizer, f);

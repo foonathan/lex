@@ -25,6 +25,7 @@ target_link_libraries(foonathan_lex INTERFACE debug_assert)
 target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_base.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_postprocess.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
