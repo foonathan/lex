@@ -156,6 +156,44 @@ namespace lex
             };
 
             template <class Operator, class Operand>
+            struct prefix_op_chain
+            {
+                using binary_ops = typename Operand::binary_ops;
+
+                template <class TokenSpec>
+                static constexpr bool has_matching_precedence(const token<TokenSpec>& op)
+                {
+                    return Operand::has_matching_precedence(op);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto op = tokenizer.peek();
+                    if (Operator::match(op))
+                    {
+                        tokenizer.bump();
+
+                        auto operand = parse_infix_operand<TLP>(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return {};
+
+                        return Operator::apply_prefix(f, TLP{}, op, operand);
+                    }
+                    else
+                        return Operand::template parse_infix_operand<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return parse_infix_operand<TLP>(tokenizer, f);
+                }
+            };
+
+            template <class Operator, class Operand>
             struct binary_op_single
             {
                 using binary_ops = merge_operator_spelling<Operator, typename Operand::binary_ops>;
@@ -241,6 +279,12 @@ namespace lex
         constexpr auto pre_op_single(Operand)
         {
             return detail::prefix_op_single<detail::operator_spelling<Operator...>, Operand>{};
+        }
+
+        template <class... Operator, class Operand>
+        constexpr auto pre_op_chain(Operand)
+        {
+            return detail::prefix_op_chain<detail::operator_spelling<Operator...>, Operand>{};
         }
 
         template <class... Operator, class Operand>

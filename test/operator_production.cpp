@@ -53,19 +53,20 @@ constexpr auto parse(Func&& f, const char (&str)[N])
     return TLP::parse(tokenizer, f);
 }
 
-void verify(lex::parse_result<int> result, int expected)
+constexpr struct unmatched_t
 {
-    if (expected == 0)
-    {
-        REQUIRE(!result.is_success());
-    }
-    else
-    {
-        REQUIRE(result.is_success());
-        REQUIRE(result.value() == expected);
-    }
+} unmatched;
+
+void verify(lex::parse_result<int> result, unmatched_t)
+{
+    REQUIRE(result.is_unmatched());
 }
 
+void verify(lex::parse_result<int> result, int expected)
+{
+    REQUIRE(result.is_success());
+    REQUIRE(result.value() == expected);
+}
 } // namespace
 
 TEST_CASE("operator_production: pre_op_single")
@@ -106,7 +107,7 @@ TEST_CASE("operator_production: pre_op_single")
         }
         constexpr int operator()(P, exclamation, int value) const
         {
-            return value == 0 ? 1 : -1;
+            return !value;
         }
 
         constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
@@ -124,13 +125,87 @@ TEST_CASE("operator_production: pre_op_single")
     verify(r2, 1);
 
     constexpr auto r3 = parse<P>(visitor{}, "!-2");
-    verify(r3, -1);
+    verify(r3, 0);
 
     constexpr auto r4 = parse<P>(visitor{}, "--2");
-    verify(r4, 0);
+    verify(r4, unmatched);
 
     constexpr auto r5 = parse<P>(visitor{}, "!!");
-    verify(r5, 0);
+    verify(r5, unmatched);
+
+    constexpr auto r6 = parse<P>(visitor{}, "-!2");
+    verify(r6, unmatched);
+}
+
+TEST_CASE("operator_production: pre_op_chain")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom   = r::atom<primary>;
+            auto negate = r::pre_op_chain<minus>(atom);
+            auto not_   = r::pre_op_chain<exclamation>(negate);
+
+            return not_;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, minus, int value) const
+        {
+            return -value;
+        }
+        constexpr int operator()(P, exclamation, int value) const
+        {
+            return !value;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "-3");
+    verify(r1, -3);
+
+    constexpr auto r2 = parse<P>(visitor{}, "!0");
+    verify(r2, 1);
+
+    constexpr auto r3 = parse<P>(visitor{}, "!-2");
+    verify(r3, 0);
+
+    constexpr auto r4 = parse<P>(visitor{}, "--2");
+    verify(r4, 2);
+
+    constexpr auto r5 = parse<P>(visitor{}, "!!1");
+    verify(r5, 1);
+
+    constexpr auto r6 = parse<P>(visitor{}, "!!--1");
+    verify(r6, 1);
+
+    constexpr auto r7 = parse<P>(visitor{}, "-!2");
+    verify(r7, unmatched);
 }
 
 TEST_CASE("operator_production: bin_op_single")
@@ -220,13 +295,13 @@ TEST_CASE("operator_production: bin_op_single")
     }
 
     constexpr auto r6 = parse<P>(visitor{}, "1 +");
-    verify(r6, 0);
+    verify(r6, unmatched);
 
     constexpr auto r7 = parse<P>(visitor{}, "1 * 2 + ");
-    verify(r7, 0);
+    verify(r7, unmatched);
 
     constexpr auto r8 = parse<P>(visitor{}, "1 + 2 + 3");
-    verify(r8, 0);
+    verify(r8, unmatched);
 }
 
 TEST_CASE("operator_production: bin_op_single + pre_op_single")
@@ -299,5 +374,5 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
     verify(r5, 14);
 
     constexpr auto r6 = parse<P>(visitor{}, "1 + -");
-    verify(r6, 0);
+    verify(r6, unmatched);
 }
