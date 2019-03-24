@@ -163,7 +163,7 @@ namespace lex
                         return Operator::apply_prefix(f, TLP{}, op, operand);
                     }
                     else
-                        return parse_infix_operand<Operand, TLP>(tokenizer, f);
+                        return parse_binary<Operand, TLP>(tokenizer, f);
                 }
             };
 
