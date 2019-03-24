@@ -146,7 +146,7 @@ TEST_CASE("operator_production: bin_op_single")
 
             auto atom           = r::atom<primary>;
             auto multiplication = r::bin_op_single(star{}, atom);
-            auto addition       = r::bin_op_single(plus{}, multiplication);
+            auto addition       = r::bin_op_single(plus{} / minus{}, multiplication);
 
             return r::expression(addition);
         }
@@ -173,6 +173,10 @@ TEST_CASE("operator_production: bin_op_single")
         {
             return lhs + rhs;
         }
+        constexpr int operator()(P, int lhs, minus, int rhs) const
+        {
+            return lhs - rhs;
+        }
 
         constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                   const lex::tokenizer<test_spec>&) const
@@ -182,20 +186,38 @@ TEST_CASE("operator_production: bin_op_single")
     constexpr auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
-    verify(r1, 4);
+    {
+        constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
+        verify(r1, 4);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1 * 4");
-    verify(r2, 4);
+        constexpr auto r2 = parse<P>(visitor{}, "1 * 4");
+        verify(r2, 4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 * 2 + 3");
-    verify(r3, 5);
+        constexpr auto r3 = parse<P>(visitor{}, "1 * 2 + 3");
+        verify(r3, 5);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
-    verify(r4, 7);
+        constexpr auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
+        verify(r4, 7);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1 * 2 + 3 * 4");
-    verify(r5, 14);
+        constexpr auto r5 = parse<P>(visitor{}, "1 * 2 + 3 * 4");
+        verify(r5, 14);
+    }
+    {
+        constexpr auto r1 = parse<P>(visitor{}, "1 - 3");
+        verify(r1, -2);
+
+        constexpr auto r2 = parse<P>(visitor{}, "1 * 4");
+        verify(r2, 4);
+
+        constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 3");
+        verify(r3, -1);
+
+        constexpr auto r4 = parse<P>(visitor{}, "1 - 2 * 3");
+        verify(r4, -5);
+
+        constexpr auto r5 = parse<P>(visitor{}, "1 * 2 - 3 * 4");
+        verify(r5, -10);
+    }
 
     constexpr auto r6 = parse<P>(visitor{}, "1 +");
     verify(r6, 0);
