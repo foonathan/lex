@@ -31,8 +31,8 @@ namespace lex
         {};
 
 #define FOONATHAN_LEX_ASSERT(Expr)                                                                 \
-    if (detail::assert_handler::level > 0 && !(Expr))                                              \
-    DEBUG_UNREACHABLE(detail::assert_handler{}, "internal assertion error: " #Expr)
+    if (foonathan::lex::detail::assert_handler::level > 0 && !(Expr))                              \
+    DEBUG_UNREACHABLE(foonathan::lex::detail::assert_handler{}, "internal assertion error: " #Expr)
 
         struct precondition_handler
         : debug_assert::default_handler,
@@ -40,8 +40,8 @@ namespace lex
         {};
 
 #define FOONATHAN_LEX_PRECONDITION(Expr, Str)                                                      \
-    if (detail::precondition_handler::level > 0 && !(Expr))                                        \
-    DEBUG_UNREACHABLE(detail::precondition_handler{}, #Expr ": " Str)
+    if (foonathan::lex::detail::precondition_handler::level > 0 && !(Expr))                        \
+    DEBUG_UNREACHABLE(foonathan::lex::detail::precondition_handler{}, #Expr ": " Str)
     } // namespace detail
 } // namespace lex
 } // namespace foonathan

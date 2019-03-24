@@ -18,244 +18,228 @@ namespace lex
     {
         namespace detail
         {
-            template <class Operator, class OpProduction>
-            using parser_for = typename Operator::template parser<OpProduction>;
+            template <class TLP, class Func>
+            using parse_result
+                = lex::parse_result<decltype(std::declval<Func>()(callback_result_of<TLP>{}))>;
 
-            template <class TokenSpec>
-            constexpr bool peek_token_is(lex::detail::type_list<>, const tokenizer<TokenSpec>&)
+            template <class... Tokens>
+            struct operator_spelling
             {
-                return false;
-            }
-
-            template <class Head, class... Tail, class TokenSpec>
-            constexpr bool peek_token_is(lex::detail::type_list<Head, Tail...>,
-                                         const tokenizer<TokenSpec>& tokenizer)
-            {
-                if (tokenizer.peek().is(Head{}))
-                    return true;
-                else
-                    return peek_token_is(lex::detail::type_list<Tail...>{}, tokenizer);
-            }
-
-            template <class OpProduction>
-            struct parser_impl
-            {
-                using grammar = typename OpProduction::grammar;
-                using tlp     = OpProduction;
-                using primary = typename decltype(OpProduction::expression())::primary;
-
-                template <class Operator, class TokenSpec, class Func>
-                static constexpr token<TokenSpec> parse_operator(Operator,
-                                                                 tokenizer<TokenSpec>& tokenizer,
-                                                                 Func&                 f)
+                template <class TokenSpec>
+                static constexpr bool match(const token<TokenSpec>& token)
                 {
-                    auto op = tokenizer.peek();
-                    if (!op.is(Operator{}))
-                    {
-                        auto error = unexpected_token<grammar, tlp, Operator>(tlp{}, Operator{});
-                        lex::detail::report_error(f, error, tokenizer);
-                        return {};
-                    }
-                    else
-                    {
-                        tokenizer.bump();
-                        return op;
-                    }
+                    // TODO: C++17
+                    return (token.is(Tokens{}) || ...);
                 }
 
-                template <class R, class TokenSpec, class Func, class Arg>
-                static constexpr R parse_operands(lex::detail::type_list<>, tokenizer<TokenSpec>&,
-                                                  Func&, Arg&& lhs)
+                template <class Func, class TLP, class TokenSpec>
+                static constexpr parse_result<TLP, Func> apply_prefix(
+                    Func& f, TLP, const token<TokenSpec>& op, parse_result<TLP, Func>& value)
                 {
-                    return R::success(static_cast<Arg&&>(lhs));
+                    parse_result<TLP, Func> result;
+
+                    // TODO: C++17
+                    (void)((op.is(Tokens{})
+                                ? (result = lex::detail::
+                                       apply_parse_result(f, TLP{}, lex::static_token<Tokens>(op),
+                                                          value.template value_or_tag<TLP>()),
+                                   true)
+                                : false)
+                           || ...);
+
+                    return result;
                 }
 
-                template <class R, class Head, class... Tail, class TokenSpec, class Func,
-                          class Arg>
-                static constexpr R parse_operands(lex::detail::type_list<Head, Tail...>,
-                                                  tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                  Arg&& lhs)
+                template <class Func, class TLP, class TokenSpec>
+                static constexpr parse_result<TLP, Func> apply_binary(Func& f, TLP,
+                                                                      parse_result<TLP, Func>& lhs,
+                                                                      const token<TokenSpec>&  op,
+                                                                      parse_result<TLP, Func>& rhs)
                 {
-                    if (peek_token_is(typename Head::leading_tokens{}, tokenizer))
-                        return parser_for<Head, OpProduction>::template parse<R>(tokenizer, f,
-                                                                                 static_cast<Arg&&>(
-                                                                                     lhs));
-                    else
-                        return parse_operands<R>(lex::detail::type_list<Tail...>{}, tokenizer, f,
-                                                 static_cast<Arg&&>(lhs));
-                }
+                    parse_result<TLP, Func> result;
 
-                template <class R, class... Operands, class TokenSpec, class Func>
-                static constexpr R parse_operands(lex::detail::type_list<Operands...> operands,
-                                                  tokenizer<TokenSpec>& tokenizer, Func& f)
-                {
-                    auto lhs = parser_for<primary, OpProduction>::template parse<R>(tokenizer, f);
-                    if (lhs.is_unmatched())
-                        return {};
-                    else
-                        return parse_operands<R>(operands, tokenizer, f,
-                                                 lhs.template value_or_tag<tlp>());
+                    // TODO: C++17
+                    (void)((op.is(Tokens{})
+                                ? (result = lex::detail::
+                                       apply_parse_result(f, TLP{},
+                                                          lhs.template value_or_tag<TLP>(),
+                                                          lex::static_token<Tokens>(op),
+                                                          rhs.template value_or_tag<TLP>()),
+                                   true)
+                                : false)
+                           || ...);
+
+                    return result;
                 }
             };
+
+            template <class S1, class S2>
+            struct merge_operator_spelling_impl;
+            template <class... T1, class... T2>
+            struct merge_operator_spelling_impl<operator_spelling<T1...>, operator_spelling<T2...>>
+            {
+                using type = operator_spelling<T1..., T2...>;
+            };
+            template <class S1, class S2>
+            using merge_operator_spelling = typename merge_operator_spelling_impl<S1, S2>::type;
 
             template <class Production>
-            struct primary
+            struct atom
             {
-                template <class OpProduction>
-                struct parser
+                using binary_ops = operator_spelling<>;
+
+                template <class TokenSpec>
+                static constexpr bool has_matching_precedence(const token<TokenSpec>&)
                 {
-                    template <class R, class TokenSpec, class Func>
-                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    {
-                        auto operand = Production::parse(tokenizer, f);
-                        if (operand.is_unmatched())
-                            return {};
-                        else
-                            return lex::detail::apply_parse_result(f, OpProduction{},
-                                                                   operand.template value_or_tag<
-                                                                       Production>());
-                    }
-                };
-            };
+                    return false;
+                }
 
-            template <class Primary, class... LowestOperators>
-            struct expression
-            {
-                static_assert(is_production<Primary>::value, "primary must be a production");
-
-                using primary = primary<Primary>;
-
-                template <class OpProduction>
-                struct parser
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
                 {
-                    using impl = parser_impl<OpProduction>;
-
-                    template <class R, class TokenSpec, class Func>
-                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    {
-                        return impl::template parse_operands<
-                            R>(lex::detail::type_list<LowestOperators...>{}, tokenizer, f);
-                    }
-                };
-            };
-
-            template <class Operator, class... Operands>
-            struct bin_op_single
-            {
-                static_assert(is_token<Operator>::value, "operator must be a token");
-
-                using leading_tokens = lex::detail::concat<lex::detail::type_list<Operator>,
-                                                           typename Operands::leading_tokens...>;
-                static_assert(lex::detail::is_unique<leading_tokens>::value,
-                              "multiple operators use the same leading operand");
-
-                template <class OpProduction>
-                struct parser
-                {
-                    using impl = parser_impl<OpProduction>;
-
-                    template <class R, class TokenSpec, class Func, class Arg>
-                    static constexpr R parse_self(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                  Arg&& lhs)
-                    {
-                        auto op = impl::parse_operator(Operator{}, tokenizer, f);
-                        if (!op)
-                            return R::success(static_cast<Arg&&>(lhs));
-
-                        auto operand = impl::template parse_operands<
-                            R>(lex::detail::type_list<Operands...>{}, tokenizer, f);
-                        if (operand.is_unmatched())
-                            return {};
-
-                        return lex::detail::apply_parse_result(f, OpProduction{},
-                                                               static_cast<Arg&&>(lhs),
-                                                               lex::static_token<Operator>(op),
-                                                               operand.template value_or_tag<
-                                                                   OpProduction>());
-                    }
-
-                    template <class R, class TokenSpec, class Func, class Arg>
-                    static constexpr R parse(tokenizer<TokenSpec>& tokenizer, Func& f, Arg&& lhs)
-                    {
-                        if (tokenizer.peek().is(Operator{}))
-                            return parse_self<R>(tokenizer, f, static_cast<Arg&&>(lhs));
-                        else
-                        {
-                            auto real_lhs = impl::template parse_operands<
-                                R>(lex::detail::type_list<Operands...>{}, tokenizer, f,
-                                   static_cast<Arg&&>(lhs));
-                            if (real_lhs.is_unmatched())
-                                return {};
-
-                            return parse_self<R>(tokenizer, f,
-                                                 real_lhs.template value_or_tag<OpProduction>());
-                        }
-                    }
-                };
-            };
-        } // namespace detail
-
-        template <class Primary, class... LowestOperators>
-        constexpr auto expression(LowestOperators...)
-        {
-            return detail::expression<Primary, LowestOperators...>{};
-        }
-
-        template <class Operator, class... Operands>
-        constexpr auto bin_op_single(Operands...)
-        {
-            return detail::bin_op_single<Operator, Operands...>{};
-        }
-
-#if 0 // TODO
-        template <class TokenOpen, class TokenClose>
-        struct parenthesized
-        {
-            static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
-                          "parentheses must be tokens");
-
-            using leading_token = lex::detail::type_list<TokenOpen>;
-
-            template <class Grammar, class TLP>
-            struct parser
-            {
-                template <class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> decltype(TLP::parse(tokenizer, f))
-                {
-                    // opening parenthesis
-                    auto open = tokenizer.peek();
-                    if (!open.is(TokenOpen{}))
-                    {
-                        auto error = unexpected_token<Grammar, TLP, TokenOpen>(TLP{}, TokenOpen{});
-                        lex::detail::report_error(f, error, tokenizer);
+                    auto value = Production::parse(tokenizer, f);
+                    if (value.is_unmatched())
                         return {};
-                    }
                     else
-                        tokenizer.bump();
+                        return lex::detail::apply_parse_result(f, TLP{},
+                                                               value.template value_or_tag<
+                                                                   Production>());
+                }
 
-                    // operand
-                    auto operand = TLP::parse(tokenizer, f);
-                    if (operand.is_unmatched())
-                        return {};
-
-                    // closing parenthesis
-                    auto close = tokenizer.peek();
-                    if (!open.is(TokenClose{}))
-                    {
-                        auto error
-                            = unexpected_token<Grammar, TLP, TokenClose>(TLP{}, TokenClose{});
-                        lex::detail::report_error(f, error, tokenizer);
-                        return {};
-                    }
-                    else
-                        tokenizer.bump();
-
-                    return operand;
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return parse_infix_operand<TLP>(tokenizer, f);
                 }
             };
-        };
-#endif
+
+            template <class Operator, class Operand>
+            struct prefix_op_single
+            {
+                using binary_ops = typename Operand::binary_ops;
+
+                template <class TokenSpec>
+                static constexpr bool has_matching_precedence(const token<TokenSpec>& op)
+                {
+                    return Operand::has_matching_precedence(op);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto op = tokenizer.peek();
+                    if (Operator::match(op))
+                    {
+                        tokenizer.bump();
+
+                        auto operand = Operand::template parse_infix_operand<TLP>(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return {};
+
+                        return Operator::apply_prefix(f, TLP{}, op, operand);
+                    }
+                    else
+                        return Operand::template parse_infix_operand<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return parse_infix_operand<TLP>(tokenizer, f);
+                }
+            };
+
+            template <class Operator, class Operand>
+            struct binary_op_single
+            {
+                using binary_ops = merge_operator_spelling<Operator, typename Operand::binary_ops>;
+
+                template <class TokenSpec>
+                static constexpr bool has_matching_precedence(const token<TokenSpec>& op)
+                {
+                    return Operator::match(op) || Operand::has_matching_precedence(op);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return Operand::template parse_infix_operand<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto result = parse_infix_operand<TLP>(tokenizer, f);
+                    if (result.is_unmatched())
+                        return {};
+
+                    while (true)
+                    {
+                        auto op = tokenizer.peek();
+                        if (!has_matching_precedence(op))
+                            break;
+                        else
+                            tokenizer.bump();
+
+                        auto operand = Operand::template parse_binary<TLP>(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return {};
+
+                        result = binary_ops::apply_binary(f, TLP{}, result, op, operand);
+                        if (Operator::match(op))
+                            break;
+                    }
+
+                    return result;
+                }
+            };
+
+            template <class Child>
+            struct expression
+            {
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto result = Child::template parse_binary<TLP>(tokenizer, f);
+                    if (result.is_unmatched())
+                        return {};
+                    else if (Child::has_matching_precedence(tokenizer.peek()))
+                        // TODO: error
+                        return {};
+                    else
+                        return result;
+                }
+            };
+
+        } // namespace detail
+
+        template <class Production>
+        constexpr auto atom = detail::atom<Production>{};
+
+        template <class Token, class Operand>
+        constexpr auto pre_op_single(Token, Operand)
+        {
+            return detail::prefix_op_single<detail::operator_spelling<Token>, Operand>{};
+        }
+
+        template <class Token, class Operand>
+        constexpr auto bin_op_single(Token, Operand)
+        {
+            return detail::binary_op_single<detail::operator_spelling<Token>, Operand>{};
+        }
+
+        template <class Operator>
+        constexpr auto expression(Operator)
+        {
+            return detail::expression<Operator>{};
+        }
     } // namespace operator_rule
 
     template <class Derived, class Grammar>
@@ -264,13 +248,10 @@ namespace lex
         template <class Func>
         static constexpr auto parse_impl(int, tokenizer<typename Grammar::token_spec>& tokenizer,
                                          Func&& f)
-            -> parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>
+            -> operator_rule::detail::parse_result<Derived, Func>
         {
-            using return_type
-                = parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>;
             using expr = decltype(Derived::expression());
-            return operator_rule::detail::parser_for<expr, Derived>::template parse<
-                return_type>(tokenizer, f);
+            return expr::template parse<Derived>(tokenizer, f);
         }
 
         template <class Func>
@@ -280,8 +261,6 @@ namespace lex
         }
 
     public:
-        using grammar = Grammar;
-
         template <class Func>
         static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
             -> decltype(parse_impl(0, tokenizer, f))
