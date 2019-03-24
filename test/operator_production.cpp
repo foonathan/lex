@@ -83,7 +83,7 @@ TEST_CASE("operator_production: pre_op_single")
             auto negate = r::pre_op_single(minus{}, atom);
             auto not_   = r::pre_op_single(exclamation{}, negate);
 
-            return r::expression(not_);
+            return not_;
         }
     };
 
@@ -148,7 +148,7 @@ TEST_CASE("operator_production: bin_op_single")
             auto multiplication = r::bin_op_single(star{}, atom);
             auto addition       = r::bin_op_single(plus{} / minus{}, multiplication);
 
-            return r::expression(addition);
+            return addition;
         }
     };
 
@@ -245,7 +245,7 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
             auto multiplication = r::bin_op_single(star{}, negate);
             auto addition       = r::bin_op_single(plus{}, multiplication);
 
-            return r::expression(addition);
+            return addition;
         }
     };
 

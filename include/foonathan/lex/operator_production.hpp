@@ -255,6 +255,19 @@ namespace lex
                         return result;
                 }
             };
+
+            template <class Expr>
+            struct make_expression_impl
+            {
+                using type = expression<Expr>;
+            };
+            template <class Child>
+            struct make_expression_impl<expression<Child>>
+            {
+                using type = expression<Child>;
+            };
+            template <class Expr>
+            using make_expression = typename make_expression_impl<Expr>::type;
         } // namespace detail
 
         template <class Production>
@@ -293,7 +306,7 @@ namespace lex
                                          Func&& f)
             -> operator_rule::detail::parse_result<Derived, Func>
         {
-            using expr = decltype(Derived::expression());
+            using expr = operator_rule::detail::make_expression<decltype(Derived::expression())>;
             return expr::template parse<Derived>(tokenizer, f);
         }
 
