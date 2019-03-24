@@ -84,42 +84,6 @@ namespace lex
             template <class S1, class S2>
             using merge_operator_spelling = typename merge_operator_spelling_impl<S1, S2>::type;
 
-            template <class Token>
-            struct make_operator_spelling_impl
-            {
-                static_assert(is_token<Token>::value, "operators must be single tokens");
-                using type = operator_spelling<Token>;
-            };
-            template <class... Tokens>
-            struct make_operator_spelling_impl<operator_spelling<Tokens...>>
-            {
-                using type = operator_spelling<Tokens...>;
-            };
-            template <class Operator>
-            using make_operator_spelling = typename make_operator_spelling_impl<Operator>::type;
-
-            template <class T1, class T2>
-            constexpr operator_spelling<T1, T2> make_operator(T1, T2)
-            {
-                static_assert(is_token<T1>::value && is_token<T2>::value,
-                              "operators must be single tokens");
-                return {};
-            }
-            template <class... Tokens, class T2>
-            constexpr operator_spelling<Tokens..., T2> make_operator(operator_spelling<Tokens...>,
-                                                                     T2)
-            {
-                static_assert(is_token<T2>::value, "operators must be single tokens");
-                return {};
-            }
-            template <class T1, class... Tokens>
-            constexpr operator_spelling<Tokens..., T1> make_operator(T1,
-                                                                     operator_spelling<Tokens...>)
-            {
-                static_assert(is_token<T1>::value, "operators must be single tokens");
-                return {};
-            }
-
             //=== operator parsers ===//
             template <class Production>
             struct atom
@@ -239,7 +203,7 @@ namespace lex
             };
 
             template <class Child>
-            struct expression
+            struct rule
             {
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -256,45 +220,33 @@ namespace lex
                 }
             };
 
-            template <class Expr>
-            struct make_expression_impl
+            template <class Child>
+            struct make_rule_impl
             {
-                using type = expression<Expr>;
+                using type = rule<Child>;
             };
             template <class Child>
-            struct make_expression_impl<expression<Child>>
+            struct make_rule_impl<rule<Child>>
             {
-                using type = expression<Child>;
+                using type = rule<Child>;
             };
-            template <class Expr>
-            using make_expression = typename make_expression_impl<Expr>::type;
+            template <class Rule>
+            using make_rule = typename make_rule_impl<Rule>::type;
         } // namespace detail
 
         template <class Production>
         constexpr auto atom = detail::atom<Production>{};
 
-        template <class Op1, class Op2>
-        constexpr auto operator/(Op1 op1, Op2 op2)
+        template <class... Operator, class Operand>
+        constexpr auto pre_op_single(Operand)
         {
-            return detail::make_operator(op1, op2);
+            return detail::prefix_op_single<detail::operator_spelling<Operator...>, Operand>{};
         }
 
-        template <class Operator, class Operand>
-        constexpr auto pre_op_single(Operator, Operand)
+        template <class... Operator, class Operand>
+        constexpr auto bin_op_single(Operand)
         {
-            return detail::prefix_op_single<detail::make_operator_spelling<Operator>, Operand>{};
-        }
-
-        template <class Operator, class Operand>
-        constexpr auto bin_op_single(Operator, Operand)
-        {
-            return detail::binary_op_single<detail::make_operator_spelling<Operator>, Operand>{};
-        }
-
-        template <class Operator>
-        constexpr auto expression(Operator)
-        {
-            return detail::expression<Operator>{};
+            return detail::binary_op_single<detail::operator_spelling<Operator...>, Operand>{};
         }
     } // namespace operator_rule
 
@@ -306,8 +258,8 @@ namespace lex
                                          Func&& f)
             -> operator_rule::detail::parse_result<Derived, Func>
         {
-            using expr = operator_rule::detail::make_expression<decltype(Derived::expression())>;
-            return expr::template parse<Derived>(tokenizer, f);
+            using rule = operator_rule::detail::make_rule<decltype(Derived::rule())>;
+            return rule::template parse<Derived>(tokenizer, f);
         }
 
         template <class Func>

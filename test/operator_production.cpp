@@ -75,13 +75,13 @@ TEST_CASE("operator_production: pre_op_single")
     {};
     struct P : lex::operator_production<P, grammar>
     {
-        static constexpr auto expression()
+        static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
             auto atom   = r::atom<primary>;
-            auto negate = r::pre_op_single(minus{}, atom);
-            auto not_   = r::pre_op_single(exclamation{}, negate);
+            auto negate = r::pre_op_single<minus>(atom);
+            auto not_   = r::pre_op_single<exclamation>(negate);
 
             return not_;
         }
@@ -140,13 +140,13 @@ TEST_CASE("operator_production: bin_op_single")
     {};
     struct P : lex::operator_production<P, grammar>
     {
-        static constexpr auto expression()
+        static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
             auto atom           = r::atom<primary>;
-            auto multiplication = r::bin_op_single(star{}, atom);
-            auto addition       = r::bin_op_single(plus{} / minus{}, multiplication);
+            auto multiplication = r::bin_op_single<star>(atom);
+            auto addition       = r::bin_op_single<plus, minus>(multiplication);
 
             return addition;
         }
@@ -236,14 +236,14 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
     {};
     struct P : lex::operator_production<P, grammar>
     {
-        static constexpr auto expression()
+        static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
             auto atom           = r::atom<primary>;
-            auto negate         = r::pre_op_single(minus{}, atom);
-            auto multiplication = r::bin_op_single(star{}, negate);
-            auto addition       = r::bin_op_single(plus{}, multiplication);
+            auto negate         = r::pre_op_single<minus>(atom);
+            auto multiplication = r::bin_op_single<star>(negate);
+            auto addition       = r::bin_op_single<plus>(multiplication);
 
             return addition;
         }
