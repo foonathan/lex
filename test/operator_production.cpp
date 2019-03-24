@@ -376,3 +376,111 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
     constexpr auto r6 = parse<P>(visitor{}, "1 + -");
     verify(r6, unmatched);
 }
+
+TEST_CASE("operator_production: bin_op_left")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom     = r::atom<primary>;
+            auto addition = r::bin_op_left<minus>(atom);
+
+            return addition;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int lhs, minus, int rhs) const
+        {
+            return lhs - rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "1 - 2");
+    verify(r1, -1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+    verify(r2, -4);
+
+    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - ");
+    verify(r3, unmatched);
+}
+
+TEST_CASE("operator_production: bin_op_right")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom     = r::atom<primary>;
+            auto addition = r::bin_op_right<minus>(atom);
+
+            return addition;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int lhs, minus, int rhs) const
+        {
+            return lhs - rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "1 - 2");
+    verify(r1, -1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+    verify(r2, 2);
+
+    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - ");
+    verify(r3, unmatched);
+}

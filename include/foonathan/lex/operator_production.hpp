@@ -26,6 +26,10 @@ namespace lex
             template <class... Tokens>
             struct operator_spelling
             {
+                static_assert(
+                    lex::detail::all_of<lex::detail::type_list<Tokens...>, is_token>::value,
+                    "operators must be single tokens");
+
                 template <class TokenSpec>
                 static constexpr bool match(const token<TokenSpec>& token)
                 {
@@ -117,8 +121,15 @@ namespace lex
                 }
             };
 
-            template <class Operator, class Operand>
-            struct prefix_op_single
+            enum associativity
+            {
+                single,
+                left,
+                right,
+            };
+
+            template <associativity Assoc, class Operator, class Operand>
+            struct prefix_op
             {
                 using binary_ops = typename Operand::binary_ops;
 
@@ -137,7 +148,10 @@ namespace lex
                     {
                         tokenizer.bump();
 
-                        auto operand = Operand::template parse_infix_operand<TLP>(tokenizer, f);
+                        auto operand
+                            = Assoc == single
+                                  ? Operand::template parse_infix_operand<TLP>(tokenizer, f)
+                                  : parse_infix_operand<TLP>(tokenizer, f);
                         if (operand.is_unmatched())
                             return {};
 
@@ -155,46 +169,8 @@ namespace lex
                 }
             };
 
-            template <class Operator, class Operand>
-            struct prefix_op_chain
-            {
-                using binary_ops = typename Operand::binary_ops;
-
-                template <class TokenSpec>
-                static constexpr bool has_matching_precedence(const token<TokenSpec>& op)
-                {
-                    return Operand::has_matching_precedence(op);
-                }
-
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
-                {
-                    auto op = tokenizer.peek();
-                    if (Operator::match(op))
-                    {
-                        tokenizer.bump();
-
-                        auto operand = parse_infix_operand<TLP>(tokenizer, f);
-                        if (operand.is_unmatched())
-                            return {};
-
-                        return Operator::apply_prefix(f, TLP{}, op, operand);
-                    }
-                    else
-                        return Operand::template parse_infix_operand<TLP>(tokenizer, f);
-                }
-
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
-                {
-                    return parse_infix_operand<TLP>(tokenizer, f);
-                }
-            };
-
-            template <class Operator, class Operand>
-            struct binary_op_single
+            template <associativity Assoc, class Operator, class Operand>
+            struct binary_op
             {
                 using binary_ops = merge_operator_spelling<Operator, typename Operand::binary_ops>;
 
@@ -227,12 +203,14 @@ namespace lex
                         else
                             tokenizer.bump();
 
-                        auto operand = Operand::template parse_binary<TLP>(tokenizer, f);
+                        auto operand = Assoc == right
+                                           ? parse_binary<TLP>(tokenizer, f)
+                                           : Operand::template parse_binary<TLP>(tokenizer, f);
                         if (operand.is_unmatched())
                             return {};
 
                         result = binary_ops::apply_binary(f, TLP{}, result, op, operand);
-                        if (Operator::match(op))
+                        if (Assoc == single && Operator::match(op))
                             break;
                     }
 
@@ -278,19 +256,33 @@ namespace lex
         template <class... Operator, class Operand>
         constexpr auto pre_op_single(Operand)
         {
-            return detail::prefix_op_single<detail::operator_spelling<Operator...>, Operand>{};
+            return detail::prefix_op<detail::single, detail::operator_spelling<Operator...>,
+                                     Operand>{};
         }
-
         template <class... Operator, class Operand>
         constexpr auto pre_op_chain(Operand)
         {
-            return detail::prefix_op_chain<detail::operator_spelling<Operator...>, Operand>{};
+            return detail::prefix_op<detail::right, detail::operator_spelling<Operator...>,
+                                     Operand>{};
         }
 
         template <class... Operator, class Operand>
         constexpr auto bin_op_single(Operand)
         {
-            return detail::binary_op_single<detail::operator_spelling<Operator...>, Operand>{};
+            return detail::binary_op<detail::single, detail::operator_spelling<Operator...>,
+                                     Operand>{};
+        }
+        template <class... Operator, class Operand>
+        constexpr auto bin_op_left(Operand)
+        {
+            return detail::binary_op<detail::left, detail::operator_spelling<Operator...>,
+                                     Operand>{};
+        }
+        template <class... Operator, class Operand>
+        constexpr auto bin_op_right(Operand)
+        {
+            return detail::binary_op<detail::right, detail::operator_spelling<Operator...>,
+                                     Operand>{};
         }
     } // namespace operator_rule
 
