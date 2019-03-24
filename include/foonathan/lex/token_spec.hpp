@@ -24,16 +24,10 @@ namespace lex
         struct production_adl
         {};
     } // namespace production_rule
-    /// \exclude
-    namespace operator_rule
-    {
-        struct operator_adl
-        {};
-    } // namespace operator_rule
 
     namespace detail
     {
-        struct base_token : production_rule::production_adl, operator_rule::operator_adl
+        struct base_token : production_rule::production_adl
         {};
     } // namespace detail
 

@@ -118,6 +118,8 @@ namespace lex
             template <class Production>
             struct atom
             {
+                static_assert(is_production<Production>::value, "atom must be a production");
+
                 using binary_ops = operator_spelling<>;
 
                 template <class TLP, class TokenSpec, class Func>
@@ -131,6 +133,43 @@ namespace lex
                         return lex::detail::apply_parse_result(f, TLP{},
                                                                value.template value_or_tag<
                                                                    Production>());
+                }
+            };
+
+            template <class TokenOpen, class TokenClose, class Atom>
+            struct parenthesized
+            {
+                static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
+                              "parentheses must be tokens");
+
+                using binary_ops = operator_spelling<>;
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    if (tokenizer.peek().is(TokenOpen{}))
+                    {
+                        tokenizer.bump();
+
+                        auto value = TLP::parse(tokenizer, f);
+                        if (value.is_unmatched())
+                            return {};
+
+                        if (tokenizer.peek().is(TokenClose{}))
+                            tokenizer.bump();
+                        else
+                        {
+                            auto error = unexpected_token<typename TLP::grammar, TLP,
+                                                          TokenClose>(TLP{}, TokenClose{});
+                            lex::detail::report_error(f, error, tokenizer);
+                            return {};
+                        }
+
+                        return value;
+                    }
+                    else
+                        return Atom::template parse<TLP>(tokenizer, f);
                 }
             };
 
@@ -241,6 +280,20 @@ namespace lex
         template <class Production>
         constexpr auto atom = detail::atom<Production>{};
 
+        /// \exclude
+        template <class TokenOpen, class TokenClose>
+        struct parenthesized_t
+        {};
+
+        template <class TokenOpen, class TokenClose>
+        constexpr parenthesized_t<TokenOpen, TokenClose> parenthesized{};
+
+        template <class Production, class TokenOpen, class TokenClose>
+        constexpr auto operator/(detail::atom<Production>, parenthesized_t<TokenOpen, TokenClose>)
+        {
+            return detail::parenthesized<TokenOpen, TokenClose, detail::atom<Production>>{};
+        }
+
         template <class... Operator, class Operand>
         constexpr auto pre_op_single(Operand)
         {
@@ -293,6 +346,8 @@ namespace lex
         }
 
     public:
+        using grammar = Grammar;
+
         template <class Func>
         static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
             -> decltype(parse_impl(0, tokenizer, f))

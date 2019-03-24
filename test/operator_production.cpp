@@ -13,8 +13,9 @@ namespace lex = foonathan::lex;
 
 namespace
 {
-using test_spec = lex::token_spec<struct whitespace, struct number, struct plus, struct minus,
-                                  struct star, struct exclamation>;
+using test_spec
+    = lex::token_spec<struct whitespace, struct number, struct plus, struct minus, struct star,
+                      struct exclamation, struct paren_open, struct paren_close>;
 
 struct whitespace : lex::rule_token<whitespace, test_spec>, lex::whitespace_token
 {
@@ -44,6 +45,10 @@ struct minus : lex::literal_token<'-'>
 struct star : lex::literal_token<'*'>
 {};
 struct exclamation : lex::literal_token<'!'>
+{};
+struct paren_open : lex::literal_token<'('>
+{};
+struct paren_close : lex::literal_token<')'>
 {};
 
 template <class TLP, typename Func, std::size_t N>
@@ -548,4 +553,78 @@ TEST_CASE("operator_production: bin_op_right")
 
     constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - ");
     verify(r3, unmatched);
+}
+
+TEST_CASE("operator_production: parenthesized")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom           = r::atom<primary> / r::parenthesized<paren_open, paren_close>;
+            auto multiplication = r::bin_op_single<star>(atom);
+            auto addition       = r::bin_op_single<plus>(multiplication);
+
+            return addition;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, paren_close>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    auto r1 = parse<P>(visitor{}, "(1 + 3)");
+    verify(r1, 4);
+
+    constexpr auto r2 = parse<P>(visitor{}, "(1 * ((4)))");
+    verify(r2, 4);
+
+    constexpr auto r3 = parse<P>(visitor{}, "2 * (2 + 3)");
+    verify(r3, 10);
+
+    constexpr auto r4 = parse<P>(visitor{}, "(1 + 2) * 3");
+    verify(r4, 9);
+
+    constexpr auto r5 = parse<P>(visitor{}, "(1 * (2 + 3)) * 4");
+    verify(r5, 20);
+
+    constexpr auto r6 = parse<P>(visitor{}, "1 + (");
+    verify(r6, unmatched);
+
+    constexpr auto r7 = parse<P>(visitor{}, "1 * (2 + ");
+    verify(r7, unmatched);
 }
