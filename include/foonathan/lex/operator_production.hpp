@@ -56,6 +56,26 @@ namespace lex
                 }
 
                 template <class Func, class TLP, class TokenSpec>
+                static constexpr parse_result<TLP, Func> apply_postfix(
+                    Func& f, TLP, parse_result<TLP, Func>& value, const token<TokenSpec>& op)
+                {
+                    parse_result<TLP, Func> result;
+
+                    // TODO: C++17
+                    (void)((op.is(Tokens{})
+                                ? (result
+                                   = lex::detail::apply_parse_result(f, TLP{},
+                                                                     value.template value_or_tag<
+                                                                         TLP>(),
+                                                                     lex::static_token<Tokens>(op)),
+                                   true)
+                                : false)
+                           || ...);
+
+                    return result;
+                }
+
+                template <class Func, class TLP, class TokenSpec>
                 static constexpr parse_result<TLP, Func> apply_binary(Func& f, TLP,
                                                                       parse_result<TLP, Func>& lhs,
                                                                       const token<TokenSpec>&  op,
@@ -207,6 +227,32 @@ namespace lex
             };
 
             template <associativity Assoc, class Operator, class Operand>
+            struct postfix_op
+            {
+                using binary_ops = typename Operand::binary_ops;
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto result = parse_binary<Operand, TLP>(tokenizer, f);
+                    if (result.is_unmatched())
+                        return {};
+
+                    while (Operator::match(tokenizer.peek()))
+                    {
+                        auto op = tokenizer.get();
+                        result  = Operator::apply_postfix(f, TLP{}, result, op);
+
+                        if (Assoc == single)
+                            break;
+                    }
+
+                    return result;
+                }
+            };
+
+            template <associativity Assoc, class Operator, class Operand>
             struct binary_op
             {
                 using binary_ops = merge_operator_spelling<Operator, typename Operand::binary_ops>;
@@ -255,9 +301,6 @@ namespace lex
                     auto result = parse_binary<Child, TLP>(tokenizer, f);
                     if (result.is_unmatched())
                         return {};
-                    else if (Child::binary_ops::match(tokenizer.peek()))
-                        // TODO: error
-                        return {};
                     else
                         return result;
                 }
@@ -305,6 +348,19 @@ namespace lex
         {
             return detail::prefix_op<detail::right, detail::operator_spelling<Operator...>,
                                      Operand>{};
+        }
+
+        template <class... Operator, class Operand>
+        constexpr auto post_op_single(Operand)
+        {
+            return detail::postfix_op<detail::single, detail::operator_spelling<Operator...>,
+                                      Operand>{};
+        }
+        template <class... Operator, class Operand>
+        constexpr auto post_op_chain(Operand)
+        {
+            return detail::postfix_op<detail::right, detail::operator_spelling<Operator...>,
+                                      Operand>{};
         }
 
         template <class... Operator, class Operand>
