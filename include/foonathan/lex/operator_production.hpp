@@ -98,41 +98,16 @@ namespace lex
                 }
             };
 
-            template <class S1, class S2>
-            struct merge_operator_spelling_impl;
-            template <class... T1, class... T2>
-            struct merge_operator_spelling_impl<operator_spelling<T1...>, operator_spelling<T2...>>
-            {
-                using type = operator_spelling<T1..., T2...>;
-            };
-            template <class S1, class S2>
-            using merge_operator_spelling = typename merge_operator_spelling_impl<S1, S2>::type;
-
             //=== operator parsers ===//
             template <class Parser, class TLP, class TokenSpec, class Func>
-            constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
-                -> decltype(Parser::template parse_infix_operand<TLP>(tokenizer, f))
+            constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                -> parse_result<TLP, Func>
             {
-                return Parser::template parse_infix_operand<TLP>(tokenizer, f);
-            }
-            template <class Parser, class TLP, class TokenSpec, class Func>
-            constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
-                -> decltype(Parser::template parse<TLP>(tokenizer, f))
-            {
-                return Parser::template parse<TLP>(tokenizer, f);
-            }
+                auto lhs = Parser::template parse_null<TLP>(tokenizer, f);
+                if (lhs.is_unmatched())
+                    return lhs;
 
-            template <class Parser, class TLP, class TokenSpec, class Func>
-            constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
-                -> decltype(Parser::template parse_binary<TLP>(tokenizer, f))
-            {
-                return Parser::template parse_binary<TLP>(tokenizer, f);
-            }
-            template <class Parser, class TLP, class TokenSpec, class Func>
-            constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
-                -> decltype(Parser::template parse<TLP>(tokenizer, f))
-            {
-                return Parser::template parse<TLP>(tokenizer, f);
+                return Parser::template parse_left<TLP>(tokenizer, f, lhs);
             }
 
             template <class Production>
@@ -140,10 +115,8 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "atom must be a production");
 
-                using binary_ops = operator_spelling<>;
-
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
                     auto value = Production::parse(tokenizer, f);
@@ -154,6 +127,13 @@ namespace lex
                                                                value.template value_or_tag<
                                                                    Production>());
                 }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
+                                                 const parse_result<TLP, Func>& lhs)
+                {
+                    return lhs;
+                }
             };
 
             template <class TokenOpen, class TokenClose, class Atom>
@@ -162,10 +142,8 @@ namespace lex
                 static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
                               "parentheses must be tokens");
 
-                using binary_ops = operator_spelling<>;
-
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
                     if (tokenizer.peek().is(TokenOpen{}))
@@ -189,7 +167,14 @@ namespace lex
                         return value;
                     }
                     else
-                        return Atom::template parse<TLP>(tokenizer, f);
+                        return Atom::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
+                                                 const parse_result<TLP, Func>& lhs)
+                {
+                    return lhs;
                 }
             };
 
@@ -203,10 +188,8 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct prefix_op
             {
-                using binary_ops = typename Operand::binary_ops;
-
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
                     auto op = tokenizer.peek();
@@ -214,80 +197,92 @@ namespace lex
                     {
                         tokenizer.bump();
 
-                        auto operand = Assoc == single ? parse_binary<Operand, TLP>(tokenizer, f)
-                                                       : parse<TLP>(tokenizer, f);
+                        auto operand = Assoc == single ? parse<Operand, TLP>(tokenizer, f)
+                                                       : parse<prefix_op, TLP>(tokenizer, f);
                         if (operand.is_unmatched())
-                            return {};
+                            return operand;
 
                         return Operator::apply_prefix(f, TLP{}, op, operand);
                     }
                     else
-                        return parse_binary<Operand, TLP>(tokenizer, f);
+                        return Operand::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
+                    -> parse_result<TLP, Func>
+                {
+                    return Operand::template parse_left<TLP>(tokenizer, f, lhs);
                 }
             };
 
             template <associativity Assoc, class Operator, class Operand>
             struct postfix_op
             {
-                using binary_ops = typename Operand::binary_ops;
-
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
-                    auto result = parse_binary<Operand, TLP>(tokenizer, f);
-                    if (result.is_unmatched())
-                        return {};
+                    return Operand::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
+                    -> parse_result<TLP, Func>
+                {
+                    lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
+                    if (lhs.is_unmatched())
+                        return lhs;
 
                     while (Operator::match(tokenizer.peek()))
                     {
                         auto op = tokenizer.get();
-                        result  = Operator::apply_postfix(f, TLP{}, result, op);
+                        lhs     = Operator::apply_postfix(f, TLP{}, lhs, op);
 
                         if (Assoc == single)
                             break;
                     }
 
-                    return result;
+                    return lhs;
                 }
             };
 
             template <associativity Assoc, class Operator, class Operand>
             struct binary_op
             {
-                using binary_ops = merge_operator_spelling<Operator, typename Operand::binary_ops>;
-
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_infix_operand(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
-                    return detail::parse_infix_operand<Operand, TLP>(tokenizer, f);
+                    return Operand::template parse_null<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_binary(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
                     -> parse_result<TLP, Func>
                 {
-                    auto result = parse_infix_operand<TLP>(tokenizer, f);
-                    if (result.is_unmatched())
-                        return {};
+                    lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
+                    if (lhs.is_unmatched())
+                        return lhs;
 
-                    while (binary_ops::match(tokenizer.peek()))
+                    while (Operator::match(tokenizer.peek()))
                     {
                         auto op = tokenizer.get();
 
-                        auto operand = Assoc == right
-                                           ? parse_binary<TLP>(tokenizer, f)
-                                           : detail::parse_binary<Operand, TLP>(tokenizer, f);
+                        auto operand = Assoc == right ? parse<binary_op, TLP>(tokenizer, f)
+                                                      : parse<Operand, TLP>(tokenizer, f);
                         if (operand.is_unmatched())
-                            return {};
+                            return operand;
 
-                        result = binary_ops::apply_binary(f, TLP{}, result, op, operand);
+                        lhs = Operator::apply_binary(f, TLP{}, lhs, op, operand);
                         if (Assoc == single && Operator::match(op))
                             break;
                     }
 
-                    return result;
+                    return lhs;
                 }
             };
 
@@ -296,13 +291,8 @@ namespace lex
             {
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
                 {
-                    auto result = parse_binary<Child, TLP>(tokenizer, f);
-                    if (result.is_unmatched())
-                        return {};
-                    else
-                        return result;
+                    return detail::parse<Child, TLP>(tokenizer, f);
                 }
             };
 

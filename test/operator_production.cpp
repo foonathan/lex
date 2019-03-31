@@ -590,6 +590,144 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
     verify(r5, unmatched);
 }
 
+TEST_CASE("operator_production: bin_op_single + post_op_single")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom           = r::atom<primary>;
+            auto negate         = r::post_op_single<minus>(atom);
+            auto multiplication = r::bin_op_single<star>(negate);
+            auto addition       = r::bin_op_single<plus>(multiplication);
+
+            return addition;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int value, minus) const
+        {
+            return -value;
+        }
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "1- + 3");
+    verify(r1, 2);
+
+    constexpr auto r2 = parse<P>(visitor{}, "1 * 4-");
+    verify(r2, -4);
+
+    constexpr auto r3 = parse<P>(visitor{}, "1 * 2- + 3");
+    verify(r3, 1);
+
+    constexpr auto r4 = parse<P>(visitor{}, "1- + 2 * 3");
+    verify(r4, 5);
+
+    constexpr auto r5 = parse<P>(visitor{}, "1- * 2- + 3 * 4");
+    verify(r5, 14);
+
+    constexpr auto r6 = parse<P>(visitor{}, "1 + -");
+    verify(r6, unmatched);
+}
+
+TEST_CASE("operator_production: post_op_single + bin_op_single")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom     = r::atom<primary>;
+            auto addition = r::bin_op_single<plus>(atom);
+            auto not_     = r::post_op_single<exclamation>(addition);
+
+            return not_;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int value, exclamation) const
+        {
+            return !value;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
+    verify(r1, 4);
+
+    constexpr auto r2 = parse<P>(visitor{}, "1!");
+    verify(r2, 0);
+
+    constexpr auto r3 = parse<P>(visitor{}, "1+2 !");
+    verify(r3, 0);
+
+    constexpr auto r4 = parse<P>(visitor{}, "0 + 0 !");
+    verify(r4, 1);
+
+    constexpr auto r5 = parse<P>(visitor{}, "1 + !");
+    verify(r5, unmatched);
+}
+
 TEST_CASE("operator_production: bin_op_left")
 {
     using grammar = lex::grammar<test_spec, struct P, struct primary>;
