@@ -16,6 +16,10 @@ namespace lex
 {
     namespace operator_rule
     {
+        /// \exclude
+        struct operator_adl
+        {};
+
         namespace detail
         {
             template <class TLP, class Func>
@@ -111,9 +115,15 @@ namespace lex
             }
 
             template <class Production>
-            struct atom
+            struct atom : operator_adl
             {
                 static_assert(is_production<Production>::value, "atom must be a production");
+
+                template <class TokenSpec>
+                static constexpr bool try_parse_null(const token<TokenSpec>&)
+                {
+                    return false;
+                }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -137,10 +147,16 @@ namespace lex
             };
 
             template <class TokenOpen, class TokenClose, class Atom>
-            struct parenthesized
+            struct parenthesized : operator_adl
             {
                 static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
                               "parentheses must be tokens");
+
+                template <class TokenSpec>
+                static constexpr bool try_parse_null(const token<TokenSpec>&)
+                {
+                    return false;
+                }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -186,8 +202,14 @@ namespace lex
             };
 
             template <associativity Assoc, class Operator, class Operand>
-            struct prefix_op
+            struct prefix_op : operator_adl
             {
+                template <class TokenSpec>
+                static constexpr bool try_parse_null(const token<TokenSpec>& token)
+                {
+                    return Operator::match(token) || Operand::try_parse_null(token);
+                }
+
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
@@ -218,8 +240,14 @@ namespace lex
             };
 
             template <associativity Assoc, class Operator, class Operand>
-            struct postfix_op
+            struct postfix_op : operator_adl
             {
+                template <class TokenSpec>
+                static constexpr bool try_parse_null(const token<TokenSpec>& token)
+                {
+                    return Operand::try_parse_null(token);
+                }
+
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
@@ -250,8 +278,14 @@ namespace lex
             };
 
             template <associativity Assoc, class Operator, class Operand>
-            struct binary_op
+            struct binary_op : operator_adl
             {
+                template <class TokenSpec>
+                static constexpr bool try_parse_null(const token<TokenSpec>& token)
+                {
+                    return Operand::try_parse_null(token);
+                }
+
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
@@ -286,13 +320,63 @@ namespace lex
                 }
             };
 
-            template <class Child>
-            struct rule
+            template <class Child, class... Children>
+            struct rule : operator_adl
             {
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left_impl(lex::detail::type_list<>,
+                                                      tokenizer<TokenSpec>&, Func&,
+                                                      parse_result<TLP, Func>& lhs)
+                {
+                    // no left operator found
+                    return lhs;
+                }
+                template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
+                static constexpr auto parse_left_impl(lex::detail::type_list<Head, Tail...>,
+                                                      tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                      parse_result<TLP, Func>& lhs)
+                {
+                    auto old    = tokenizer.current_ptr();
+                    auto result = Head::template parse_left<TLP>(tokenizer, f, lhs);
+                    if (tokenizer.current_ptr() != old)
+                        // Head parsed something, so we're done
+                        return result;
+                    else
+                        // try the next child
+                        return parse_left_impl<TLP>(lex::detail::type_list<Tail...>{}, tokenizer, f,
+                                                    lhs);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_impl(lex::detail::type_list<>,
+                                                 tokenizer<TokenSpec>& tokenizer, Func& f)
+                {
+                    // we haven't found any prefix operator, so parse an atom
+                    // then use the first child whose parse_left() function matched something
+
+                    // to parse an atom, we can just use the parse_null() function of any child,
+                    // as we didn't have a prefix operator that would match
+                    auto atom = Child::template parse_null<TLP>(tokenizer, f);
+                    return parse_left_impl<TLP>(lex::detail::type_list<Child, Children...>{},
+                                                tokenizer, f, atom);
+                }
+                template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
+                static constexpr auto parse_impl(lex::detail::type_list<Head, Tail...>,
+                                                 tokenizer<TokenSpec>& tokenizer, Func& f)
+                {
+                    if (Head::try_parse_null(tokenizer.peek()))
+                        // we have a prefix operator that definitely narrows it down to Head
+                        return detail::parse<Head, TLP>(tokenizer, f);
+                    else
+                        // try to parse the next one instead
+                        return parse_impl<TLP>(lex::detail::type_list<Tail...>{}, tokenizer, f);
+                }
+
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
                 {
-                    return detail::parse<Child, TLP>(tokenizer, f);
+                    return parse_impl<TLP>(lex::detail::type_list<Child, Children...>{}, tokenizer,
+                                           f);
                 }
             };
 
@@ -301,13 +385,26 @@ namespace lex
             {
                 using type = rule<Child>;
             };
-            template <class Child>
-            struct make_rule_impl<rule<Child>>
+            template <class... Children>
+            struct make_rule_impl<rule<Children...>>
             {
-                using type = rule<Child>;
+                using type = rule<Children...>;
             };
             template <class Rule>
             using make_rule = typename make_rule_impl<Rule>::type;
+
+            template <class Operand1, class Operand2>
+            struct make_choice_impl
+            {
+                using type = rule<Operand1, Operand2>;
+            };
+            template <class... Children, class Operand2>
+            struct make_choice_impl<rule<Children...>, Operand2>
+            {
+                using type = rule<Children..., Operand2>;
+            };
+            template <class Operand1, class Operand2>
+            using make_choice = typename make_choice_impl<Operand1, Operand2>::type;
         } // namespace detail
 
         template <class Production>
@@ -370,6 +467,12 @@ namespace lex
         {
             return detail::binary_op<detail::right, detail::operator_spelling<Operator...>,
                                      Operand>{};
+        }
+
+        template <class Operand1, class Operand2>
+        constexpr auto operator/(Operand1, Operand2)
+        {
+            return detail::make_choice<Operand1, Operand2>{};
         }
     } // namespace operator_rule
 

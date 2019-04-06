@@ -909,3 +909,146 @@ TEST_CASE("operator_production: parenthesized")
     constexpr auto r7 = parse<P>(visitor{}, "1 * (2 + ");
     verify(r7, unmatched);
 }
+
+TEST_CASE("operator_production: choice with single atom")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom = r::atom<primary>;
+
+            auto multiplication = r::bin_op_left<star>(atom);
+            auto addition       = r::bin_op_left<plus>(atom);
+            auto difference     = r::bin_op_left<minus>(atom);
+
+            return multiplication / addition / difference;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+        constexpr int operator()(P, int lhs, minus, int rhs) const
+        {
+            return lhs - rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "1");
+    verify(r0, 1);
+
+    auto r1 = parse<P>(visitor{}, "1 + 2 + 3");
+    verify(r1, 6);
+
+    constexpr auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
+    verify(r2, 12);
+
+    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - 3");
+    verify(r3, -4);
+
+    constexpr auto r4 = parse<P>(visitor{}, "1 + 2 - 3");
+    verify(r4, unmatched);
+
+    constexpr auto r5 = parse<P>(visitor{}, "1 * 2 - 3");
+    verify(r5, unmatched);
+}
+
+TEST_CASE("operator_production: choice with unary")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom = r::atom<primary>;
+
+            auto multiplication = r::bin_op_left<star>(atom);
+
+            auto negate   = r::pre_op_single<minus>(atom);
+            auto addition = r::bin_op_left<plus>(negate);
+
+            return multiplication / addition;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+        constexpr int operator()(P, minus, int rhs) const
+        {
+            return -rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "1");
+    verify(r0, 1);
+
+    auto r1 = parse<P>(visitor{}, "1 + 2 + 3");
+    verify(r1, 6);
+
+    constexpr auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
+    verify(r2, 12);
+
+    constexpr auto r3 = parse<P>(visitor{}, "-4");
+    verify(r3, -4);
+
+    constexpr auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
+    verify(r4, unmatched);
+
+    constexpr auto r5 = parse<P>(visitor{}, "-1 * 3");
+    verify(r5, unmatched);
+}
