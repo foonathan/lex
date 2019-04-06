@@ -247,6 +247,46 @@ namespace lex
                 }
             };
 
+            template <associativity Assoc, class Operator, class Production, class Operand>
+            struct prefix_prod : operand_parser
+            {
+                static_assert(is_production<Production>::value, "must be a production");
+
+                using pre_tokens = lex::detail::concat<typename Operator::token_list,
+                                                       typename Operand::pre_tokens>;
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    if (Operator::match(tokenizer.peek()))
+                    {
+                        auto op = Production::parse(tokenizer, f);
+                        if (op.is_unmatched())
+                            return {};
+
+                        auto operand = Assoc == single ? parse<Operand, TLP>(tokenizer, f)
+                                                       : parse<prefix_prod, TLP>(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return operand;
+
+                        return lex::detail::
+                            apply_parse_result(f, TLP{}, op.template value_or_tag<Production>(),
+                                               operand.template value_or_tag<TLP>());
+                    }
+                    else
+                        return Operand::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
+                    -> parse_result<TLP, Func>
+                {
+                    return Operand::template parse_left<TLP>(tokenizer, f, lhs);
+                }
+            };
+
             template <associativity Assoc, class Operator, class Operand>
             struct postfix_op : operand_parser
             {
@@ -272,6 +312,48 @@ namespace lex
                     {
                         auto op = tokenizer.get();
                         lhs     = Operator::apply_postfix(f, TLP{}, lhs, op);
+
+                        if (Assoc == single)
+                            break;
+                    }
+
+                    return lhs;
+                }
+            };
+
+            template <associativity Assoc, class Operator, class Production, class Operand>
+            struct postfix_prod : operand_parser
+            {
+                static_assert(is_production<Production>::value, "must be a production");
+
+                using pre_tokens = typename Operand::pre_tokens;
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return Operand::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
+                    -> parse_result<TLP, Func>
+                {
+                    lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
+                    if (lhs.is_unmatched())
+                        return lhs;
+
+                    while (Operator::match(tokenizer.peek()))
+                    {
+                        auto op = Production::parse(tokenizer, f);
+                        if (op.is_unmatched())
+                            return {};
+
+                        lhs = lex::detail::apply_parse_result(f, TLP{},
+                                                              lhs.template value_or_tag<TLP>(),
+                                                              op.template value_or_tag<
+                                                                  Production>());
 
                         if (Assoc == single)
                             break;
@@ -313,6 +395,54 @@ namespace lex
 
                         lhs = Operator::apply_binary(f, TLP{}, lhs, op, operand);
                         if (Assoc == single && Operator::match(op))
+                            break;
+                    }
+
+                    return lhs;
+                }
+            };
+
+            template <associativity Assoc, class Operator, class Production, class Operand>
+            struct binary_prod : operand_parser
+            {
+                static_assert(is_production<Production>::value, "must be a production");
+
+                using pre_tokens = typename Operand::pre_tokens;
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    return Operand::template parse_null<TLP>(tokenizer, f);
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                 parse_result<TLP, Func>& lhs)
+                    -> parse_result<TLP, Func>
+                {
+                    lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
+                    if (lhs.is_unmatched())
+                        return lhs;
+
+                    while (Operator::match(tokenizer.peek()))
+                    {
+                        auto op_token = tokenizer.peek();
+                        auto op       = Production::parse(tokenizer, f);
+                        if (op.is_unmatched())
+                            return {};
+
+                        auto operand = Assoc == right ? parse<binary_prod, TLP>(tokenizer, f)
+                                                      : parse<Operand, TLP>(tokenizer, f);
+                        if (operand.is_unmatched())
+                            return operand;
+
+                        lhs = lex::detail::apply_parse_result(f, TLP{},
+                                                              lhs.template value_or_tag<TLP>(),
+                                                              op.template value_or_tag<
+                                                                  Production>(),
+                                                              operand.template value_or_tag<TLP>());
+                        if (Assoc == single && Operator::match(op_token))
                             break;
                     }
 
@@ -411,7 +541,7 @@ namespace lex
             struct make_choice_impl<rule<Children...>, Operand2>
             {
                 static constexpr auto verify = &detail::verify_operand<Operand2>;
-                using type = rule<Children..., Operand2>;
+                using type                   = rule<Children..., Operand2>;
             };
             template <class Operand1, class Operand2>
             using make_choice = typename make_choice_impl<Operand1, Operand2>::type;
@@ -445,8 +575,23 @@ namespace lex
         constexpr auto pre_op_chain(Operand)
         {
             detail::verify_operand<Operand>();
-            return detail::prefix_op<detail::right, detail::operator_spelling<Operator...>,
+            return detail::prefix_op<detail::left, detail::operator_spelling<Operator...>,
                                      Operand>{};
+        }
+
+        template <class... Operator, class Production, class Operand>
+        constexpr auto pre_prod_single(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::prefix_prod<detail::single, detail::operator_spelling<Operator...>,
+                                       Production, Operand>{};
+        }
+        template <class... Operator, class Production, class Operand>
+        constexpr auto pre_prod_chain(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::prefix_prod<detail::left, detail::operator_spelling<Operator...>,
+                                       Production, Operand>{};
         }
 
         template <class... Operator, class Operand>
@@ -462,6 +607,21 @@ namespace lex
             detail::verify_operand<Operand>();
             return detail::postfix_op<detail::right, detail::operator_spelling<Operator...>,
                                       Operand>{};
+        }
+
+        template <class... Operator, class Production, class Operand>
+        constexpr auto post_prod_single(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::postfix_prod<detail::single, detail::operator_spelling<Operator...>,
+                                        Production, Operand>{};
+        }
+        template <class... Operator, class Production, class Operand>
+        constexpr auto post_prod_chain(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::postfix_prod<detail::right, detail::operator_spelling<Operator...>,
+                                        Production, Operand>{};
         }
 
         template <class... Operator, class Operand>
@@ -484,6 +644,28 @@ namespace lex
             detail::verify_operand<Operand>();
             return detail::binary_op<detail::right, detail::operator_spelling<Operator...>,
                                      Operand>{};
+        }
+
+        template <class... Operator, class Production, class Operand>
+        constexpr auto bin_prod_single(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::binary_prod<detail::single, detail::operator_spelling<Operator...>,
+                                       Production, Operand>{};
+        }
+        template <class... Operator, class Production, class Operand>
+        constexpr auto bin_prod_left(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::binary_prod<detail::left, detail::operator_spelling<Operator...>,
+                                       Production, Operand>{};
+        }
+        template <class... Operator, class Production, class Operand>
+        constexpr auto bin_prod_right(Production, Operand)
+        {
+            detail::verify_operand<Operand>();
+            return detail::binary_prod<detail::right, detail::operator_spelling<Operator...>,
+                                       Production, Operand>{};
         }
 
         template <class Operand1, class Operand2>
