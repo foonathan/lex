@@ -124,6 +124,9 @@ namespace lex
             -> decltype(list_production<Derived, Grammar, Production, Separator>::parse(tokenizer,
                                                                                         f))
         {
+            static_assert(std::is_same<typename Derived::end_token, Close>::value,
+                          "must not override end_token");
+
             if (tokenizer.peek().is(Open{}))
                 tokenizer.bump();
             else
