@@ -12,11 +12,15 @@ namespace lex = foonathan::lex;
 
 namespace
 {
-using test_spec = lex::token_spec<struct comma, struct a>;
+using test_spec = lex::token_spec<struct comma, struct a, struct open, struct close>;
 
 struct comma : lex::literal_token<','>
 {};
 struct a : lex::literal_token<'a'>
+{};
+struct open : lex::literal_token<'('>
+{};
+struct close : lex::literal_token<')'>
 {};
 
 template <class TLP, typename Func, std::size_t N>
@@ -248,4 +252,249 @@ TEST_CASE("list_production: empty, trailing")
 
     constexpr auto r6 = parse<P>(visitor{}, ",");
     verify(r6, unmatched);
+}
+
+TEST_CASE("bracketed_list_production: non-empty, non-trailing")
+{
+    using grammar = lex::grammar<test_spec, struct A, struct P>;
+    struct A : lex::token_production<A, grammar, a>
+    {};
+    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    {};
+
+    struct visitor
+    {
+        constexpr A operator()(A, a)
+        {
+            return {};
+        }
+
+        constexpr int operator()(P, A)
+        {
+            return 1;
+        }
+        constexpr int operator()(P, int list, A)
+        {
+            return list + 1;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "()");
+    verify(r0, unmatched);
+
+    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    verify(r1, 1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    verify(r2, 2);
+
+    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    verify(r3, 3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    verify(r4, unmatched);
+
+    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    verify(r5, unmatched);
+
+    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    verify(r6, unmatched);
+}
+
+TEST_CASE("bracketed_list_production: non-empty, trailing")
+{
+    using grammar = lex::grammar<test_spec, struct A, struct P>;
+    struct A : lex::token_production<A, grammar, a>
+    {};
+    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    {
+        using allow_trailing = std::true_type;
+    };
+
+    struct visitor
+    {
+        constexpr A operator()(A, a)
+        {
+            return {};
+        }
+
+        constexpr int operator()(P, A)
+        {
+            return 1;
+        }
+        constexpr int operator()(P, int list, A)
+        {
+            return list + 1;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "()");
+    verify(r0, unmatched);
+
+    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    verify(r1, 1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    verify(r2, 2);
+
+    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    verify(r3, 3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    verify(r4, 1);
+
+    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    verify(r5, unmatched);
+
+    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    verify(r6, unmatched);
+}
+
+TEST_CASE("bracketed_list_production: empty, non-trailing")
+{
+    using grammar = lex::grammar<test_spec, struct A, struct P>;
+    struct A : lex::token_production<A, grammar, a>
+    {};
+    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    {
+        using allow_empty = std::true_type;
+    };
+
+    struct visitor
+    {
+        constexpr A operator()(A, a)
+        {
+            return {};
+        }
+
+        constexpr int operator()(P)
+        {
+            return 0;
+        }
+        constexpr int operator()(P, int list, A)
+        {
+            return list + 1;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "()");
+    verify(r0, 0);
+
+    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    verify(r1, 1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    verify(r2, 2);
+
+    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    verify(r3, 3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    verify(r4, unmatched);
+
+    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    verify(r5, unmatched);
+
+    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    verify(r6, unmatched);
+
+    constexpr auto r7 = parse<P>(visitor{}, "(,)");
+    verify(r7, unmatched);
+}
+
+TEST_CASE("bracketed_list_production: empty, trailing")
+{
+    using grammar = lex::grammar<test_spec, struct A, struct P>;
+    struct A : lex::token_production<A, grammar, a>
+    {};
+    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    {
+        using allow_empty    = std::true_type;
+        using allow_trailing = std::true_type;
+    };
+
+    struct visitor
+    {
+        constexpr A operator()(A, a)
+        {
+            return {};
+        }
+
+        constexpr int operator()(P)
+        {
+            return 0;
+        }
+        constexpr int operator()(P, int list, A)
+        {
+            return list + 1;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+
+        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
+                                  const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "()");
+    verify(r0, 0);
+
+    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    verify(r1, 1);
+
+    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    verify(r2, 2);
+
+    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    verify(r3, 3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    verify(r4, 1);
+
+    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    verify(r5, unmatched);
+
+    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    verify(r6, unmatched);
+
+    constexpr auto r7 = parse<P>(visitor{}, "(,)");
+    verify(r7, unmatched);
 }

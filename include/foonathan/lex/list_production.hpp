@@ -106,6 +106,50 @@ namespace lex
             return parse_impl<end>(typename Derived::allow_empty{}, tokenizer, f);
         }
     };
+
+    template <class Derived, class Grammar, class Open, class Production, class Separator,
+              class Close>
+    class bracketed_list_production : public detail::base_production
+    {
+        static_assert(is_token<Open>::value && is_token<Close>::value,
+                      "list brackets must be tokens");
+
+    public:
+        using end_token      = Close;
+        using allow_empty    = std::false_type;
+        using allow_trailing = std::false_type;
+
+        template <class Func>
+        static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
+            -> decltype(list_production<Derived, Grammar, Production, Separator>::parse(tokenizer,
+                                                                                        f))
+        {
+            if (tokenizer.peek().is(Open{}))
+                tokenizer.bump();
+            else
+            {
+                auto error = lex::unexpected_token<Grammar, Derived, Open>(Derived{}, Open{});
+                lex::detail::report_error(f, error, tokenizer);
+                return {};
+            }
+
+            auto result
+                = list_production<Derived, Grammar, Production, Separator>::parse(tokenizer, f);
+            if (result.is_unmatched())
+                return result;
+
+            if (tokenizer.peek().is(Close{}))
+                tokenizer.bump();
+            else
+            {
+                auto error = lex::unexpected_token<Grammar, Derived, Close>(Derived{}, Close{});
+                lex::detail::report_error(f, error, tokenizer);
+                return {};
+            }
+
+            return result;
+        }
+    };
 } // namespace lex
 } // namespace foonathan
 
