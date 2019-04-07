@@ -50,6 +50,7 @@ set(tests
     detail/trie.cpp
     ascii.cpp
     identifier_token.cpp
+    list_production.cpp
     literal_token.cpp
     operator_production.cpp
     production_rule_production.cpp

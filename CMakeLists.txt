@@ -35,6 +35,7 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/grammar.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/list_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/operator_production.hpp
