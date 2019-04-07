@@ -105,15 +105,18 @@ TEST_CASE("operator_production: pre_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, minus, int value) const
         {
             return -value;
         }
+
         constexpr int operator()(P, exclamation, int value) const
         {
             return !value;
@@ -173,15 +176,18 @@ TEST_CASE("operator_production: pre_op_chain")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, minus, int value) const
         {
             return -value;
         }
+
         constexpr int operator()(P, exclamation, int value) const
         {
             return !value;
@@ -244,15 +250,18 @@ TEST_CASE("operator_production: post_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int value, minus) const
         {
             return -value;
         }
+
         constexpr int operator()(P, int value, exclamation) const
         {
             return !value;
@@ -312,15 +321,18 @@ TEST_CASE("operator_production: post_op_chain")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int value, minus) const
         {
             return -value;
         }
+
         constexpr int operator()(P, int value, exclamation) const
         {
             return !value;
@@ -383,19 +395,23 @@ TEST_CASE("operator_production: bin_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
+
         constexpr int operator()(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
@@ -480,19 +496,23 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, minus, int value) const
         {
             return -value;
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
@@ -552,15 +572,18 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, exclamation, int value) const
         {
             return !value;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
@@ -618,19 +641,23 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int value, minus) const
         {
             return -value;
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
@@ -690,15 +717,18 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int value, exclamation) const
         {
             return !value;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
@@ -739,8 +769,9 @@ TEST_CASE("operator_production: bin_op_left")
         {
             namespace r = lex::operator_rule;
 
-            auto atom     = r::atom<primary>;
-            auto addition = r::bin_op_left<minus>(atom);
+            auto atom           = r::atom<primary>;
+            auto multiplication = r::bin_op_single<star>(atom);
+            auto addition       = r::bin_op_left<minus>(multiplication);
 
             return addition;
         }
@@ -754,11 +785,18 @@ TEST_CASE("operator_production: bin_op_left")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+
         constexpr int operator()(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
@@ -778,8 +816,14 @@ TEST_CASE("operator_production: bin_op_left")
     constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
     verify(r2, -4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - ");
-    verify(r3, unmatched);
+    constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
+    verify(r3, -3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
+    verify(r4, -7);
+
+    constexpr auto r5 = parse<P>(visitor{}, "1 - 2 - ");
+    verify(r5, unmatched);
 }
 
 TEST_CASE("operator_production: bin_op_right")
@@ -793,8 +837,9 @@ TEST_CASE("operator_production: bin_op_right")
         {
             namespace r = lex::operator_rule;
 
-            auto atom     = r::atom<primary>;
-            auto addition = r::bin_op_right<minus>(atom);
+            auto atom           = r::atom<primary>;
+            auto multiplication = r::bin_op_single<star>(atom);
+            auto addition       = r::bin_op_right<minus>(multiplication);
 
             return addition;
         }
@@ -808,11 +853,18 @@ TEST_CASE("operator_production: bin_op_right")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
+        constexpr int operator()(P, int lhs, star, int rhs) const
+        {
+            return lhs * rhs;
+        }
+
         constexpr int operator()(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
@@ -832,8 +884,14 @@ TEST_CASE("operator_production: bin_op_right")
     constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - ");
-    verify(r3, unmatched);
+    constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
+    verify(r3, 3);
+
+    constexpr auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
+    verify(r4, 5);
+
+    constexpr auto r5 = parse<P>(visitor{}, "1 - 2 - ");
+    verify(r5, unmatched);
 }
 
 TEST_CASE("operator_production: parenthesized")
@@ -863,15 +921,18 @@ TEST_CASE("operator_production: parenthesized")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
@@ -880,6 +941,7 @@ TEST_CASE("operator_production: parenthesized")
         constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
+
         constexpr void operator()(lex::unexpected_token<grammar, P, paren_close>,
                                   const lex::tokenizer<test_spec>&) const
         {}
@@ -939,19 +1001,23 @@ TEST_CASE("operator_production: choice with single atom")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
+
         constexpr int operator()(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
@@ -1011,19 +1077,23 @@ TEST_CASE("operator_production: choice with unary")
             return number;
         }
 
-        int           operator()(lex::callback_result_of<P>) const;
+        int operator()(lex::callback_result_of<P>) const;
+
         constexpr int operator()(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
+
         constexpr int operator()(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
+
         constexpr int operator()(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
+
         constexpr int operator()(P, minus, int rhs) const
         {
             return -rhs;
@@ -1081,13 +1151,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, op, int rhs) const
             {
                 return -rhs;
@@ -1096,6 +1169,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1133,13 +1207,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, op, int rhs) const
             {
                 return -rhs;
@@ -1148,6 +1225,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1185,13 +1263,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, int lhs, op) const
             {
                 return -lhs;
@@ -1200,6 +1281,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1237,13 +1319,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, int lhs, op) const
             {
                 return -lhs;
@@ -1252,6 +1337,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1289,13 +1375,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
@@ -1304,6 +1393,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1341,13 +1431,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
@@ -1356,6 +1449,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
@@ -1393,13 +1487,16 @@ TEST_CASE("operator_production: production as operator")
             {
                 return number;
             }
+
             constexpr void operator()(op, minus) const {}
 
-            int           operator()(lex::callback_result_of<P>) const;
+            int operator()(lex::callback_result_of<P>) const;
+
             constexpr int operator()(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
+
             constexpr int operator()(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
@@ -1408,6 +1505,7 @@ TEST_CASE("operator_production: production as operator")
             constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
+
             constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
                                       const lex::tokenizer<test_spec>&) const
             {}
