@@ -92,7 +92,29 @@ namespace lex
     template <class Grammar, class Production>
     struct exhausted_choice : exhausted_choice<Grammar>
     {
-        constexpr exhausted_choice(Production p) noexcept : exhausted_choice<Grammar>(p)
+        constexpr exhausted_choice(Production p) noexcept : exhausted_choice<Grammar>(p) {}
+    };
+
+    //=== illegal_operator_chain ===//
+    /// While trying to parse `OperatorProduction`, an operator was chained even though it was not
+    /// allowed to.
+    template <class Grammar, class OperatorProduction = void>
+    struct illegal_operator_chain;
+
+    template <class Grammar>
+    struct illegal_operator_chain<Grammar, void>
+    {
+        production_kind<Grammar> production;
+
+        template <class Production>
+        constexpr illegal_operator_chain(Production p) noexcept : production(p)
+        {}
+    };
+
+    template <class Grammar, class Production>
+    struct illegal_operator_chain : illegal_operator_chain<Grammar>
+    {
+        constexpr illegal_operator_chain(Production p) noexcept : illegal_operator_chain<Grammar>(p)
         {}
     };
 

@@ -138,7 +138,8 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "atom must be a production");
 
-                using pre_tokens = lex::detail::type_list<>;
+                using pre_tokens  = lex::detail::type_list<>;
+                using post_tokens = lex::detail::type_list<>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -167,7 +168,8 @@ namespace lex
                 static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
                               "parentheses must be tokens");
 
-                using pre_tokens = lex::detail::type_list<>;
+                using pre_tokens  = lex::detail::type_list<>;
+                using post_tokens = lex::detail::type_list<>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -215,8 +217,9 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct prefix_op : operand_parser
             {
-                using pre_tokens = lex::detail::concat<typename Operator::token_list,
+                using pre_tokens  = lex::detail::concat<typename Operator::token_list,
                                                        typename Operand::pre_tokens>;
+                using post_tokens = typename Operand::post_tokens;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -252,8 +255,9 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens = lex::detail::concat<typename Operator::token_list,
+                using pre_tokens  = lex::detail::concat<typename Operator::token_list,
                                                        typename Operand::pre_tokens>;
+                using post_tokens = typename Operand::post_tokens;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -290,7 +294,9 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct postfix_op : operand_parser
             {
-                using pre_tokens = typename Operand::pre_tokens;
+                using pre_tokens  = typename Operand::pre_tokens;
+                using post_tokens = lex::detail::concat<typename Operator::token_list,
+                                                        typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -326,7 +332,9 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens = typename Operand::pre_tokens;
+                using pre_tokens  = typename Operand::pre_tokens;
+                using post_tokens = lex::detail::concat<typename Operator::token_list,
+                                                        typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -366,7 +374,9 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct binary_op : operand_parser
             {
-                using pre_tokens = typename Operand::pre_tokens;
+                using pre_tokens  = typename Operand::pre_tokens;
+                using post_tokens = lex::detail::concat<typename Operator::token_list,
+                                                        typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -407,7 +417,9 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens = typename Operand::pre_tokens;
+                using pre_tokens  = typename Operand::pre_tokens;
+                using post_tokens = lex::detail::concat<typename Operator::token_list,
+                                                        typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -453,8 +465,11 @@ namespace lex
             template <class Child, class... Children>
             struct rule : operator_adl
             {
-                using pre_tokens = lex::detail::concat<typename Child::pre_tokens,
+                using pre_tokens  = lex::detail::concat<typename Child::pre_tokens,
                                                        typename Children::pre_tokens...>;
+                using post_tokens = lex::detail::concat<typename Child::post_tokens,
+                                                        typename Children::post_tokens...>;
+
                 static_assert(
                     lex::detail::is_unique<pre_tokens>::value,
                     "operator choice cannot uniquely decide a path based on a prefix operator, "
@@ -517,6 +532,27 @@ namespace lex
                 }
             };
 
+            template <class Rule>
+            struct end : operator_adl
+            {
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                    -> parse_result<TLP, Func>
+                {
+                    auto result = Rule::template parse<TLP>(tokenizer, f);
+                    if (result.is_unmatched())
+                        return result;
+                    else if (operator_spelling<typename Rule::post_tokens>::match(tokenizer.peek()))
+                    {
+                        auto error = illegal_operator_chain<typename TLP::grammar, TLP>(TLP{});
+                        lex::detail::report_error(f, error, tokenizer);
+                        return {};
+                    }
+                    else
+                        return result;
+                }
+            };
+
             template <class Child>
             struct make_rule_impl
             {
@@ -526,6 +562,11 @@ namespace lex
             struct make_rule_impl<rule<Children...>>
             {
                 using type = rule<Children...>;
+            };
+            template <class Rule>
+            struct make_rule_impl<end<Rule>>
+            {
+                using type = end<Rule>;
             };
             template <class Rule>
             using make_rule = typename make_rule_impl<Rule>::type;
@@ -672,6 +713,20 @@ namespace lex
         constexpr auto operator/(Operand1, Operand2)
         {
             return detail::make_choice<Operand1, Operand2>{};
+        }
+
+        /// \exclude
+        struct end_t
+        {};
+
+        constexpr end_t end = {};
+
+        template <class Operand>
+        constexpr auto operator+(Operand, end_t)
+        {
+            static_assert(std::is_base_of<operator_adl, Operand>::value,
+                          "illegal type in operator DSL");
+            return detail::end<detail::make_rule<Operand>>{};
         }
     } // namespace operator_rule
 

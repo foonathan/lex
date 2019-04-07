@@ -1524,3 +1524,68 @@ TEST_CASE("operator_production: production as operator")
         verify(r3, unmatched);
     }
 }
+
+TEST_CASE("operator_production: end")
+{
+    using grammar = lex::grammar<test_spec, struct P, struct primary>;
+    struct primary : lex::token_production<primary, grammar, number>
+    {};
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom     = r::atom<primary>;
+            auto negate   = r::post_op_single<minus>(atom);
+            auto addition = r::bin_op_single<plus>(negate);
+
+            return addition + r::end;
+        }
+    };
+
+    struct visitor
+    {
+        constexpr lex::static_token<number> operator()(primary,
+                                                       lex::static_token<number> number) const
+        {
+            return number;
+        }
+
+        int           operator()(lex::callback_result_of<P>) const;
+        constexpr int operator()(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+        constexpr int operator()(P, int value, minus) const
+        {
+            return -value;
+        }
+        constexpr int operator()(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void operator()(lex::illegal_operator_chain<grammar, P>,
+                                  const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    constexpr auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, 4);
+
+    constexpr auto r1 = parse<P>(visitor{}, "3-");
+    verify(r1, -3);
+
+    constexpr auto r2 = parse<P>(visitor{}, "3 + 1");
+    verify(r2, 4);
+
+    constexpr auto r3 = parse<P>(visitor{}, "3 + 1 + 2");
+    verify(r3, unmatched);
+
+    constexpr auto r4 = parse<P>(visitor{}, "2--");
+    verify(r4, unmatched);
+}
