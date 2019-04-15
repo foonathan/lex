@@ -709,7 +709,8 @@ namespace lex
                                        Production, Operand>{};
         }
 
-        template <class Operand1, class Operand2>
+        template <class Operand1, class Operand2,
+                  typename = std::enable_if_t<std::is_base_of<operator_adl, Operand1>::value>>
         constexpr auto operator/(Operand1, Operand2)
         {
             return detail::make_choice<Operand1, Operand2>{};

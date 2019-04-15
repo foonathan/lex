@@ -4,3 +4,6 @@
 
 add_executable(foonathan_lex_ctokenizer ctokenizer.cpp)
 target_link_libraries(foonathan_lex_ctokenizer PUBLIC foonathan_lex)
+
+add_executable(foonathan_lex_calculator calculator.cpp)
+target_link_libraries(foonathan_lex_calculator PUBLIC foonathan_lex)

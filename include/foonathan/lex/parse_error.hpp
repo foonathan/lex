@@ -28,10 +28,19 @@ namespace lex
         {}
     };
 
-    template <class Grammar, class Production, class Token>
-    struct unexpected_token : unexpected_token<Grammar>
+    template <class Grammar, class Production>
+    struct unexpected_token<Grammar, Production, void> : unexpected_token<Grammar>
     {
+        template <class Token>
         constexpr unexpected_token(Production p, Token t) noexcept : unexpected_token<Grammar>(p, t)
+        {}
+    };
+
+    template <class Grammar, class Production, class Token>
+    struct unexpected_token : unexpected_token<Grammar, Production>
+    {
+        constexpr unexpected_token(Production p, Token t) noexcept
+        : unexpected_token<Grammar, Production>(p, t)
         {}
     };
 

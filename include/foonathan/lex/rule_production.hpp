@@ -151,7 +151,10 @@ namespace lex
             return detail::make_sequence(detail::make_rule<Rule1>{}, detail::make_rule<Rule2>{});
         }
 
-        template <class Rule1, class Rule2>
+        template <class Rule1, class Rule2,
+                  typename
+                  = std::enable_if_t<std::is_base_of<base_rule, Rule1>::value
+                                     || is_token<Rule1>::value || is_production<Rule1>::value>>
         constexpr auto operator/(Rule1 rule1, Rule2 rule2) noexcept
         {
             (void)rule1, (void)rule2;

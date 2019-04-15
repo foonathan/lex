@@ -16,6 +16,7 @@ namespace lex
     struct grammar : detail::type_list<StartProduction, OtherProductions...>
     {
         using token_spec = TokenSpec;
+        using start      = StartProduction;
     };
 
     namespace detail

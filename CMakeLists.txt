@@ -41,6 +41,7 @@ target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/operator_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_error.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_result.hpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parser.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_production.hpp
                ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
