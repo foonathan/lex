@@ -279,6 +279,12 @@ int main()
             std::cout << "error: expected expression or variable declaration, got '"
                       << tokenizer.peek().name() << "'\n";
         }
+
+        void operator()(lex::unexpected_token<grammar::grammar, grammar::decl_seq, lex::eof_token>,
+                        const lex::tokenizer<grammar::token_spec>& tokenizer)
+        {
+            std::cout << "error: expected eof, got '" << tokenizer.peek().name() << "'\n";
+        }
     } interpreter;
 
     std::cout << "Simple calculator\n";
@@ -286,9 +292,7 @@ int main()
     std::string str;
     while (std::cout << "> ", std::getline(std::cin, str))
     {
-        lex::tokenizer<grammar::token_spec> tokenizer(str.data(), str.size());
-
-        auto result = lex::parse<grammar::grammar>(tokenizer, interpreter);
+        auto result = lex::parse<grammar::grammar>(str.data(), str.size(), interpreter);
         if (result.is_success())
         {
             auto first = true;
