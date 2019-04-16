@@ -148,6 +148,7 @@ struct decl_seq : lex::list_production<decl_seq, grammar, decl, semicolon>
 #include <cmath>
 #include <iostream>
 #include <string>
+#include <vector>
 
 int main()
 {
@@ -223,14 +224,14 @@ int main()
             return value;
         }
 
-        int operator()(grammar::decl_seq, int value)
+        std::vector<int> operator()(grammar::decl_seq, int value)
         {
-            return value;
+            return {value};
         }
-        int operator()(grammar::decl_seq, int container, int value)
+        std::vector<int> operator()(grammar::decl_seq, std::vector<int>&& container, int value)
         {
-            (void)container;
-            return value;
+            container.push_back(value);
+            return std::move(container);
         }
 
         void operator()(
@@ -289,6 +290,17 @@ int main()
 
         auto result = lex::parse<grammar::grammar>(tokenizer, interpreter);
         if (result.is_success())
-            std::cout << result.value() << '\n';
+        {
+            auto first = true;
+            for (auto val : result.value())
+            {
+                if (first)
+                    first = false;
+                else
+                    std::cout << "; ";
+                std::cout << val;
+            }
+            std::cout << '\n';
+        }
     }
 }

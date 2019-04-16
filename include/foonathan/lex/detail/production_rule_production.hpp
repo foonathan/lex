@@ -48,12 +48,12 @@ namespace lex
                                                 Args&&... args)
                         -> decltype(Cont::parse(
                             tokenizer, f, static_cast<Args&&>(args)...,
-                            callback_return_type(0, f).template value_or_tag<Production>()))
+                                        callback_return_type(0, f).template forward<Production>()))
                     {
                         auto result = Production::parse(tokenizer, f);
                         if (result.is_success())
                             return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                               result.template value_or_tag<Production>());
+                                               result.template forward<Production>());
                         else
                             return {};
                     }
@@ -74,12 +74,12 @@ namespace lex
                                                 Args&&... args)
                         -> decltype(Cont::parse(
                             tokenizer, f, static_cast<Args&&>(args)...,
-                            Production::parse(tokenizer, f).template value_or_tag<Production>()))
+                            Production::parse(tokenizer, f).template forward<Production>()))
                     {
                         auto result = Production::parse(tokenizer, f);
                         if (result.is_success())
                             return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                               result.template value_or_tag<Production>());
+                                               result.template forward<Production>());
                         else
                             return {};
                     }
@@ -119,14 +119,15 @@ namespace lex
                         capture_success_callback<Func, Production, decltype(capture_callback)>
                              callback{f, capture_callback};
                         auto result = Production::parse(tokenizer, callback);
+                        using result_type = std::decay_t<decltype(result)>;
                         if (result.is_success())
                             // we've matched the production, return the parse result from the
                             // continuation
-                            return result.value();
+                            return static_cast<result_type&&>(result).value();
                         else
                             // we did not match the production, return an unmatched parse result of
                             // the type of result
-                            return std::decay_t<decltype(result.value())>{};
+                            return typename result_type::value_type{};
                     }
                 };
             };
@@ -225,7 +226,7 @@ namespace lex
                         {
                             auto next_result = try_parse<
                                 parser_for<Tail, Cont>>(tokenizer, f,
-                                                        result.template value_or_tag<tlp>());
+                                                                    result.template forward<tlp>());
                             if (next_result.is_unmatched())
                                 break;
                             result = static_cast<decltype(next_result)&&>(next_result);

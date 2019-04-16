@@ -25,7 +25,7 @@ constexpr auto parse(Func&& f, const char (&str)[N])
     return TLP::parse(tokenizer, f);
 }
 
-void verify(lex::parse_result<int> result, int expected)
+void verify(const lex::parse_result<int>& result, int expected)
 {
     if (expected == -1)
     {

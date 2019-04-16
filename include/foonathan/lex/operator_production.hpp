@@ -53,7 +53,7 @@ namespace lex
                     (void)((op.is(Tokens{})
                                 ? (result = lex::detail::
                                        apply_parse_result(f, TLP{}, lex::static_token<Tokens>(op),
-                                                          value.template value_or_tag<TLP>()),
+                                                                     value.template forward<TLP>()),
                                    true)
                                 : false)
                            || ...);
@@ -71,8 +71,7 @@ namespace lex
                     (void)((op.is(Tokens{})
                                 ? (result
                                    = lex::detail::apply_parse_result(f, TLP{},
-                                                                     value.template value_or_tag<
-                                                                         TLP>(),
+                                                                     value.template forward<TLP>(),
                                                                      lex::static_token<Tokens>(op)),
                                    true)
                                 : false)
@@ -93,9 +92,9 @@ namespace lex
                     (void)((op.is(Tokens{})
                                 ? (result = lex::detail::
                                        apply_parse_result(f, TLP{},
-                                                          lhs.template value_or_tag<TLP>(),
-                                                          lex::static_token<Tokens>(op),
-                                                          rhs.template value_or_tag<TLP>()),
+                                                                     lhs.template forward<TLP>(),
+                                                                     lex::static_token<Tokens>(op),
+                                                                     rhs.template forward<TLP>()),
                                    true)
                                 : false)
                            || ...);
@@ -150,15 +149,15 @@ namespace lex
                         return {};
                     else
                         return lex::detail::apply_parse_result(f, TLP{},
-                                                               value.template value_or_tag<
-                                                                   Production>());
+                                                               value
+                                                                   .template forward<Production>());
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
-                                                 const parse_result<TLP, Func>& lhs)
+                                                 parse_result<TLP, Func>& lhs)
                 {
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -201,9 +200,9 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
-                                                 const parse_result<TLP, Func>& lhs)
+                                                 parse_result<TLP, Func>& lhs)
                 {
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -274,9 +273,9 @@ namespace lex
                         if (operand.is_unmatched())
                             return operand;
 
-                        return lex::detail::
-                            apply_parse_result(f, TLP{}, op.template value_or_tag<Production>(),
-                                               operand.template value_or_tag<TLP>());
+                        return lex::detail::apply_parse_result(f, TLP{},
+                                                               op.template forward<Production>(),
+                                                               operand.template forward<TLP>());
                     }
                     else
                         return Operand::template parse_null<TLP>(tokenizer, f);
@@ -312,7 +311,7 @@ namespace lex
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return lhs;
+                        return static_cast<parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -323,7 +322,7 @@ namespace lex
                             break;
                     }
 
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -350,7 +349,7 @@ namespace lex
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return lhs;
+                        return static_cast<parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -358,16 +357,14 @@ namespace lex
                         if (op.is_unmatched())
                             return {};
 
-                        lhs = lex::detail::apply_parse_result(f, TLP{},
-                                                              lhs.template value_or_tag<TLP>(),
-                                                              op.template value_or_tag<
-                                                                  Production>());
+                        lhs = lex::detail::apply_parse_result(f, TLP{}, lhs.template forward<TLP>(),
+                                                              op.template forward<Production>());
 
                         if (Assoc == single)
                             break;
                     }
 
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -392,7 +389,7 @@ namespace lex
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return lhs;
+                        return static_cast<parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -401,14 +398,14 @@ namespace lex
                         auto operand = Assoc == right ? parse<binary_op, TLP>(tokenizer, f)
                                                       : parse<Operand, TLP>(tokenizer, f);
                         if (operand.is_unmatched())
-                            return operand;
+                            return static_cast<decltype(operand)&&>(operand);
 
                         lhs = Operator::apply_binary(f, TLP{}, lhs, op, operand);
                         if (Assoc == single && Operator::match(op))
                             break;
                     }
 
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -435,7 +432,7 @@ namespace lex
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return lhs;
+                        return static_cast<parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -449,16 +446,14 @@ namespace lex
                         if (operand.is_unmatched())
                             return operand;
 
-                        lhs = lex::detail::apply_parse_result(f, TLP{},
-                                                              lhs.template value_or_tag<TLP>(),
-                                                              op.template value_or_tag<
-                                                                  Production>(),
-                                                              operand.template value_or_tag<TLP>());
+                        lhs = lex::detail::apply_parse_result(f, TLP{}, lhs.template forward<TLP>(),
+                                                              op.template forward<Production>(),
+                                                              operand.template forward<TLP>());
                         if (Assoc == single && Operator::match(op_token))
                             break;
                     }
 
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -481,7 +476,7 @@ namespace lex
                                                       parse_result<TLP, Func>& lhs)
                 {
                     // no left operator found
-                    return lhs;
+                    return static_cast<parse_result<TLP, Func>&&>(lhs);
                 }
                 template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
                 static constexpr auto parse_left_impl(lex::detail::type_list<Head, Tail...>,

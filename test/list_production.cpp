@@ -34,12 +34,12 @@ constexpr struct unmatched_t
 {
 } unmatched;
 
-void verify(lex::parse_result<int> result, unmatched_t)
+void verify(const lex::parse_result<int>& result, unmatched_t)
 {
     REQUIRE(result.is_unmatched());
 }
 
-void verify(lex::parse_result<int> result, int expected)
+void verify(const lex::parse_result<int>& result, int expected)
 {
     REQUIRE(result.is_success());
     REQUIRE(result.value() == expected);

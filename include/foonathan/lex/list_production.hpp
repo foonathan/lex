@@ -33,9 +33,9 @@ namespace lex
             if (elem.is_unmatched())
                 return decltype(result)::unmatched();
 
-            result = lex::detail::apply_parse_result(f, Derived{},
-                                                     result.template value_or_tag<Derived>(),
-                                                     elem.template value_or_tag<Production>());
+            result
+                = lex::detail::apply_parse_result(f, Derived{}, result.template forward<Derived>(),
+                                                  elem.template forward<Production>());
 
             while (tokenizer.peek().is(Separator{}))
             {
@@ -48,8 +48,8 @@ namespace lex
                     return decltype(result)::unmatched();
 
                 result = lex::detail::apply_parse_result(f, Derived{},
-                                                         result.template value_or_tag<Derived>(),
-                                                         elem.template value_or_tag<Production>());
+                                                         result.template forward<Derived>(),
+                                                         elem.template forward<Production>());
             }
 
             return result;
@@ -61,14 +61,14 @@ namespace lex
                                          Func&&                                   f)
             -> decltype(lex::detail::apply_parse_result(
                 f, std::declval<Derived>(),
-                Production::parse(tokenizer, f).template value_or_tag<Production>()))
+                Production::parse(tokenizer, f).template forward<Production>()))
         {
             auto elem = Production::parse(tokenizer, f);
             if (elem.is_unmatched())
                 return {};
 
             auto result = lex::detail::apply_parse_result(f, Derived{},
-                                                          elem.template value_or_tag<Production>());
+                                                          elem.template forward<Production>());
 
             while (tokenizer.peek().is(Separator{}))
             {
@@ -81,8 +81,8 @@ namespace lex
                     return {};
 
                 result = lex::detail::apply_parse_result(f, Derived{},
-                                                         result.template value_or_tag<Derived>(),
-                                                         elem.template value_or_tag<Production>());
+                                                         result.template forward<Derived>(),
+                                                         elem.template forward<Production>());
             }
 
             return result;
