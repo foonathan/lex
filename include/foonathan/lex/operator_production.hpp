@@ -6,8 +6,7 @@
 #define FOONATHAN_LEX_OPERATOR_PRODUCTION_HPP_INCLUDED
 
 #include <foonathan/lex/grammar.hpp>
-#include <foonathan/lex/parse_error.hpp>
-#include <foonathan/lex/parse_result.hpp>
+#include <foonathan/lex/parser.hpp>
 #include <foonathan/lex/tokenizer.hpp>
 
 namespace foonathan
@@ -51,8 +50,9 @@ namespace lex
 
                     // TODO: C++17
                     (void)((op.is(Tokens{})
-                                ? (result = lex::detail::
-                                       apply_parse_result(f, TLP{}, lex::static_token<Tokens>(op),
+                                ? (result
+                                   = lex::detail::apply_parse_result(f, TLP{},
+                                                                     lex::static_token<Tokens>(op),
                                                                      value.template forward<TLP>()),
                                    true)
                                 : false)
@@ -90,8 +90,8 @@ namespace lex
 
                     // TODO: C++17
                     (void)((op.is(Tokens{})
-                                ? (result = lex::detail::
-                                       apply_parse_result(f, TLP{},
+                                ? (result
+                                   = lex::detail::apply_parse_result(f, TLP{},
                                                                      lhs.template forward<TLP>(),
                                                                      lex::static_token<Tokens>(op),
                                                                      rhs.template forward<TLP>()),
@@ -132,25 +132,56 @@ namespace lex
                 static_assert(is_operand, "cannot nest this operator rule further");
             }
 
-            template <class Production>
+            template <class ProductionOrToken>
             struct atom : operand_parser
             {
-                static_assert(is_production<Production>::value, "atom must be a production");
+                static_assert(is_production<ProductionOrToken>::value
+                                  || is_token<ProductionOrToken>::value,
+                              "atom must be a production or token");
 
                 using pre_tokens  = lex::detail::type_list<>;
                 using post_tokens = lex::detail::type_list<>;
 
                 template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_impl(std::true_type /* is_production */,
+                                                 tokenizer<TokenSpec>& tokenizer, Func&& f)
+                {
+                    return ProductionOrToken::parse(tokenizer, f);
+                }
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_impl(std::false_type /* is_production */,
+                                                 tokenizer<TokenSpec>& tokenizer, Func&& f)
+                {
+                    auto token        = tokenizer.peek();
+                    using result_type = lex::parse_result<decltype(
+                        lex::detail::parse_token<ProductionOrToken>(token))>;
+                    if (token.is(ProductionOrToken{}))
+                    {
+                        tokenizer.bump();
+                        return result_type::success(
+                            lex::detail::parse_token<ProductionOrToken>(token));
+                    }
+                    else
+                    {
+                        auto error
+                            = unexpected_token<typename TLP::grammar, TLP,
+                                               ProductionOrToken>(TLP{}, ProductionOrToken{});
+                        lex::detail::report_error(f, error, tokenizer);
+                        return result_type::unmatched();
+                    }
+                }
+
+                template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> parse_result<TLP, Func>
                 {
-                    auto value = Production::parse(tokenizer, f);
+                    auto value = parse_impl<TLP>(is_production<ProductionOrToken>{}, tokenizer, f);
                     if (value.is_unmatched())
                         return {};
                     else
                         return lex::detail::apply_parse_result(f, TLP{},
-                                                               value
-                                                                   .template forward<Production>());
+                                                               value.template forward<
+                                                                   ProductionOrToken>());
                 }
 
                 template <class TLP, class TokenSpec, class Func>
@@ -583,8 +614,8 @@ namespace lex
             using make_choice = typename make_choice_impl<Operand1, Operand2>::type;
         } // namespace detail
 
-        template <class Production>
-        constexpr auto atom = detail::atom<Production>{};
+        template <class ProductionOrToken>
+        constexpr auto atom = detail::atom<ProductionOrToken>{};
 
         /// \exclude
         template <class TokenOpen, class TokenClose>

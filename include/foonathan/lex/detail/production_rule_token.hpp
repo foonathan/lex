@@ -6,7 +6,7 @@
 #define FOONATHAN_LEX_PRODUCTION_RULE_TOKEN_HPP_INCLUDED
 
 #include <foonathan/lex/detail/production_rule_base.hpp>
-#include <foonathan/lex/parse_error.hpp>
+#include <foonathan/lex/parser.hpp>
 
 namespace foonathan
 {
@@ -53,14 +53,14 @@ namespace lex
                     static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
                                                 Args&&... args)
                         -> decltype(Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                                parse_token<Token>(tokenizer.get())))
+                                                lex::detail::parse_token<Token>(tokenizer.get())))
                     {
                         auto token = tokenizer.peek();
                         if (token.is(Token{}))
                         {
                             tokenizer.bump();
                             return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                               parse_token<Token>(token));
+                                               lex::detail::parse_token<Token>(token));
                         }
                         else
                         {

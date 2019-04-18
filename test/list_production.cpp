@@ -6,8 +6,6 @@
 
 #include <catch.hpp>
 
-#include <foonathan/lex/token_production.hpp>
-
 namespace lex = foonathan::lex;
 
 namespace
@@ -48,29 +46,22 @@ void verify(const lex::parse_result<int>& result, int expected)
 
 TEST_CASE("list_production: non-empty, non-trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::list_production<P, grammar, A, comma>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::list_production<P, grammar, a, comma>
     {};
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
-        constexpr int operator()(P, A)
+        constexpr int operator()(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
     };
@@ -96,10 +87,8 @@ TEST_CASE("list_production: non-empty, non-trailing")
 
 TEST_CASE("list_production: non-empty, trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::list_production<P, grammar, A, comma>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::list_production<P, grammar, a, comma>
     {
         using end_token      = lex::eof_token;
         using allow_trailing = std::true_type;
@@ -107,21 +96,16 @@ TEST_CASE("list_production: non-empty, trailing")
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
-        constexpr int operator()(P, A)
+        constexpr int operator()(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
     };
@@ -147,10 +131,8 @@ TEST_CASE("list_production: non-empty, trailing")
 
 TEST_CASE("list_production: empty, non-trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::list_production<P, grammar, A, comma>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::list_production<P, grammar, a, comma>
     {
         using end_token   = lex::eof_token;
         using allow_empty = std::true_type;
@@ -158,21 +140,16 @@ TEST_CASE("list_production: empty, non-trailing")
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
         constexpr int operator()(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
     };
@@ -201,10 +178,8 @@ TEST_CASE("list_production: empty, non-trailing")
 
 TEST_CASE("list_production: empty, trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::list_production<P, grammar, A, comma>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::list_production<P, grammar, a, comma>
     {
         using end_token      = lex::eof_token;
         using allow_empty    = std::true_type;
@@ -213,21 +188,16 @@ TEST_CASE("list_production: empty, trailing")
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
         constexpr int operator()(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
     };
@@ -256,29 +226,22 @@ TEST_CASE("list_production: empty, trailing")
 
 TEST_CASE("bracketed_list_production: non-empty, non-trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::bracketed_list_production<P, grammar, open, a, comma, close>
     {};
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
-        constexpr int operator()(P, A)
+        constexpr int operator()(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
 
@@ -314,31 +277,24 @@ TEST_CASE("bracketed_list_production: non-empty, non-trailing")
 
 TEST_CASE("bracketed_list_production: non-empty, trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::bracketed_list_production<P, grammar, open, a, comma, close>
     {
         using allow_trailing = std::true_type;
     };
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
-        constexpr int operator()(P, A)
+        constexpr int operator()(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
 
@@ -374,31 +330,24 @@ TEST_CASE("bracketed_list_production: non-empty, trailing")
 
 TEST_CASE("bracketed_list_production: empty, non-trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::bracketed_list_production<P, grammar, open, a, comma, close>
     {
         using allow_empty = std::true_type;
     };
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
         constexpr int operator()(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
 
@@ -437,10 +386,8 @@ TEST_CASE("bracketed_list_production: empty, non-trailing")
 
 TEST_CASE("bracketed_list_production: empty, trailing")
 {
-    using grammar = lex::grammar<test_spec, struct A, struct P>;
-    struct A : lex::token_production<A, grammar, a>
-    {};
-    struct P : lex::bracketed_list_production<P, grammar, open, A, comma, close>
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::bracketed_list_production<P, grammar, open, a, comma, close>
     {
         using allow_empty    = std::true_type;
         using allow_trailing = std::true_type;
@@ -448,21 +395,16 @@ TEST_CASE("bracketed_list_production: empty, trailing")
 
     struct visitor
     {
-        constexpr A operator()(A, a)
-        {
-            return {};
-        }
-
         constexpr int operator()(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, A)
+        constexpr int operator()(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, A, a>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
                                   const lex::tokenizer<test_spec>&)
         {}
 

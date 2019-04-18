@@ -7,7 +7,6 @@
 #include <foonathan/lex/operator_production.hpp>
 #include <foonathan/lex/parser.hpp>
 #include <foonathan/lex/rule_production.hpp>
-#include <foonathan/lex/token_production.hpp>
 
 namespace grammar
 {

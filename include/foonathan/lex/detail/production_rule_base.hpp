@@ -66,24 +66,6 @@ namespace lex
                 return true;
             }
 
-            template <class Token, class TokenSpec>
-            constexpr auto parse_token_impl(int, token<TokenSpec> token)
-                -> static_token<Token, decltype(Token::parse(token))>
-            {
-                using type = static_token<Token, decltype(Token::parse(token))>;
-                return type(token, Token::parse(token));
-            }
-            template <class Token, class TokenSpec>
-            constexpr auto parse_token_impl(short, token<TokenSpec> token)
-            {
-                return static_token<Token>(token);
-            }
-            template <class Token, class TokenSpec>
-            constexpr auto parse_token(token<TokenSpec> token)
-            {
-                return parse_token_impl<Token>(0, token);
-            }
-
             //=== parser implementations ===//
             /// The final parser that invokes the callback.
             template <class Grammar, class TLP>

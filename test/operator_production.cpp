@@ -7,7 +7,7 @@
 #include <catch.hpp>
 
 #include <foonathan/lex/ascii.hpp>
-#include <foonathan/lex/token_production.hpp>
+#include <foonathan/lex/rule_production.hpp>
 
 namespace lex = foonathan::lex;
 
@@ -80,16 +80,14 @@ void verify(const lex::parse_result<int>& result, int expected)
 
 TEST_CASE("operator_production: pre_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom   = r::atom<primary>;
+            auto atom   = r::atom<number>;
             auto negate = r::pre_op_single<minus>(atom);
             auto not_   = r::pre_op_single<exclamation>(negate);
 
@@ -99,12 +97,6 @@ TEST_CASE("operator_production: pre_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -122,7 +114,7 @@ TEST_CASE("operator_production: pre_op_single")
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -151,16 +143,14 @@ TEST_CASE("operator_production: pre_op_single")
 
 TEST_CASE("operator_production: pre_op_chain")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom   = r::atom<primary>;
+            auto atom   = r::atom<number>;
             auto negate = r::pre_op_chain<minus>(atom);
             auto not_   = r::pre_op_chain<exclamation>(negate);
 
@@ -170,12 +160,6 @@ TEST_CASE("operator_production: pre_op_chain")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -193,7 +177,7 @@ TEST_CASE("operator_production: pre_op_chain")
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -225,16 +209,14 @@ TEST_CASE("operator_production: pre_op_chain")
 
 TEST_CASE("operator_production: post_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom   = r::atom<primary>;
+            auto atom   = r::atom<number>;
             auto negate = r::post_op_single<minus>(atom);
             auto not_   = r::post_op_single<exclamation>(negate);
 
@@ -244,12 +226,6 @@ TEST_CASE("operator_production: post_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -267,7 +243,7 @@ TEST_CASE("operator_production: post_op_single")
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -296,16 +272,14 @@ TEST_CASE("operator_production: post_op_single")
 
 TEST_CASE("operator_production: post_op_chain")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom   = r::atom<primary>;
+            auto atom   = r::atom<number>;
             auto negate = r::post_op_chain<minus>(atom);
             auto not_   = r::post_op_chain<exclamation>(negate);
 
@@ -315,12 +289,6 @@ TEST_CASE("operator_production: post_op_chain")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -338,7 +306,7 @@ TEST_CASE("operator_production: post_op_chain")
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -370,16 +338,14 @@ TEST_CASE("operator_production: post_op_chain")
 
 TEST_CASE("operator_production: bin_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary>;
+            auto atom           = r::atom<number>;
             auto multiplication = r::bin_op_single<star>(atom);
             auto addition       = r::bin_op_single<plus, minus>(multiplication);
 
@@ -389,12 +355,6 @@ TEST_CASE("operator_production: bin_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -417,7 +377,7 @@ TEST_CASE("operator_production: bin_op_single")
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -470,16 +430,14 @@ TEST_CASE("operator_production: bin_op_single")
 
 TEST_CASE("operator_production: bin_op_single + pre_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary>;
+            auto atom           = r::atom<number>;
             auto negate         = r::pre_op_single<minus>(atom);
             auto multiplication = r::bin_op_single<star>(negate);
             auto addition       = r::bin_op_single<plus>(multiplication);
@@ -490,12 +448,6 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -518,7 +470,7 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -547,16 +499,14 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
 
 TEST_CASE("operator_production: pre_op_single + bin_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom     = r::atom<primary>;
+            auto atom     = r::atom<number>;
             auto addition = r::bin_op_single<plus>(atom);
             auto not_     = r::pre_op_single<exclamation>(addition);
 
@@ -566,12 +516,6 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -589,7 +533,7 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -615,16 +559,14 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
 
 TEST_CASE("operator_production: bin_op_single + post_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary>;
+            auto atom           = r::atom<number>;
             auto negate         = r::post_op_single<minus>(atom);
             auto multiplication = r::bin_op_single<star>(negate);
             auto addition       = r::bin_op_single<plus>(multiplication);
@@ -635,12 +577,6 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -663,7 +599,7 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -692,16 +628,14 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
 
 TEST_CASE("operator_production: post_op_single + bin_op_single")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom     = r::atom<primary>;
+            auto atom     = r::atom<number>;
             auto addition = r::bin_op_single<plus>(atom);
             auto not_     = r::post_op_single<exclamation>(addition);
 
@@ -711,12 +645,6 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -734,7 +662,7 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -760,16 +688,14 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
 
 TEST_CASE("operator_production: bin_op_left")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary>;
+            auto atom           = r::atom<number>;
             auto multiplication = r::bin_op_single<star>(atom);
             auto addition       = r::bin_op_left<minus>(multiplication);
 
@@ -779,12 +705,6 @@ TEST_CASE("operator_production: bin_op_left")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -802,7 +722,7 @@ TEST_CASE("operator_production: bin_op_left")
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -828,16 +748,14 @@ TEST_CASE("operator_production: bin_op_left")
 
 TEST_CASE("operator_production: bin_op_right")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary>;
+            auto atom           = r::atom<number>;
             auto multiplication = r::bin_op_single<star>(atom);
             auto addition       = r::bin_op_right<minus>(multiplication);
 
@@ -847,12 +765,6 @@ TEST_CASE("operator_production: bin_op_right")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -870,7 +782,7 @@ TEST_CASE("operator_production: bin_op_right")
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -896,16 +808,14 @@ TEST_CASE("operator_production: bin_op_right")
 
 TEST_CASE("operator_production: parenthesized")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom           = r::atom<primary> / r::parenthesized<paren_open, paren_close>;
+            auto atom           = r::atom<number> / r::parenthesized<paren_open, paren_close>;
             auto multiplication = r::bin_op_single<star>(atom);
             auto addition       = r::bin_op_single<plus>(multiplication);
 
@@ -915,12 +825,6 @@ TEST_CASE("operator_production: parenthesized")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -938,7 +842,7 @@ TEST_CASE("operator_production: parenthesized")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
@@ -974,16 +878,14 @@ TEST_CASE("operator_production: parenthesized")
 
 TEST_CASE("operator_production: choice with single atom")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom = r::atom<primary>;
+            auto atom = r::atom<number>;
 
             auto multiplication = r::bin_op_left<star>(atom);
             auto addition       = r::bin_op_left<plus>(atom);
@@ -995,12 +897,6 @@ TEST_CASE("operator_production: choice with single atom")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -1023,7 +919,7 @@ TEST_CASE("operator_production: choice with single atom")
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -1049,16 +945,14 @@ TEST_CASE("operator_production: choice with single atom")
 
 TEST_CASE("operator_production: choice with unary")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom = r::atom<primary>;
+            auto atom = r::atom<number>;
 
             auto multiplication = r::bin_op_left<star>(atom);
 
@@ -1071,12 +965,6 @@ TEST_CASE("operator_production: choice with unary")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int operator()(lex::callback_result_of<P>) const;
 
         constexpr int operator()(P, lex::static_token<number> num) const
@@ -1099,7 +987,7 @@ TEST_CASE("operator_production: choice with unary")
             return -rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -1125,33 +1013,30 @@ TEST_CASE("operator_production: choice with unary")
 
 TEST_CASE("operator_production: production as operator")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary, struct op>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
-    struct op : lex::token_production<op, grammar, minus>
-    {};
-
     SECTION("pre_prod_single")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::pre_prod_single<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1166,7 +1051,7 @@ TEST_CASE("operator_production: production as operator")
                 return -rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1189,25 +1074,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("pre_prod_chain")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::pre_prod_chain<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1222,7 +1110,7 @@ TEST_CASE("operator_production: production as operator")
                 return -rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1245,25 +1133,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("post_prod_single")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::post_prod_single<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1278,7 +1169,7 @@ TEST_CASE("operator_production: production as operator")
                 return -lhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1301,25 +1192,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("post_prod_chain")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::post_prod_chain<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1334,7 +1228,7 @@ TEST_CASE("operator_production: production as operator")
                 return -lhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1357,25 +1251,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("bin_prod_single")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::bin_prod_single<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1390,7 +1287,7 @@ TEST_CASE("operator_production: production as operator")
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1413,25 +1310,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("bin_prod_left")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::bin_prod_left<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1446,7 +1346,7 @@ TEST_CASE("operator_production: production as operator")
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1469,25 +1369,28 @@ TEST_CASE("operator_production: production as operator")
     }
     SECTION("bin_prod_right")
     {
+        using grammar = lex::grammar<test_spec, struct P, struct op>;
+        struct op : lex::rule_production<op, grammar>
+        {
+            static constexpr auto rule()
+            {
+                return minus{};
+            }
+        };
+
         struct P : lex::operator_production<P, grammar>
         {
             static constexpr auto rule()
             {
                 namespace r = lex::operator_rule;
 
-                auto atom = r::atom<primary>;
+                auto atom = r::atom<number>;
                 return r::bin_prod_right<minus>(op{}, atom);
             }
         };
 
         struct visitor
         {
-            constexpr lex::static_token<number> operator()(primary,
-                                                           lex::static_token<number> number) const
-            {
-                return number;
-            }
-
             constexpr void operator()(op, minus) const {}
 
             int operator()(lex::callback_result_of<P>) const;
@@ -1502,7 +1405,7 @@ TEST_CASE("operator_production: production as operator")
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                       const lex::tokenizer<test_spec>&) const
             {}
 
@@ -1527,16 +1430,14 @@ TEST_CASE("operator_production: production as operator")
 
 TEST_CASE("operator_production: end")
 {
-    using grammar = lex::grammar<test_spec, struct P, struct primary>;
-    struct primary : lex::token_production<primary, grammar, number>
-    {};
+    using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
 
-            auto atom     = r::atom<primary>;
+            auto atom     = r::atom<number>;
             auto negate   = r::post_op_single<minus>(atom);
             auto addition = r::bin_op_single<plus>(negate);
 
@@ -1546,12 +1447,6 @@ TEST_CASE("operator_production: end")
 
     struct visitor
     {
-        constexpr lex::static_token<number> operator()(primary,
-                                                       lex::static_token<number> number) const
-        {
-            return number;
-        }
-
         int           operator()(lex::callback_result_of<P>) const;
         constexpr int operator()(P, lex::static_token<number> num) const
         {
@@ -1566,7 +1461,7 @@ TEST_CASE("operator_production: end")
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, primary, number>,
+        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
                                   const lex::tokenizer<test_spec>&) const
         {}
         constexpr void operator()(lex::illegal_operator_chain<grammar, P>,
