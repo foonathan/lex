@@ -69,8 +69,19 @@ namespace lex
                             return {};
                         }
                     }
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse_known(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                      Args&&... args)
+                    {
+                        auto token = tokenizer.peek();
+                        FOONATHAN_LEX_ASSERT(token.is(Token{}));
+                        tokenizer.bump();
+                        return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
+                                           lex::detail::parse_token<Token>(token));
+                    }
                 };
-            };
+            }; // namespace detail
 
             template <class Token>
             struct silent_token : base_token_rule
@@ -110,6 +121,16 @@ namespace lex
                             return {};
                         }
                     }
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse_known(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                      Args&&... args)
+                    {
+                        auto token = tokenizer.peek();
+                        FOONATHAN_LEX_ASSERT(token.is(Token{}));
+                        tokenizer.bump();
+                        return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...);
+                    }
                 };
             };
 
@@ -128,7 +149,25 @@ namespace lex
                 using leading_tokens = lex::detail::type_list<any_token>;
 
                 template <class Cont>
-                using parser = Cont;
+                struct parser : Cont
+                {
+                    using grammar = typename Cont::grammar;
+                    using tlp     = typename Cont::tlp;
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                Args&&... args)
+                    {
+                        return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...);
+                    }
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse_known(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                      Args&&... args)
+                    {
+                        return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...);
+                    }
+                };
             };
             template <class Head, class... Tail>
             struct token_sequence<Head, Tail...> : base_token_rule
@@ -169,6 +208,9 @@ namespace lex
                 static_assert(lex::detail::is_unique<leading_tokens>::value,
                               "token choice cannot be resolved with one token lookahead");
 
+                using has_catch_all
+                    = lex::detail::contains<lex::detail::type_list<Choices...>, token_sequence<>>;
+
                 template <class Cont>
                 struct parser : Cont
                 {
@@ -176,7 +218,15 @@ namespace lex
                     using tlp     = typename Cont::tlp;
 
                     template <class... Tokens, class TokenSpec, typename Func>
-                    static constexpr void report_error(lex::detail::type_list<Tokens...>,
+                    static constexpr void report_error(std::true_type /* has_catch_all */,
+                                                       lex::detail::type_list<Tokens...>,
+                                                       tokenizer<TokenSpec>&, Func&)
+                    {
+                        FOONATHAN_LEX_ASSERT(false);
+                    }
+                    template <class... Tokens, class TokenSpec, typename Func>
+                    static constexpr void report_error(std::false_type /* has_catch_all */,
+                                                       lex::detail::type_list<Tokens...>,
                                                        tokenizer<TokenSpec>& tokenizer, Func& f)
                     {
                         token_kind<TokenSpec> alternatives[] = {Tokens{}...};
@@ -185,7 +235,8 @@ namespace lex
                         lex::detail::report_error(f, error, tokenizer);
                     }
                     template <class Token, class TokenSpec, typename Func>
-                    static constexpr void report_error(lex::detail::type_list<Token>,
+                    static constexpr void report_error(std::false_type /* has_catch_all */,
+                                                       lex::detail::type_list<Token>,
                                                        tokenizer<TokenSpec>& tokenizer, Func& f)
                     {
                         // if there is only a single token this is an unexpected token error
@@ -198,7 +249,8 @@ namespace lex
                                                   Func& f, Args&&...)
                     {
                         // need to remove the tag any_token, as it is not part of the token spec
-                        report_error(lex::detail::remove<leading_tokens, any_token>{}, tokenizer,
+                        report_error(has_catch_all{},
+                                     lex::detail::remove<leading_tokens, any_token>{}, tokenizer,
                                      f);
                         return {};
                     }
@@ -209,8 +261,9 @@ namespace lex
                                                   Args&&... args)
                     {
                         if (peek_token_is(typename Head::leading_tokens{}, tokenizer))
-                            return parser_for<Head, Cont>::parse(tokenizer, f,
-                                                                 static_cast<Args&&>(args)...);
+                            return parser_for<Head, Cont>::parse_known(tokenizer, f,
+                                                                       static_cast<Args&&>(
+                                                                           args)...);
                         else
                             return parse_impl<R>(token_choice<Tail...>{}, tokenizer, f,
                                                  static_cast<Args&&>(args)...);

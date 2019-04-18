@@ -238,17 +238,6 @@ int main()
             return std::move(container);
         }
 
-        void operator()(
-            lex::unexpected_token<grammar::grammar, grammar::atom_expr, grammar::number>,
-            const lex::tokenizer<grammar::token_spec>& tokenizer)
-        {
-            std::cout << "error: expected number, got '" << tokenizer.peek().name() << "'\n";
-        }
-        void operator()(lex::unexpected_token<grammar::grammar, grammar::atom_expr, grammar::var>,
-                        const lex::tokenizer<grammar::token_spec>& tokenizer)
-        {
-            std::cout << "error: expected variable, got '" << tokenizer.peek().name() << "'\n";
-        }
         void operator()(lex::exhausted_token_choice<grammar::grammar, grammar::atom_expr,
                                                     grammar::number, grammar::var>,
                         const lex::tokenizer<grammar::token_spec>& tokenizer)

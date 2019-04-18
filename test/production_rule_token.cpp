@@ -194,13 +194,6 @@ TEST_CASE("rule_production: token choice")
             return 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-
         constexpr void operator()(lex::exhausted_token_choice<grammar, P, A, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
@@ -237,10 +230,6 @@ TEST_CASE("rule_production: token opt")
         {
             return 1;
         }
-
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
     };
 
     constexpr auto r0 = parse<P>(visitor{}, "");
@@ -299,9 +288,6 @@ TEST_CASE("rule_production: token complex")
                                   const lex::tokenizer<test_spec>&) const
         {}
         constexpr void operator()(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
         constexpr void operator()(lex::unexpected_token<grammar, P, lex::eof_token>,
