@@ -37,7 +37,7 @@ struct number : lex::rule_token<number, token_spec>
         return lex::token_rule::star(lex::ascii::is_digit);
     }
 
-    static constexpr int parse(lex::static_token<number> number)
+    static constexpr int parse(token number)
     {
         int result = 0;
         for (auto ptr = number.spelling().end(); ptr != number.spelling().begin(); --ptr)
@@ -58,6 +58,11 @@ struct var : lex::rule_token<var, token_spec>
     static constexpr auto rule() noexcept
     {
         return lex::ascii::is_alpha;
+    }
+
+    static constexpr char parse(token var)
+    {
+        return var.spelling()[0];
     }
 
     static constexpr const char* name = "<var>";
@@ -158,13 +163,13 @@ int main()
     {
         int variables[256] = {};
 
-        int operator()(grammar::atom_expr, lex::static_token<grammar::number> token)
+        int operator()(grammar::atom_expr, lex::static_token<grammar::number, int> number)
         {
-            return grammar::number::parse(token);
+            return number.value();
         }
-        int operator()(grammar::atom_expr, lex::static_token<grammar::var> token)
+        int operator()(grammar::atom_expr, lex::static_token<grammar::var, char> var)
         {
-            return variables[token.spelling()[0]];
+            return variables[var.value()];
         }
 
         int operator()(lex::callback_result_of<grammar::expr>);
@@ -213,9 +218,9 @@ int main()
             return unsigned(lhs) | unsigned(rhs);
         }
 
-        int operator()(grammar::var_decl, lex::static_token<grammar::var> var, int value)
+        int operator()(grammar::var_decl, lex::static_token<grammar::var, char> var, int value)
         {
-            variables[var.spelling()[0]] = value;
+            variables[var.value()] = value;
             return value;
         }
 

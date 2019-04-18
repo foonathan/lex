@@ -82,13 +82,16 @@ namespace lex
         friend tokenizer<TokenSpec>;
     };
 
-    /// A single token whose kind is statically known.
+    /// A single token whose kind is statically know and which can have an optional payload.
     ///
     /// It has a similar interface to [lex::token]() otherwise,
     /// just a lot of the results are statically determined.
     /// \notes `Token` is one of the token classes that are also passed to [lex::token_spec]().
+    template <class Token, class Payload = void>
+    class static_token;
+
     template <class Token>
-    class static_token
+    class static_token<Token, void>
     {
         static_assert(is_token<Token>::value, "must be a token");
 
@@ -155,6 +158,39 @@ namespace lex
 
     private:
         token_spelling spelling_;
+    };
+
+    template <class Token, class Payload>
+    class static_token : static_token<Token, void>
+    {
+    public:
+        /// Constructs it from a generic token container.
+        /// \requires `token.is(Token{})`.
+        template <class TokenSpec>
+        explicit constexpr static_token(const token<TokenSpec>& token, Payload payload)
+        : static_token<Token, void>(token), payload_(static_cast<Payload&&>(payload))
+        {}
+
+        /// \returns The associated payload.
+        constexpr Payload& value() & noexcept
+        {
+            return payload_;
+        }
+        constexpr const Payload& value() const& noexcept
+        {
+            return payload_;
+        }
+        constexpr Payload&& value() && noexcept
+        {
+            return static_cast<Payload&&>(payload_);
+        }
+        constexpr const Payload&& value() const&& noexcept
+        {
+            return static_cast<const Payload&&>(payload_);
+        }
+
+    private:
+        Payload payload_;
     };
 } // namespace lex
 } // namespace foonathan

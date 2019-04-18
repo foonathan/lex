@@ -53,14 +53,14 @@ namespace lex
                     static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
                                                 Args&&... args)
                         -> decltype(Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                                static_token<Token>(tokenizer.get())))
+                                                parse_token<Token>(tokenizer.get())))
                     {
                         auto token = tokenizer.peek();
                         if (token.is(Token{}))
                         {
                             tokenizer.bump();
                             return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                               static_token<Token>(token));
+                                               parse_token<Token>(token));
                         }
                         else
                         {

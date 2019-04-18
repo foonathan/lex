@@ -12,6 +12,9 @@ namespace foonathan
 {
 namespace lex
 {
+    template <class TokenSpec>
+    class token;
+
     /// A token that has no associated parsing rule.
     ///
     /// It can only be created by some other [lex::rule_token]().
@@ -54,6 +57,7 @@ namespace lex
 
         using spec         = TokenSpec;
         using token_kind   = lex::token_kind<TokenSpec>;
+        using token        = lex::token<TokenSpec>;
         using match_result = lex::match_result<TokenSpec>;
 
         /// \returns An unmatched result.
