@@ -247,6 +247,7 @@ int main()
                                                     grammar::number, grammar::var>,
                         const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: expected number or variable, got '" << tokenizer.peek().name()
                       << "'\n";
         }
@@ -255,18 +256,21 @@ int main()
             lex::unexpected_token<grammar::grammar, grammar::expr, grammar::close_paren>,
             const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: expected ')', got '" << tokenizer.peek().name() << "'\n";
         }
-        void operator()(lex::illegal_operator_chain<grammar::grammar, grammar::expr>,
-                        const lex::tokenizer<grammar::token_spec>& tokenizer)
+        void operator()(lex::illegal_operator_chain<grammar::grammar, grammar::expr> error,
+                        const lex::tokenizer<grammar::token_spec>&                   tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: operator '" << tokenizer.peek().name()
-                      << "' cannot be mixed with this expression\n";
+                      << "' cannot be mixed with operator '" << error.op.name() << "'\n";
         }
 
         void operator()(lex::unexpected_token<grammar::grammar, grammar::var_decl> error,
                         const lex::tokenizer<grammar::token_spec>&                 tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: expected '" << error.expected.name() << "', got '"
                       << tokenizer.peek().name() << "'\n";
         }
@@ -274,6 +278,7 @@ int main()
         void operator()(lex::exhausted_choice<grammar::grammar, grammar::decl>,
                         const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: expected expression or variable declaration, got '"
                       << tokenizer.peek().name() << "'\n";
         }
@@ -281,7 +286,16 @@ int main()
         void operator()(lex::unexpected_token<grammar::grammar, grammar::decl_seq, lex::eof_token>,
                         const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
+            print_line(tokenizer);
             std::cout << "error: expected eof, got '" << tokenizer.peek().name() << "'\n";
+        }
+
+    private:
+        void print_line(const lex::tokenizer<grammar::token_spec>& tokenizer)
+        {
+            auto offset = tokenizer.current_ptr() - tokenizer.begin_ptr();
+            auto spaces = offset + 2; // to account for "> " at beginning
+            std::cout << std::string(spaces, ' ') << "^\n";
         }
     } interpreter;
 

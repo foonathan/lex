@@ -22,8 +22,23 @@ namespace lex
         namespace detail
         {
             template <class TLP, class Func>
-            using parse_result
-                = lex::parse_result<decltype(std::declval<Func>()(callback_result_of<TLP>{}))>;
+            struct op_parse_result
+            {
+                using value_type = decltype(std::declval<Func>()(callback_result_of<TLP>{}));
+
+                parse_result<value_type>                 result;
+                token<typename TLP::grammar::token_spec> op;
+
+                constexpr bool is_unmatched() const noexcept
+                {
+                    return result.is_unmatched();
+                }
+
+                constexpr value_type&& forward() noexcept
+                {
+                    return result.template forward<TLP>();
+                }
+            };
 
             //=== operator_spelling ===//
             template <class... Tokens>
@@ -43,17 +58,18 @@ namespace lex
                 }
 
                 template <class Func, class TLP, class TokenSpec>
-                static constexpr parse_result<TLP, Func> apply_prefix(
-                    Func& f, TLP, const token<TokenSpec>& op, parse_result<TLP, Func>& value)
+                static constexpr op_parse_result<TLP, Func> apply_prefix(
+                    Func& f, TLP, const token<TokenSpec>& op, op_parse_result<TLP, Func>& value)
                 {
-                    parse_result<TLP, Func> result;
+                    op_parse_result<TLP, Func> result;
+                    result.op = op;
 
                     // TODO: C++17
                     (void)((op.is(Tokens{})
-                                ? (result
+                                ? (result.result
                                    = lex::detail::apply_parse_result(f, TLP{},
                                                                      lex::static_token<Tokens>(op),
-                                                                     value.template forward<TLP>()),
+                                                                     value.forward()),
                                    true)
                                 : false)
                            || ...);
@@ -62,16 +78,16 @@ namespace lex
                 }
 
                 template <class Func, class TLP, class TokenSpec>
-                static constexpr parse_result<TLP, Func> apply_postfix(
-                    Func& f, TLP, parse_result<TLP, Func>& value, const token<TokenSpec>& op)
+                static constexpr op_parse_result<TLP, Func> apply_postfix(
+                    Func& f, TLP, op_parse_result<TLP, Func>& value, const token<TokenSpec>& op)
                 {
-                    parse_result<TLP, Func> result;
+                    op_parse_result<TLP, Func> result;
+                    result.op = op;
 
                     // TODO: C++17
                     (void)((op.is(Tokens{})
-                                ? (result
-                                   = lex::detail::apply_parse_result(f, TLP{},
-                                                                     value.template forward<TLP>(),
+                                ? (result.result
+                                   = lex::detail::apply_parse_result(f, TLP{}, value.forward(),
                                                                      lex::static_token<Tokens>(op)),
                                    true)
                                 : false)
@@ -81,20 +97,19 @@ namespace lex
                 }
 
                 template <class Func, class TLP, class TokenSpec>
-                static constexpr parse_result<TLP, Func> apply_binary(Func& f, TLP,
-                                                                      parse_result<TLP, Func>& lhs,
-                                                                      const token<TokenSpec>&  op,
-                                                                      parse_result<TLP, Func>& rhs)
+                static constexpr op_parse_result<TLP, Func> apply_binary(
+                    Func& f, TLP, op_parse_result<TLP, Func>& lhs, const token<TokenSpec>& op,
+                    op_parse_result<TLP, Func>& rhs)
                 {
-                    parse_result<TLP, Func> result;
+                    op_parse_result<TLP, Func> result;
+                    result.op = op;
 
                     // TODO: C++17
                     (void)((op.is(Tokens{})
-                                ? (result
-                                   = lex::detail::apply_parse_result(f, TLP{},
-                                                                     lhs.template forward<TLP>(),
+                                ? (result.result
+                                   = lex::detail::apply_parse_result(f, TLP{}, lhs.forward(),
                                                                      lex::static_token<Tokens>(op),
-                                                                     rhs.template forward<TLP>()),
+                                                                     rhs.forward()),
                                    true)
                                 : false)
                            || ...);
@@ -110,7 +125,7 @@ namespace lex
             //=== operator parsers ===//
             template <class Parser, class TLP, class TokenSpec, class Func>
             constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                -> parse_result<TLP, Func>
+                -> op_parse_result<TLP, Func>
             {
                 auto lhs = Parser::template parse_null<TLP>(tokenizer, f);
                 if (lhs.is_unmatched())
@@ -173,22 +188,23 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     auto value = parse_impl<TLP>(is_production<ProductionOrToken>{}, tokenizer, f);
                     if (value.is_unmatched())
                         return {};
                     else
-                        return lex::detail::apply_parse_result(f, TLP{},
-                                                               value.template forward<
-                                                                   ProductionOrToken>());
+                        return {lex::detail::apply_parse_result(f, TLP{},
+                                                                value.template forward<
+                                                                    ProductionOrToken>()),
+                                {}};
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
-                                                 parse_result<TLP, Func>& lhs)
+                                                 op_parse_result<TLP, Func>& lhs)
                 {
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -203,7 +219,7 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     if (tokenizer.peek().is(TokenOpen{}))
                     {
@@ -223,7 +239,7 @@ namespace lex
                             return {};
                         }
 
-                        return value;
+                        return {static_cast<decltype(value)&&>(value), {}};
                     }
                     else
                         return Atom::template parse_null<TLP>(tokenizer, f);
@@ -231,9 +247,9 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
-                                                 parse_result<TLP, Func>& lhs)
+                                                 op_parse_result<TLP, Func>& lhs)
                 {
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -253,7 +269,7 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     auto op = tokenizer.peek();
                     if (Operator::match(op))
@@ -273,8 +289,8 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_left<TLP>(tokenizer, f, lhs);
                 }
@@ -291,9 +307,10 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
-                    if (Operator::match(tokenizer.peek()))
+                    auto op_token = tokenizer.peek();
+                    if (Operator::match(op_token))
                     {
                         auto op = Production::parse(tokenizer, f);
                         if (op.is_unmatched())
@@ -304,9 +321,10 @@ namespace lex
                         if (operand.is_unmatched())
                             return operand;
 
-                        return lex::detail::apply_parse_result(f, TLP{},
-                                                               op.template forward<Production>(),
-                                                               operand.template forward<TLP>());
+                        return {lex::detail::apply_parse_result(f, TLP{},
+                                                                op.template forward<Production>(),
+                                                                operand.forward()),
+                                op_token};
                     }
                     else
                         return Operand::template parse_null<TLP>(tokenizer, f);
@@ -314,8 +332,8 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_left<TLP>(tokenizer, f, lhs);
                 }
@@ -330,19 +348,19 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_null<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return static_cast<parse_result<TLP, Func>&&>(lhs);
+                        return static_cast<op_parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -353,7 +371,7 @@ namespace lex
                             break;
                     }
 
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -368,34 +386,35 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_null<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return static_cast<parse_result<TLP, Func>&&>(lhs);
+                        return static_cast<op_parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
-                        auto op = Production::parse(tokenizer, f);
+                        auto op_token = tokenizer.peek();
+                        auto op       = Production::parse(tokenizer, f);
                         if (op.is_unmatched())
                             return {};
 
-                        lhs = lex::detail::apply_parse_result(f, TLP{}, lhs.template forward<TLP>(),
-                                                              op.template forward<Production>());
-
+                        lhs = {lex::detail::apply_parse_result(f, TLP{}, lhs.forward(),
+                                                               op.template forward<Production>()),
+                               op_token};
                         if (Assoc == single)
                             break;
                     }
 
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -408,19 +427,19 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_null<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return static_cast<parse_result<TLP, Func>&&>(lhs);
+                        return static_cast<op_parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -436,7 +455,7 @@ namespace lex
                             break;
                     }
 
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -451,19 +470,19 @@ namespace lex
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     return Operand::template parse_null<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left(tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                 parse_result<TLP, Func>& lhs)
-                    -> parse_result<TLP, Func>
+                                                 op_parse_result<TLP, Func>& lhs)
+                    -> op_parse_result<TLP, Func>
                 {
                     lhs = Operand::template parse_left<TLP>(tokenizer, f, lhs);
                     if (lhs.is_unmatched())
-                        return static_cast<parse_result<TLP, Func>&&>(lhs);
+                        return static_cast<op_parse_result<TLP, Func>&&>(lhs);
 
                     while (Operator::match(tokenizer.peek()))
                     {
@@ -477,14 +496,15 @@ namespace lex
                         if (operand.is_unmatched())
                             return operand;
 
-                        lhs = lex::detail::apply_parse_result(f, TLP{}, lhs.template forward<TLP>(),
-                                                              op.template forward<Production>(),
-                                                              operand.template forward<TLP>());
+                        lhs = {lex::detail::apply_parse_result(f, TLP{}, lhs.forward(),
+                                                               op.template forward<Production>(),
+                                                               operand.forward()),
+                               op_token};
                         if (Assoc == single && Operator::match(op_token))
                             break;
                     }
 
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -504,15 +524,15 @@ namespace lex
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_left_impl(lex::detail::type_list<>,
                                                       tokenizer<TokenSpec>&, Func&,
-                                                      parse_result<TLP, Func>& lhs)
+                                                      op_parse_result<TLP, Func>& lhs)
                 {
                     // no left operator found
-                    return static_cast<parse_result<TLP, Func>&&>(lhs);
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
                 template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
                 static constexpr auto parse_left_impl(lex::detail::type_list<Head, Tail...>,
                                                       tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                      parse_result<TLP, Func>& lhs)
+                                                      op_parse_result<TLP, Func>& lhs)
                 {
                     auto old    = tokenizer.current_ptr();
                     auto result = Head::template parse_left<TLP>(tokenizer, f, lhs);
@@ -563,14 +583,15 @@ namespace lex
             {
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                    -> parse_result<TLP, Func>
+                    -> op_parse_result<TLP, Func>
                 {
                     auto result = Rule::template parse<TLP>(tokenizer, f);
                     if (result.is_unmatched())
                         return result;
                     else if (operator_spelling<typename Rule::post_tokens>::match(tokenizer.peek()))
                     {
-                        auto error = illegal_operator_chain<typename TLP::grammar, TLP>(TLP{});
+                        auto error
+                            = illegal_operator_chain<typename TLP::grammar, TLP>(TLP{}, result.op);
                         lex::detail::report_error(f, error, tokenizer);
                         return {};
                     }
@@ -763,10 +784,11 @@ namespace lex
         template <class Func>
         static constexpr auto parse_impl(int, tokenizer<typename Grammar::token_spec>& tokenizer,
                                          Func&& f)
-            -> operator_rule::detail::parse_result<Derived, Func>
+            -> parse_result<
+                typename operator_rule::detail::op_parse_result<Derived, Func>::value_type>
         {
             using rule = operator_rule::detail::make_rule<decltype(Derived::rule())>;
-            return rule::template parse<Derived>(tokenizer, f);
+            return rule::template parse<Derived>(tokenizer, f).result;
         }
 
         template <class Func>

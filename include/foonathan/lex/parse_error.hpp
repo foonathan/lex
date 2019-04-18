@@ -6,6 +6,7 @@
 #define FOONATHAN_LEX_PARSE_ERROR_HPP_INCLUDED
 
 #include <foonathan/lex/production_kind.hpp>
+#include <foonathan/lex/token.hpp>
 #include <foonathan/lex/token_kind.hpp>
 
 namespace foonathan
@@ -113,17 +114,22 @@ namespace lex
     template <class Grammar>
     struct illegal_operator_chain<Grammar, void>
     {
-        production_kind<Grammar> production;
+        production_kind<Grammar>                 production;
+        lex::token<typename Grammar::token_spec> op;
 
         template <class Production>
-        constexpr illegal_operator_chain(Production p) noexcept : production(p)
+        constexpr illegal_operator_chain(Production                          p,
+                                         token<typename Grammar::token_spec> op) noexcept
+        : production(p), op(op)
         {}
     };
 
     template <class Grammar, class Production>
     struct illegal_operator_chain : illegal_operator_chain<Grammar>
     {
-        constexpr illegal_operator_chain(Production p) noexcept : illegal_operator_chain<Grammar>(p)
+        constexpr illegal_operator_chain(Production                          p,
+                                         token<typename Grammar::token_spec> op) noexcept
+        : illegal_operator_chain<Grammar>(p, op)
         {}
     };
 
