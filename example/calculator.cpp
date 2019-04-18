@@ -145,8 +145,13 @@ struct decl : lex::rule_production<decl, grammar>
     }
 };
 
-struct decl_seq : lex::list_production<decl_seq, grammar, decl, semicolon>
-{};
+struct decl_seq : lex::list_production<decl_seq, grammar>
+{
+    using element         = decl;
+    using separator_token = semicolon;
+    using end_token       = lex::eof_token;
+    using allow_trailing  = std::true_type;
+};
 } // namespace grammar
 
 #include <cmath>
