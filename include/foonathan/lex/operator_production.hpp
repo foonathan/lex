@@ -53,8 +53,11 @@ namespace lex
                 template <class TokenSpec>
                 static constexpr bool match(const token<TokenSpec>& token)
                 {
-                    // TODO: C++17
-                    return (token.is(Tokens{}) || ...);
+                    bool result[] = {token.is(Tokens{})..., false};
+                    for (auto value : result)
+                        if (value)
+                            return true;
+                    return false;
                 }
 
                 template <class Func, class TLP, class TokenSpec>
@@ -64,15 +67,15 @@ namespace lex
                     op_parse_result<TLP, Func> result;
                     result.op = op;
 
-                    // TODO: C++17
-                    (void)((op.is(Tokens{})
-                                ? (result.result
-                                   = lex::detail::apply_parse_result(f, TLP{},
-                                                                     lex::static_token<Tokens>(op),
-                                                                     value.forward()),
-                                   true)
-                                : false)
-                           || ...);
+                    bool dummy[]
+                        = {(op.is(Tokens{})
+                            && (result.result
+                                = lex::detail::apply_parse_result(f, TLP{},
+                                                                  lex::static_token<Tokens>(op),
+                                                                  value.forward()),
+                                false))...,
+                           false};
+                    (void)dummy;
 
                     return result;
                 }
@@ -84,14 +87,14 @@ namespace lex
                     op_parse_result<TLP, Func> result;
                     result.op = op;
 
-                    // TODO: C++17
-                    (void)((op.is(Tokens{})
-                                ? (result.result
-                                   = lex::detail::apply_parse_result(f, TLP{}, value.forward(),
-                                                                     lex::static_token<Tokens>(op)),
-                                   true)
-                                : false)
-                           || ...);
+                    bool dummy[]
+                        = {(op.is(Tokens{})
+                            && (result.result
+                                = lex::detail::apply_parse_result(f, TLP{}, value.forward(),
+                                                                  lex::static_token<Tokens>(op)),
+                                false))...,
+                           false};
+                    (void)dummy;
 
                     return result;
                 }
@@ -104,15 +107,15 @@ namespace lex
                     op_parse_result<TLP, Func> result;
                     result.op = op;
 
-                    // TODO: C++17
-                    (void)((op.is(Tokens{})
-                                ? (result.result
-                                   = lex::detail::apply_parse_result(f, TLP{}, lhs.forward(),
-                                                                     lex::static_token<Tokens>(op),
-                                                                     rhs.forward()),
-                                   true)
-                                : false)
-                           || ...);
+                    bool dummy[]
+                        = {(op.is(Tokens{})
+                            && (result.result
+                                = lex::detail::apply_parse_result(f, TLP{}, lhs.forward(),
+                                                                  lex::static_token<Tokens>(op),
+                                                                  rhs.forward()),
+                                false))...,
+                           false};
+                    (void)dummy;
 
                     return result;
                 }

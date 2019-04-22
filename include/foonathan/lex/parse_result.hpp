@@ -35,9 +35,10 @@ namespace lex
             explicit parse_result_storage(unmatched_tag) noexcept : unmatched_{}, is_matched_(false)
             {}
 
-            explicit parse_result_storage(T&& result) noexcept(
+            template <typename U>
+            explicit parse_result_storage(int, U&& result) noexcept(
                 std::is_nothrow_move_constructible<T>::value)
-            : matched_(static_cast<T&&>(result)), is_matched_(true)
+            : matched_(static_cast<U&&>(result)), is_matched_(true)
             {}
 
             ~parse_result_storage() noexcept
@@ -60,9 +61,10 @@ namespace lex
             : unmatched_{}, is_matched_(false)
             {}
 
-            constexpr explicit parse_result_storage(T&& result) noexcept(
+            template <typename U>
+            constexpr explicit parse_result_storage(int, U&& result) noexcept(
                 std::is_nothrow_move_constructible<T>::value)
-            : matched_(static_cast<T&&>(result)), is_matched_(true)
+            : matched_(static_cast<U&&>(result)), is_matched_(true)
             {}
 
             ~parse_result_storage() noexcept = default;
@@ -111,9 +113,6 @@ namespace lex
         : parse_result_storage<T>
         {
             using parse_result_storage<T>::parse_result_storage;
-
-            constexpr parse_result_impl(parse_result_impl&& other) noexcept = default;
-            constexpr parse_result_impl& operator=(parse_result_impl&& other) noexcept = default;
         };
     } // namespace detail
 
@@ -131,9 +130,10 @@ namespace lex
             return parse_result<T>(detail::unmatched_tag{});
         }
 
-        static constexpr parse_result<T> success(T&& result)
+        template <typename U>
+        static constexpr parse_result<T> success(U&& result)
         {
-            return parse_result<T>(static_cast<T&&>(result));
+            return parse_result<T>(0, static_cast<U&&>(result));
         }
 
         constexpr parse_result() noexcept : parse_result(detail::unmatched_tag{}) {}

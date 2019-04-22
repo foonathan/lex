@@ -46,8 +46,8 @@ namespace lex
                     template <class TokenSpec, typename Func, typename... Args>
                     static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
                                                 Args&&... args)
-                        -> decltype(Cont::parse(
-                            tokenizer, f, static_cast<Args&&>(args)...,
+                        -> decltype(
+                            Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
                                         callback_return_type(0, f).template forward<Production>()))
                     {
                         auto result = Production::parse(tokenizer, f);
@@ -104,21 +104,56 @@ namespace lex
                                   "only a production can be used in this context");
 
                     template <class TokenSpec, typename Func, typename... Args>
+                    struct capture_callback;
+                    template <class TokenSpec, typename Func>
+                    struct capture_callback<TokenSpec, Func>
+                    {
+                        tokenizer<TokenSpec>& tokenizer;
+                        Func&                 f;
+
+                        constexpr capture_callback(lex::tokenizer<TokenSpec>& tokenizer, Func& f)
+                        : tokenizer(tokenizer), f(f)
+                        {}
+
+                        template <typename... Args>
+                        constexpr auto operator()(Args&&... args) const
+                        {
+                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...);
+                        }
+                    };
+                    template <class TokenSpec, typename Func, typename Head, typename... Tail>
+                    struct capture_callback<TokenSpec, Func, Head, Tail...>
+                    : capture_callback<TokenSpec, Func, Tail...>
+                    {
+                        Head&& head;
+
+                        constexpr capture_callback(tokenizer<TokenSpec>& tokenizer, Func& f, Head&& h,
+                                         Tail&&... tail)
+                        : capture_callback<TokenSpec, Func, Tail...>(tokenizer, f,
+                                                                     static_cast<Tail&&>(tail)...),
+                          head(static_cast<Head&&>(h))
+                        {}
+
+                        template <typename... Args>
+                        constexpr auto operator()(Args&&... args) const
+                        {
+                            return capture_callback<TokenSpec, Func, Tail...>::
+                                operator()(static_cast<Head&&>(head), static_cast<Args&&>(args)...);
+                        }
+                    };
+
+                    template <class TokenSpec, typename Func, typename... Args>
                     static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
                                                 Args&&... args)
                     {
-                        // TODO: requires C++17
-                        auto capture_callback = [&](auto&&... inline_args) {
-                            // forward the inlined arguments
-                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                               static_cast<decltype(inline_args)&&>(
-                                                   inline_args)...);
-                        };
+                        // create a callback that passes the existing arguments as well
+                        capture_callback<TokenSpec, Func, Args&&...>
+                            impl_callback(tokenizer, f, static_cast<Args&&>(args)...);
 
                         // parse the production but capture success
-                        capture_success_callback<Func, Production, decltype(capture_callback)>
-                             callback{f, capture_callback};
-                        auto result = Production::parse(tokenizer, callback);
+                        capture_success_callback<Func, Production, decltype(impl_callback)>
+                             callback{f, impl_callback};
+                        auto result       = Production::parse(tokenizer, callback);
                         using result_type = std::decay_t<decltype(result)>;
                         if (result.is_success())
                             // we've matched the production, return the parse result from the
@@ -224,8 +259,8 @@ namespace lex
                         // try to parse result as often as possible
                         while (true)
                         {
-                            auto next_result = try_parse<
-                                parser_for<Tail, Cont>>(tokenizer, f,
+                            auto next_result
+                                = try_parse<parser_for<Tail, Cont>>(tokenizer, f,
                                                                     result.template forward<tlp>());
                             if (next_result.is_unmatched())
                                 break;
