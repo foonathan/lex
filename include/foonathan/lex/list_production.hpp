@@ -181,15 +181,15 @@ namespace lex
                           "a list with trailing seperator requires ::end_token");
 
             using impl      = detail::list_production_impl<Derived, Grammar>;
-            using element   = typename Derived::element;
+            using elem      = typename Derived::element;
             using separator = typename Derived::separator_token;
             using end = std::conditional_t<has_end, typename Derived::end_token, lex::eof_token>;
             using parser
                 = std::conditional_t<Derived::allow_empty::value,
                                      typename impl::template empty_parser<
-                                         element, separator, end, Derived::allow_trailing::value>,
+                                         elem, separator, end, Derived::allow_trailing::value>,
                                      typename impl::template non_empty_parser<
-                                         element, separator, end, Derived::allow_trailing::value>>;
+                                         elem, separator, end, Derived::allow_trailing::value>>;
             return parser::parse(tokenizer, f);
         }
     };
@@ -215,14 +215,14 @@ namespace lex
                           "list brackets must be tokens");
 
             using impl      = detail::list_production_impl<Derived, Grammar>;
-            using element   = typename Derived::element;
+            using elem      = typename Derived::element;
             using separator = typename Derived::separator_token;
-            using parser    = std::conditional_t<
-                Derived::allow_empty::value,
-                typename impl::template empty_parser<element, separator, close,
-                                                     Derived::allow_trailing::value>,
-                typename impl::template non_empty_parser<element, separator, close,
-                                                         Derived::allow_trailing::value>>;
+            using parser
+                = std::conditional_t<Derived::allow_empty::value,
+                                     typename impl::template empty_parser<
+                                         elem, separator, close, Derived::allow_trailing::value>,
+                                     typename impl::template non_empty_parser<
+                                         elem, separator, close, Derived::allow_trailing::value>>;
 
             if (tokenizer.peek().is(open{}))
                 tokenizer.bump();

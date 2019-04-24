@@ -137,7 +137,8 @@ namespace lex
 
         /// Can either be used as `silent<Token>` or `silent(Token{} + Token{})`.
         template <class Rule>
-        constexpr auto silent(Rule rule)
+        constexpr auto silent(Rule rule) -> detail::silent_return_type<Rule>
+        // need trailing return type to due GCC bug
         {
             (void)rule;
             return detail::silent_return_type<Rule>{};

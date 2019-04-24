@@ -6,6 +6,8 @@
 
 #include <catch.hpp>
 
+#include "test.hpp"
+
 namespace lex = foonathan::lex;
 
 namespace
@@ -69,16 +71,16 @@ TEST_CASE("list_production: no separator, non-empty")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "aa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "aa");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aaa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aaa");
     verify(r3, 3);
 }
 
@@ -108,16 +110,16 @@ TEST_CASE("list_production: no separator, empty")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "aa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "aa");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aaa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aaa");
     verify(r3, 3);
 }
 
@@ -146,22 +148,22 @@ TEST_CASE("list_production: non-empty, non-trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "a,a");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a,a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a,a,a");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "a,");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "a,");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, ",a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, ",a");
     verify(r5, unmatched);
 }
 
@@ -192,22 +194,22 @@ TEST_CASE("list_production: non-empty, trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "a,a");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a,a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a,a,a");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "a,");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "a,");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, ",a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, ",a");
     verify(r5, unmatched);
 }
 
@@ -238,25 +240,25 @@ TEST_CASE("list_production: empty, non-trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "a,a");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a,a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a,a,a");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "a,");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "a,");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, ",a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, ",a");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, ",");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, ",");
     verify(r6, unmatched);
 }
 
@@ -288,25 +290,25 @@ TEST_CASE("list_production: empty, trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "a,a");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a,a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a,a,a");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "a,");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "a,");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, ",a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, ",a");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, ",");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, ",");
     verify(r6, unmatched);
 }
 
@@ -343,19 +345,19 @@ TEST_CASE("bracketed_list_production: no separator, non-empty")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(aa)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(aa)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(aaa)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(aaa)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "aa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "aa");
     verify(r4, unmatched);
 }
 
@@ -393,19 +395,19 @@ TEST_CASE("bracketed_list_production: no separator, empty")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(aa)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(aa)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(aaa)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(aaa)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "aa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "aa");
     verify(r4, unmatched);
 }
 
@@ -443,25 +445,25 @@ TEST_CASE("bracketed_list_production: non-empty, non-trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(a,a)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(a,a,a)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "(a,)");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "(,a)");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "a,a");
     verify(r6, unmatched);
 }
 
@@ -500,25 +502,25 @@ TEST_CASE("bracketed_list_production: non-empty, trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, unmatched);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(a,a)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(a,a,a)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "(a,)");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "(,a)");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "a,a");
     verify(r6, unmatched);
 }
 
@@ -557,28 +559,28 @@ TEST_CASE("bracketed_list_production: empty, non-trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(a,a)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(a,a,a)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "(a,)");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "(,a)");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "a,a");
     verify(r6, unmatched);
 
-    constexpr auto r7 = parse<P>(visitor{}, "(,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "(,)");
     verify(r7, unmatched);
 }
 
@@ -618,27 +620,27 @@ TEST_CASE("bracketed_list_production: empty, trailing")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "()");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "(a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(a,a)");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "(a,a,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(a,a,a)");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "(a,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "(a,)");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, "(,a)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "(,a)");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "a,a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "a,a");
     verify(r6, unmatched);
 
-    constexpr auto r7 = parse<P>(visitor{}, "(,)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "(,)");
     verify(r7, unmatched);
 }

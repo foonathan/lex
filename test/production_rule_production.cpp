@@ -6,6 +6,8 @@
 
 #include <catch.hpp>
 
+#include "test.hpp"
+
 namespace lex = foonathan::lex;
 
 namespace
@@ -78,16 +80,16 @@ TEST_CASE("rule_production: production")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "b");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "abc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "abc");
     verify(r2, 4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, -1);
 }
 
@@ -116,16 +118,16 @@ TEST_CASE("rule_production: inline")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "bb");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "bb");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "abbc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "abbc");
     verify(r2, 0);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, -1);
 }
 
@@ -167,16 +169,16 @@ TEST_CASE("rule_production: choice")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "ac");
     verify(r0, 10);
 
-    constexpr auto r1 = parse<P>(visitor{}, "bc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "bc");
     verify(r1, 11);
 
-    constexpr auto r2 = parse<P>(visitor{}, "c");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "c");
     verify(r2, -1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a");
     verify(r3, -1);
 }
 
@@ -221,16 +223,16 @@ TEST_CASE("rule_production: choice with tokens")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "ac");
     verify(r0, 10);
 
-    constexpr auto r1 = parse<P>(visitor{}, "bc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "bc");
     verify(r1, 11);
 
-    constexpr auto r2 = parse<P>(visitor{}, "c");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "c");
     verify(r2, 12);
 
-    constexpr auto r3 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "a");
     verify(r3, -1);
 }
 
@@ -271,16 +273,16 @@ TEST_CASE("rule_production: choice with complex peek")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "abc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "abc");
     verify(r0, 1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "ac");
     verify(r1, 2);
 
-    constexpr auto r2 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "a");
     verify(r2, 3);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, -1);
 }
 
@@ -313,25 +315,25 @@ TEST_CASE("rule_production: right recursion")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "b");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "ab");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aab");
     verify(r3, 2);
 
-    constexpr auto r4 = parse<P>(visitor{}, "aaab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "aaab");
     verify(r4, 3);
 
-    constexpr auto r5 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "a");
     verify(r5, -1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "ac");
     verify(r6, -1);
 }
 
@@ -364,28 +366,28 @@ TEST_CASE("rule_production: middle recursion")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "b");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "aba");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "aba");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aabaa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aabaa");
     verify(r3, 2);
 
-    constexpr auto r4 = parse<P>(visitor{}, "aaabaaa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "aaabaaa");
     verify(r4, 3);
 
-    constexpr auto r5 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "a");
     verify(r5, -1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "ac");
     verify(r6, -1);
 
-    constexpr auto r7 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "ab");
     verify(r7, -1);
 }
 
@@ -418,25 +420,25 @@ TEST_CASE("rule_production: left recursion")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
     auto r1 = parse<P>(visitor{}, "b");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "ba");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "ba");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "baa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "baa");
     verify(r3, 2);
 
-    constexpr auto r4 = parse<P>(visitor{}, "baaa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "baaa");
     verify(r4, 3);
 
-    constexpr auto r5 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "a");
     verify(r5, -1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "ca");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "ca");
     verify(r6, -1);
 }
 
@@ -478,24 +480,24 @@ TEST_CASE("rule_production: indirect recursion")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "ac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "ac");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "abac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "abac");
     verify(r2, 10);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ababac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ababac");
     verify(r3, 110);
 
-    constexpr auto r4 = parse<P>(visitor{}, "abababac");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "abababac");
     verify(r4, 1110);
 
-    constexpr auto r5 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "ab");
     verify(r5, -1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "abc");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "abc");
     verify(r6, -1);
 }

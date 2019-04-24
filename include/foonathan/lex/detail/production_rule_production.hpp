@@ -108,17 +108,15 @@ namespace lex
                     template <class TokenSpec, typename Func>
                     struct capture_callback<TokenSpec, Func>
                     {
-                        tokenizer<TokenSpec>& tokenizer;
+                        tokenizer<TokenSpec>& t;
                         Func&                 f;
 
-                        constexpr capture_callback(lex::tokenizer<TokenSpec>& tokenizer, Func& f)
-                        : tokenizer(tokenizer), f(f)
-                        {}
+                        constexpr capture_callback(tokenizer<TokenSpec>& t, Func& f) : t(t), f(f) {}
 
                         template <typename... Args>
                         constexpr auto operator()(Args&&... args) const
                         {
-                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...);
+                            return Cont::parse(t, f, static_cast<Args&&>(args)...);
                         }
                     };
                     template <class TokenSpec, typename Func, typename Head, typename... Tail>

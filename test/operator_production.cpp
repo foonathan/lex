@@ -9,6 +9,8 @@
 #include <foonathan/lex/ascii.hpp>
 #include <foonathan/lex/rule_production.hpp>
 
+#include "test.hpp"
+
 namespace lex = foonathan::lex;
 
 namespace
@@ -119,25 +121,25 @@ TEST_CASE("operator_production: pre_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "-3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "-3");
     verify(r1, -3);
 
-    constexpr auto r2 = parse<P>(visitor{}, "!0");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "!0");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "!-2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "!-2");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "--2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "--2");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "!!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "!!");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "-!2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "-!2");
     verify(r6, unmatched);
 }
 
@@ -182,28 +184,28 @@ TEST_CASE("operator_production: pre_op_chain")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "-3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "-3");
     verify(r1, -3);
 
-    constexpr auto r2 = parse<P>(visitor{}, "!0");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "!0");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "!-2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "!-2");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "--2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "--2");
     verify(r4, 2);
 
-    constexpr auto r5 = parse<P>(visitor{}, "!!1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "!!1");
     verify(r5, 1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "!!--1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "!!--1");
     verify(r6, 1);
 
-    constexpr auto r7 = parse<P>(visitor{}, "-!2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "-!2");
     verify(r7, unmatched);
 }
 
@@ -248,25 +250,25 @@ TEST_CASE("operator_production: post_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "3-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "3-");
     verify(r1, -3);
 
-    constexpr auto r2 = parse<P>(visitor{}, "0!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "0!");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "2-!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "2-!");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "2--");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "2--");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "!!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "!!");
     verify(r5, unmatched);
 
-    constexpr auto r6 = parse<P>(visitor{}, "2-!-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "2-!-");
     verify(r6, unmatched);
 }
 
@@ -311,28 +313,28 @@ TEST_CASE("operator_production: post_op_chain")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "3-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "3-");
     verify(r1, -3);
 
-    constexpr auto r2 = parse<P>(visitor{}, "0!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "0!");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "2-!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "2-!");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "2--");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "2--");
     verify(r4, 2);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1!!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1!!");
     verify(r5, 1);
 
-    constexpr auto r6 = parse<P>(visitor{}, "1--!!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1--!!");
     verify(r6, 1);
 
-    constexpr auto r7 = parse<P>(visitor{}, "2!-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "2!-");
     verify(r7, unmatched);
 }
 
@@ -382,49 +384,49 @@ TEST_CASE("operator_production: bin_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
     {
-        constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + 3");
         verify(r1, 4);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1 * 4");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 * 4");
         verify(r2, 4);
 
-        constexpr auto r3 = parse<P>(visitor{}, "1 * 2 + 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * 2 + 3");
         verify(r3, 5);
 
-        constexpr auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
         verify(r4, 7);
 
-        constexpr auto r5 = parse<P>(visitor{}, "1 * 2 + 3 * 4");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 * 2 + 3 * 4");
         verify(r5, 14);
     }
     {
-        constexpr auto r1 = parse<P>(visitor{}, "1 - 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 - 3");
         verify(r1, -2);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1 * 4");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 * 4");
         verify(r2, 4);
 
-        constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * 2 - 3");
         verify(r3, -1);
 
-        constexpr auto r4 = parse<P>(visitor{}, "1 - 2 * 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 - 2 * 3");
         verify(r4, -5);
 
-        constexpr auto r5 = parse<P>(visitor{}, "1 * 2 - 3 * 4");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 * 2 - 3 * 4");
         verify(r5, -10);
     }
 
-    constexpr auto r6 = parse<P>(visitor{}, "1 +");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1 +");
     verify(r6, unmatched);
 
-    constexpr auto r7 = parse<P>(visitor{}, "1 * 2 + ");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "1 * 2 + ");
     verify(r7, unmatched);
 
-    constexpr auto r8 = parse<P>(visitor{}, "1 + 2 + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r8 = parse<P>(visitor{}, "1 + 2 + 3");
     verify(r8, unmatched);
 }
 
@@ -475,25 +477,25 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "-1 + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "-1 + 3");
     verify(r1, 2);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1 * -4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 * -4");
     verify(r2, -4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 * -2 + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * -2 + 3");
     verify(r3, 1);
 
-    constexpr auto r4 = parse<P>(visitor{}, "-1 + 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "-1 + 2 * 3");
     verify(r4, 5);
 
-    constexpr auto r5 = parse<P>(visitor{}, "-1 * -2 + 3 * 4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "-1 * -2 + 3 * 4");
     verify(r5, 14);
 
-    constexpr auto r6 = parse<P>(visitor{}, "1 + -");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1 + -");
     verify(r6, unmatched);
 }
 
@@ -538,22 +540,22 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + 3");
     verify(r1, 4);
 
-    constexpr auto r2 = parse<P>(visitor{}, "!1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "!1");
     verify(r2, 0);
 
-    constexpr auto r3 = parse<P>(visitor{}, "! 1+2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "! 1+2");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "! 0 + 0");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "! 0 + 0");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, "! 1 + ");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "! 1 + ");
     verify(r5, unmatched);
 }
 
@@ -604,25 +606,25 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1- + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1- + 3");
     verify(r1, 2);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1 * 4-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 * 4-");
     verify(r2, -4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 * 2- + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * 2- + 3");
     verify(r3, 1);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1- + 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1- + 2 * 3");
     verify(r4, 5);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1- * 2- + 3 * 4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1- * 2- + 3 * 4");
     verify(r5, 14);
 
-    constexpr auto r6 = parse<P>(visitor{}, "1 + -");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1 + -");
     verify(r6, unmatched);
 }
 
@@ -667,22 +669,22 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1 + 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + 3");
     verify(r1, 4);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1!");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1!");
     verify(r2, 0);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1+2 !");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1+2 !");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "0 + 0 !");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "0 + 0 !");
     verify(r4, 1);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1 + !");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 + !");
     verify(r5, unmatched);
 }
 
@@ -727,22 +729,22 @@ TEST_CASE("operator_production: bin_op_left")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1 - 2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 - 2");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
     verify(r2, -4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
     verify(r3, -3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
     verify(r4, -7);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1 - 2 - ");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 - 2 - ");
     verify(r5, unmatched);
 }
 
@@ -787,22 +789,22 @@ TEST_CASE("operator_production: bin_op_right")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "1 - 2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 - 2");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
     verify(r2, 2);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 * 2 - 2 - 3");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 - 2 - 2 * 3");
     verify(r4, 5);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1 - 2 - ");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 - 2 - ");
     verify(r5, unmatched);
 }
 
@@ -851,28 +853,28 @@ TEST_CASE("operator_production: parenthesized")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
     auto r1 = parse<P>(visitor{}, "(1 + 3)");
     verify(r1, 4);
 
-    constexpr auto r2 = parse<P>(visitor{}, "(1 * ((4)))");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(1 * ((4)))");
     verify(r2, 4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "2 * (2 + 3)");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "2 * (2 + 3)");
     verify(r3, 10);
 
-    constexpr auto r4 = parse<P>(visitor{}, "(1 + 2) * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "(1 + 2) * 3");
     verify(r4, 9);
 
-    constexpr auto r5 = parse<P>(visitor{}, "(1 * (2 + 3)) * 4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "(1 * (2 + 3)) * 4");
     verify(r5, 20);
 
-    constexpr auto r6 = parse<P>(visitor{}, "1 + (");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1 + (");
     verify(r6, unmatched);
 
-    constexpr auto r7 = parse<P>(visitor{}, "1 * (2 + ");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "1 * (2 + ");
     verify(r7, unmatched);
 }
 
@@ -924,22 +926,22 @@ TEST_CASE("operator_production: choice with single atom")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
     verify(r0, 1);
 
     auto r1 = parse<P>(visitor{}, "1 + 2 + 3");
     verify(r1, 6);
 
-    constexpr auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
     verify(r2, 12);
 
-    constexpr auto r3 = parse<P>(visitor{}, "1 - 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 - 2 - 3");
     verify(r3, -4);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1 + 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 + 2 - 3");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "1 * 2 - 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 * 2 - 3");
     verify(r5, unmatched);
 }
 
@@ -992,22 +994,22 @@ TEST_CASE("operator_production: choice with unary")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
     verify(r0, 1);
 
     auto r1 = parse<P>(visitor{}, "1 + 2 + 3");
     verify(r1, 6);
 
-    constexpr auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "2 * 2 * 3");
     verify(r2, 12);
 
-    constexpr auto r3 = parse<P>(visitor{}, "-4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-4");
     verify(r3, -4);
 
-    constexpr auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 + 2 * 3");
     verify(r4, unmatched);
 
-    constexpr auto r5 = parse<P>(visitor{}, "-1 * 3");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "-1 * 3");
     verify(r5, unmatched);
 }
 
@@ -1026,7 +1028,7 @@ TEST_CASE("operator_production: production as operator")
 
         struct P : lex::operator_production<P, grammar>
         {
-            static constexpr auto rule()
+            static FOONATHAN_LEX_TEST_CONSTEXPR auto rule()
             {
                 namespace r = lex::operator_rule;
 
@@ -1060,16 +1062,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "-1");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "--1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "--1");
         verify(r2, unmatched);
 
-        constexpr auto r3 = parse<P>(visitor{}, "-");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
     SECTION("pre_prod_chain")
@@ -1119,16 +1121,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "-1");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "--1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "--1");
         verify(r2, 1);
 
-        constexpr auto r3 = parse<P>(visitor{}, "-");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
     SECTION("post_prod_single")
@@ -1178,16 +1180,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "1-");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1--");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1--");
         verify(r2, unmatched);
 
-        constexpr auto r3 = parse<P>(visitor{}, "-");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
     SECTION("post_prod_chain")
@@ -1237,16 +1239,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "1-");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1--");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1--");
         verify(r2, 1);
 
-        constexpr auto r3 = parse<P>(visitor{}, "-");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
     SECTION("bin_prod_single")
@@ -1296,16 +1298,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "1 - 2");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
         verify(r2, unmatched);
 
-        constexpr auto r3 = parse<P>(visitor{}, "1 -");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 -");
         verify(r3, unmatched);
     }
     SECTION("bin_prod_left")
@@ -1355,16 +1357,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "1 - 2");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
         verify(r2, -4);
 
-        constexpr auto r3 = parse<P>(visitor{}, "1 -");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 -");
         verify(r3, unmatched);
     }
     SECTION("bin_prod_right")
@@ -1414,16 +1416,16 @@ TEST_CASE("operator_production: production as operator")
             {}
         };
 
-        constexpr auto r0 = parse<P>(visitor{}, "1");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
         verify(r0, 1);
 
         auto r1 = parse<P>(visitor{}, "1 - 2");
         verify(r1, -1);
 
-        constexpr auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 - 2 - 3");
         verify(r2, 2);
 
-        constexpr auto r3 = parse<P>(visitor{}, "1 -");
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 -");
         verify(r3, unmatched);
     }
 }
@@ -1469,18 +1471,18 @@ TEST_CASE("operator_production: end")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "4");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
     verify(r0, 4);
 
-    constexpr auto r1 = parse<P>(visitor{}, "3-");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "3-");
     verify(r1, -3);
 
-    constexpr auto r2 = parse<P>(visitor{}, "3 + 1");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "3 + 1");
     verify(r2, 4);
 
-    constexpr auto r3 = parse<P>(visitor{}, "3 + 1 + 2");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "3 + 1 + 2");
     verify(r3, unmatched);
 
-    constexpr auto r4 = parse<P>(visitor{}, "2--");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "2--");
     verify(r4, unmatched);
 }

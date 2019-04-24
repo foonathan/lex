@@ -624,9 +624,9 @@ namespace lex
             template <class Operand1, class Operand2>
             struct make_choice_impl
             {
-                static constexpr auto verify
-                    = (&detail::verify_operand<Operand1>, &detail::verify_operand<Operand2>);
-                using type = rule<Operand1, Operand2>;
+                static constexpr auto verify1 = &detail::verify_operand<Operand1>;
+                static constexpr auto verify2 = &detail::verify_operand<Operand2>;
+                using type                    = rule<Operand1, Operand2>;
             };
             template <class... Children, class Operand2>
             struct make_choice_impl<rule<Children...>, Operand2>

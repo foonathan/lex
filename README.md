@@ -112,12 +112,12 @@ The library requires a C++14 compiler with reasonable `constexpr` support.
 Compilers that are being tested on CI:
 
 * Linux:
-    * GCC 5 to 8, but compile-time tokenization is not support for GCC < 8 (still works at runtime)
+    * GCC 5 to 8, but compile-time parsing is not supported for GCC < 8 (still works at runtime)
     * clang 4 to 7
 * MacOS:
     * XCode 9 and 10
 * Windows:
-    * Visual Studio 2017
+    * Visual Studio 2017, but compile-time parsing sometimes doesn't work (still works at runtime)
 
 ### Installation
 

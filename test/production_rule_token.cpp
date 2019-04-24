@@ -6,6 +6,8 @@
 
 #include <catch.hpp>
 
+#include "test.hpp"
+
 namespace lex = foonathan::lex;
 
 namespace
@@ -66,16 +68,16 @@ TEST_CASE("rule_production: token")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, -1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aab");
     verify(r3, 0);
 }
 
@@ -99,16 +101,16 @@ TEST_CASE("rule_production: silent")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, -1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aba");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aba");
     verify(r3, 0);
 }
 
@@ -132,16 +134,16 @@ TEST_CASE("rule_production: eof")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, -1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aab");
     verify(r3, -1);
 }
 
@@ -165,16 +167,16 @@ TEST_CASE("rule_production: token sequence")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, -1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, -1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, 0);
 }
 
@@ -199,19 +201,19 @@ TEST_CASE("rule_production: token choice")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 0);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, 1);
 
-    constexpr auto r3 = parse<P>(visitor{}, "ab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
     verify(r3, 0);
 
-    constexpr auto r4 = parse<P>(visitor{}, "cab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "cab");
     verify(r4, -1);
 }
 
@@ -232,16 +234,16 @@ TEST_CASE("rule_production: token opt")
         }
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, 0);
 
-    constexpr auto r1 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "b");
     verify(r2, 0);
 
-    constexpr auto r3 = parse<P>(visitor{}, "aab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aab");
     verify(r3, 1);
 }
 
@@ -302,27 +304,27 @@ TEST_CASE("rule_production: token complex")
         {}
     };
 
-    constexpr auto r0 = parse<P>(visitor{}, "aab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "aab");
     verify(r0, 0);
-    constexpr auto r1 = parse<P>(visitor{}, "aa");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "aa");
     verify(r1, 1);
 
-    constexpr auto r2 = parse<P>(visitor{}, "bbab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "bbab");
     verify(r2, 2);
-    constexpr auto r3 = parse<P>(visitor{}, "bba");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "bba");
     verify(r3, 3);
 
-    constexpr auto r4 = parse<P>(visitor{}, "bcab");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "bcab");
     verify(r4, 4);
-    constexpr auto r5 = parse<P>(visitor{}, "bca");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "bca");
     verify(r5, 5);
 
-    constexpr auto r6 = parse<P>(visitor{}, "a");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "a");
     verify(r6, -1);
-    constexpr auto r7 = parse<P>(visitor{}, "bb");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "bb");
     verify(r7, -1);
-    constexpr auto r8 = parse<P>(visitor{}, "bcb");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r8 = parse<P>(visitor{}, "bcb");
     verify(r8, -1);
-    constexpr auto r9 = parse<P>(visitor{}, "c");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r9 = parse<P>(visitor{}, "c");
     verify(r9, -1);
 }
