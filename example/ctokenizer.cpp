@@ -196,7 +196,7 @@ struct float_literal : lex::basic_rule_token<float_literal, spec>
         auto float_rule = (float_with_fraction / float_without_fraction) + float_suffix();
 
         // In order to match the rules, we create a `lex::rule_matcher` giving it the input.
-        lex::rule_matcher<spec> matcher(str, end);
+        rule_matcher matcher(str, end);
         if (matcher.match(float_rule))
             // It matched the floating point rule.
             // We finish parsing the float literal token if the remaining characters are not alpha

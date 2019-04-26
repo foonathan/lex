@@ -14,6 +14,8 @@ namespace lex
 {
     template <class TokenSpec>
     class token;
+    template <class TokenSpec>
+    class rule_matcher;
 
     /// A token that has no associated parsing rule.
     ///
@@ -59,6 +61,7 @@ namespace lex
         using token_kind   = lex::token_kind<TokenSpec>;
         using token        = lex::token<TokenSpec>;
         using match_result = lex::match_result<TokenSpec>;
+        using rule_matcher = lex::rule_matcher<TokenSpec>;
 
         /// \returns An unmatched result.
         static constexpr match_result unmatched() noexcept
@@ -798,7 +801,7 @@ namespace lex
                                                                 const char* end) noexcept
         {
             constexpr auto rule = Derived::rule();
-            return rule_matcher<TokenSpec>(str, end).finish(Derived{}, rule);
+            return lex::rule_matcher<TokenSpec>(str, end).finish(Derived{}, rule);
         }
     };
 } // namespace lex
