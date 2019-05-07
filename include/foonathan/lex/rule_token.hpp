@@ -570,7 +570,7 @@ namespace lex
                         return false;
 
                     auto sub_copy = cur;
-                    if (sub.try_match(sub_copy, end))
+                    if (sub.try_match(sub_copy, copy))
                         // if sub matched, don't match
                         return false;
 
