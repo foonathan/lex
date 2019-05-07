@@ -778,6 +778,14 @@ namespace lex
                 return match_result<TokenSpec>::unmatched();
         }
 
+        constexpr match_result<TokenSpec> finish(token_kind<TokenSpec> kind) noexcept
+        {
+            if (get_bump() > 0)
+                return match_result<TokenSpec>::success(kind, get_bump());
+            else
+                return match_result<TokenSpec>::unmatched();
+        }
+
     private:
         constexpr std::size_t get_bump() const noexcept
         {
