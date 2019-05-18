@@ -3,13 +3,40 @@
 # found in the top-level directory of this distribution.
 
 cmake_minimum_required(VERSION 3.8)
-if(POLICY CMP0076)
-    cmake_policy(SET CMP0076 NEW)
-endif()
-
 project(foonathan_lex VERSION 0.0.0)
 
 include(external/external.cmake)
+
+set(detail_header_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_base.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_postprocess.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_production.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_token.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp)
+set(header_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/grammar.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/list_production.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/operator_production.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_error.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_result.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parser.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_production.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_spec.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/whitespace_token.hpp)
 
 # main target
 add_library(foonathan_lex INTERFACE)
@@ -19,39 +46,7 @@ target_include_directories(foonathan_lex SYSTEM INTERFACE
                            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
                            $<INSTALL_INTERFACE:include/>)
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
-
-target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/assert.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_base.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_postprocess.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_production.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/production_rule_token.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp
-               >)
-target_sources(foonathan_lex INTERFACE $<BUILD_INTERFACE:
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/grammar.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/identifier_token.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/list_production.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/literal_token.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/match_result.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/operator_production.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_error.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parse_result.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/parser.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/production_kind.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_production.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/rule_token.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/spelling.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_kind.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/token_spec.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/tokenizer.hpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/whitespace_token.hpp
-               >)
+target_sources(foonathan_lex INTERFACE "$<BUILD_INTERFACE:${detail_header_files};${header_files}>")
 
 # installation
 if(NOT dependency_via_submodule)
