@@ -76,51 +76,32 @@ namespace lex
         };
     } // namespace token_kind_detail
 
-    /// Information about the kind of a token.
     template <class TokenSpec>
     class token_kind
     {
     public:
-        /// \effects Creates it from the integral id.
         static constexpr token_kind from_id(std::size_t id) noexcept
         {
             return token_kind(0, static_cast<token_kind_detail::id_type<TokenSpec>>(id));
         }
 
-        /// \effects Creates it from an incomplete token type.
-        /// But otherwise behaves like the constructor.
         template <class Token>
         static constexpr token_kind of() noexcept
         {
             return token_kind(0, token_kind_detail::get_id<TokenSpec, Token>());
         }
 
-        /// \effects Creates an error token kind.
-        /// \group ctor_error
         constexpr token_kind() noexcept : token_kind(error_token{}) {}
-        /// \group ctor_error
-        constexpr token_kind(error_token) noexcept
-        : id_(token_kind_detail::get_id<TokenSpec, error_token>())
-        {}
 
-        /// \effects Creates the EOF token kind.
-        constexpr token_kind(eof_token) noexcept
-        : id_(token_kind_detail::get_id<TokenSpec, eof_token>())
-        {}
-
-        /// \effects Creates the specified token kind.
-        /// \requires The token must be one of the specified tokens.
         template <class Token>
         constexpr token_kind(Token) noexcept : id_(token_kind_detail::get_id<TokenSpec, Token>())
         {}
 
-        /// \returns Whether or not it is the error token.
         explicit constexpr operator bool() const noexcept
         {
             return id_ != 0;
         }
 
-        /// \returns Whether or not it is the specified token kind.
         template <class Token>
         constexpr bool is(Token = {}) const noexcept
         {
@@ -135,17 +116,11 @@ namespace lex
             return matcher.result;
         }
 
-        /// \returns The underlying integer value of the token.
         constexpr token_kind_detail::id_type<TokenSpec> get() const noexcept
         {
             return id_;
         }
 
-        /// \returns The name of the token.
-        /// If this function is used, all rule tokens must have a `static constexpr const char*
-        /// name;` member. This is returned as the name. For tokens that inherit from a class other
-        /// than [lex::rule_token]() it is automatically provided, but can of course be overriden by
-        /// hiding the declaration.
         constexpr const char* name() const noexcept
         {
             if (!*this)

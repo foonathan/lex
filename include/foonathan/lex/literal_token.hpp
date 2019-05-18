@@ -12,11 +12,6 @@ namespace foonathan
 {
 namespace lex
 {
-    /// A literal token.
-    ///
-    /// It matches the given sequence of characters.
-    /// If there are multiple literal tokens with a common prefix the longest matching will be
-    /// selected.
     template <char... Literal>
     struct literal_token : detail::base_token
     {
@@ -29,8 +24,6 @@ namespace lex
     template <char... Literal>
     constexpr const char literal_token<Literal...>::value[];
 
-    /// Expands to `literal_token<String[0], String[1], ...>`.
-    /// It ignores all null characters.
 #define FOONATHAN_LEX_LITERAL(String)                                                              \
     FOONATHAN_LEX_DETAIL_STRING(foonathan::lex::literal_token, String)
 
@@ -53,7 +46,6 @@ namespace lex
         using literal_token_type = decltype(get_literal_type(Token{}));
     } // namespace detail
 
-    /// Whether or not the token is a literal token.
     template <class Token>
     struct is_literal_token : detail::is_literal_token_impl<literal_token, Token>::value
     {};

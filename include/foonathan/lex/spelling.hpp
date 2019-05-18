@@ -11,9 +11,6 @@ namespace foonathan
 {
 namespace lex
 {
-    /// The spelling of a token.
-    ///
-    /// This is simply a lightweight `std::string_view` replacement.
     class token_spelling
     {
     public:

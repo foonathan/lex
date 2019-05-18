@@ -104,7 +104,7 @@ A: Thanks. I do have a Patreon page, so consider checking it out:
 
 ## Documentation
 
-> A full reference documentation is WIP, look at the comments in the header files for now.
+Tutorial and reference documentation can be found [here](doc/doc.md).
 
 ### Compiler Support
 
