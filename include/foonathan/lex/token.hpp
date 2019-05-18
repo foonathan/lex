@@ -135,7 +135,7 @@ namespace lex
     };
 
     template <class Token, class Payload>
-    class static_token : static_token<Token, void>
+    class static_token : public static_token<Token, void>
     {
     public:
         template <class TokenSpec>
