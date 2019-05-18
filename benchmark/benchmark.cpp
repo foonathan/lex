@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
         {
             for (auto& run : report)
             {
-                auto name = split_name(run.run_name);
+                auto name = split_name(run.run_name.str());
 
                 // insert the category if necessary
                 auto iter = std::find(categories_.begin(), categories_.end(), name.second);
