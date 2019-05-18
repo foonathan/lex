@@ -52,11 +52,11 @@ struct keyword_c : lex::keyword_token<'c'>
 
 TEST_CASE("identifier_token and keyword_token")
 {
-    static constexpr const char       array[]   = "dd a ab abc c";
+    static constexpr const char       array[]   = "dd a ab abc c d";
     constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
     FOONATHAN_LEX_TEST_CONSTEXPR auto result    = tokenize<test_spec>(tokenizer);
 
-    REQUIRE(result.size() == 9);
+    REQUIRE(result.size() == 11);
 
     REQUIRE(result[0].is(identifier{}));
     REQUIRE(result[0].name() == std::string("<identifier>"));
@@ -98,4 +98,12 @@ TEST_CASE("identifier_token and keyword_token")
     REQUIRE(result[8].name() == std::string("c"));
     REQUIRE(result[8].spelling() == "c");
     REQUIRE(result[8].offset(tokenizer) == 12);
+
+    REQUIRE(result[9].is(whitespace{}));
+    REQUIRE(result[9].spelling() == " ");
+    REQUIRE(result[9].offset(tokenizer) == 13);
+
+    REQUIRE(result[10].is(identifier{}));
+    REQUIRE(result[10].spelling() == "d");
+    REQUIRE(result[10].offset(tokenizer) == 14);
 }

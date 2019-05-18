@@ -68,7 +68,7 @@ namespace lex
                 auto identifier_end   = str + identifier.bump;
                 auto keyword = literal_trie<TokenSpec, Keywords>::try_match(identifier_begin,
                                                                             identifier_end);
-                if (keyword.is_matched() && keyword.bump == identifier.bump)
+                if (keyword.is_success() && keyword.bump == identifier.bump)
                     // we've matched a keyword and it isn't a prefix but the whole string
                     return keyword;
                 else
