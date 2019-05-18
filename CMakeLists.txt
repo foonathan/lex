@@ -42,11 +42,18 @@ set(header_files
 add_library(foonathan_lex INTERFACE)
 add_library(foonathan::foonathan_lex ALIAS foonathan_lex)
 target_compile_features(foonathan_lex INTERFACE cxx_std_14)
-target_include_directories(foonathan_lex SYSTEM INTERFACE
-                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                           $<INSTALL_INTERFACE:include/>)
 target_link_libraries(foonathan_lex INTERFACE debug_assert)
 target_sources(foonathan_lex INTERFACE "$<BUILD_INTERFACE:${detail_header_files};${header_files}>")
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    target_include_directories(foonathan_lex INTERFACE
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+                               $<INSTALL_INTERFACE:include/>)
+else()
+    target_include_directories(foonathan_lex SYSTEM INTERFACE
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+                               $<INSTALL_INTERFACE:include/>)
+endif()
 
 # installation
 if(NOT dependency_via_submodule)
