@@ -200,19 +200,17 @@ namespace lex
         /// EOF.
         constexpr void bump() noexcept
         {
-            using any_whitespace = detail::any_of<TokenSpec, is_whitespace>;
             reset(ptr_ + last_result_.bump);
-            skip_whitespace(any_whitespace{});
         }
 
         /// \effects Resets the tokenizer to the specified position and parses that token
         /// immediately.
         constexpr void reset(const char* position) noexcept
         {
-            FOONATHAN_LEX_PRECONDITION(begin_ <= position && position <= end_,
-                                       "position out of range");
-            ptr_         = position;
-            last_result_ = trie::try_match(ptr_, end_);
+            reset_impl(position);
+
+            using any_whitespace = detail::any_of<TokenSpec, is_whitespace_token>;
+            skip_whitespace(any_whitespace{});
         }
 
         //=== getters ===//
@@ -237,10 +235,18 @@ namespace lex
         }
 
     private:
+        constexpr void reset_impl(const char* position) noexcept
+        {
+            FOONATHAN_LEX_PRECONDITION(begin_ <= position && position <= end_,
+                                       "position out of range");
+            ptr_         = position;
+            last_result_ = trie::try_match(ptr_, end_);
+        }
+
         constexpr void skip_whitespace(std::true_type)
         {
-            while (last_result_.kind.template is_category<is_whitespace>())
-                reset(ptr_ + last_result_.bump);
+            while (last_result_.kind.template is_category<is_whitespace_token>())
+                reset_impl(ptr_ + last_result_.bump);
         }
         constexpr void skip_whitespace(std::false_type) {}
 

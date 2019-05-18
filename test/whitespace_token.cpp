@@ -38,3 +38,16 @@ TEST_CASE("whitespace_token")
     REQUIRE(result[2].spelling() == "a");
     REQUIRE(result[2].offset(tokenizer) == 5);
 }
+
+TEST_CASE("whitespace_token and reset()")
+{
+    static constexpr const char array[] = "bbabbba";
+
+    auto tokenizer = lex::tokenizer<test_spec>(array);
+    REQUIRE(tokenizer.peek().is(token_a{}));
+    REQUIRE(tokenizer.peek().offset(tokenizer) == 2);
+
+    tokenizer.reset(tokenizer.current_ptr() + 1);
+    REQUIRE(tokenizer.peek().is(token_a{}));
+    REQUIRE(tokenizer.peek().offset(tokenizer) == 6);
+}
