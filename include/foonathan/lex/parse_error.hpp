@@ -94,15 +94,15 @@ namespace lex
     {
         production_kind<Grammar> production;
 
-        template <class Production>
+        template <class Production, typename = std::enable_if_t<is_production<Production>::value>>
         constexpr exhausted_choice(Production p) noexcept : production(p)
         {}
     };
 
     template <class Grammar, class Production>
-    struct exhausted_choice : exhausted_choice<Grammar>
+    struct exhausted_choice : exhausted_choice<Grammar, void>
     {
-        constexpr exhausted_choice(Production p) noexcept : exhausted_choice<Grammar>(p) {}
+        constexpr exhausted_choice(Production p) noexcept : exhausted_choice<Grammar, void>(p) {}
     };
 
     //=== illegal_operator_chain ===//
