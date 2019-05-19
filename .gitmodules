@@ -4,3 +4,6 @@
 [submodule "external/debug_assert"]
 	path = external/debug_assert
 	url = https://github.com/foonathan/debug_assert
+[submodule "external/mp11"]
+	path = external/mp11
+	url = https://github.com/boostorg/mp11

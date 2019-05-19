@@ -121,11 +121,30 @@ Compilers that are being tested on CI:
 
 ### Installation
 
-The library is header-only and has only my [debug_assert](https://github.com/foonathan/debug_assert) library as dependency.
+The library is header-only and requires my [debug_assert](https://github.com/foonathan/debug_assert) library as well as the (header-only and standalone) [Boost.mp11](https://github.com/boostorg/mp11).
 
-If you use CMake, `debug_assert` will be cloned automatically if not installed on the system.
-You can use it with `add_subdirectory()` or install it and use `find_package(foonathan_lex)`,
-then link to `foonathan::foonathan_lex` and everything will be setup automatically.
+#### Using CMake `add_subdirectory()`:
+
+Download and call `add_subdirectory()`.
+It will look for the dependencies with `find_package()`, if they're not found, the git submodules will be used.
+
+Then link to `foonathan::foonathan_lex`.
+
+#### Using CMake `find_package()`:
+
+Download and install, setting the CMake variable `FOONATHAN_LEX_FORCE_FIND_PACKAGE=ON`.
+This requires the dependencies to be installed as well.
+
+Then call `find_package(foonathan_lex)` and link to `foonathan::foonathan_lex`.
+
+##### With other buildsystems:
+
+You need to set the following options:
+
+* Enable C++14
+* Add the include path, so `#include <debug_assert.hpp>` works
+* Add the include path, so `#include <boost/mp11/mp11.hpp>` works
+* Add the include path, so `#include <foonathan/lex/tokenizer.hpp>` works
 
 ## Planned Features
 

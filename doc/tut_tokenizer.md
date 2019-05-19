@@ -324,7 +324,7 @@ struct float_literal
 ```
 
 > Note that we've deliberately avoided ambiguity by specifying that no `.` must follow an integer literal.
-> Otherwise, whether or not `123.4` is a float literal or an integer literal, then a `.`, then another integer literal, would depend on the order in the token specification.
+> Otherwise, whether or not `123.4` is a float literal or an integer literal, then a `.`, then another integer literal, would be unspecified.
 > By saying that an integer literal only matches if the next token isn't `.`, this is avoided.
 
 However, writing it that way is less efficient as it could be.

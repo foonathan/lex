@@ -5,6 +5,10 @@
 #ifndef FOONATHAN_LEX_OPERATOR_PRODUCTION_HPP_INCLUDED
 #define FOONATHAN_LEX_OPERATOR_PRODUCTION_HPP_INCLUDED
 
+#include <boost/mp11/algorithm.hpp>
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/set.hpp>
+
 #include <foonathan/lex/grammar.hpp>
 #include <foonathan/lex/parser.hpp>
 #include <foonathan/lex/tokenizer.hpp>
@@ -21,6 +25,8 @@ namespace lex
 
         namespace detail
         {
+            namespace mp = boost::mp11;
+
             template <class TLP, class Func>
             struct op_parse_result
             {
@@ -44,11 +50,10 @@ namespace lex
             template <class... Tokens>
             struct operator_spelling
             {
-                static_assert(
-                    lex::detail::all_of<lex::detail::type_list<Tokens...>, is_token>::value,
-                    "operators must be single tokens");
+                static_assert(mp::mp_all_of<operator_spelling, is_token>::value,
+                              "operators must be single tokens");
 
-                using token_list = lex::detail::type_list<Tokens...>;
+                using token_list = operator_spelling;
 
                 template <class TokenSpec>
                 static constexpr bool match(const token<TokenSpec>& token)
@@ -120,10 +125,6 @@ namespace lex
                     return result;
                 }
             };
-            template <class... Tokens>
-            struct operator_spelling<lex::detail::type_list<Tokens...>>
-            : operator_spelling<Tokens...>
-            {};
 
             //=== operator parsers ===//
             template <class Parser, class TLP, class TokenSpec, class Func>
@@ -157,8 +158,8 @@ namespace lex
                                   || is_token<ProductionOrToken>::value,
                               "atom must be a production or token");
 
-                using pre_tokens  = lex::detail::type_list<>;
-                using post_tokens = lex::detail::type_list<>;
+                using pre_tokens  = mp::mp_list<>;
+                using post_tokens = mp::mp_list<>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_impl(std::true_type /* is_production */,
@@ -217,8 +218,8 @@ namespace lex
                 static_assert(is_token<TokenOpen>::value && is_token<TokenClose>::value,
                               "parentheses must be tokens");
 
-                using pre_tokens  = lex::detail::type_list<>;
-                using post_tokens = lex::detail::type_list<>;
+                using pre_tokens  = mp::mp_list<>;
+                using post_tokens = mp::mp_list<>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -266,8 +267,8 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct prefix_op : operand_parser
             {
-                using pre_tokens  = lex::detail::concat<typename Operator::token_list,
-                                                       typename Operand::pre_tokens>;
+                using pre_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::pre_tokens>;
                 using post_tokens = typename Operand::post_tokens;
 
                 template <class TLP, class TokenSpec, class Func>
@@ -304,8 +305,8 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens  = lex::detail::concat<typename Operator::token_list,
-                                                       typename Operand::pre_tokens>;
+                using pre_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::pre_tokens>;
                 using post_tokens = typename Operand::post_tokens;
 
                 template <class TLP, class TokenSpec, class Func>
@@ -345,9 +346,9 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct postfix_op : operand_parser
             {
-                using pre_tokens  = typename Operand::pre_tokens;
-                using post_tokens = lex::detail::concat<typename Operator::token_list,
-                                                        typename Operand::post_tokens>;
+                using pre_tokens = typename Operand::pre_tokens;
+                using post_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -383,9 +384,9 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens  = typename Operand::pre_tokens;
-                using post_tokens = lex::detail::concat<typename Operator::token_list,
-                                                        typename Operand::post_tokens>;
+                using pre_tokens = typename Operand::pre_tokens;
+                using post_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -424,9 +425,9 @@ namespace lex
             template <associativity Assoc, class Operator, class Operand>
             struct binary_op : operand_parser
             {
-                using pre_tokens  = typename Operand::pre_tokens;
-                using post_tokens = lex::detail::concat<typename Operator::token_list,
-                                                        typename Operand::post_tokens>;
+                using pre_tokens = typename Operand::pre_tokens;
+                using post_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -467,9 +468,9 @@ namespace lex
             {
                 static_assert(is_production<Production>::value, "must be a production");
 
-                using pre_tokens  = typename Operand::pre_tokens;
-                using post_tokens = lex::detail::concat<typename Operator::token_list,
-                                                        typename Operand::post_tokens>;
+                using pre_tokens = typename Operand::pre_tokens;
+                using post_tokens
+                    = mp::mp_append<typename Operator::token_list, typename Operand::post_tokens>;
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
@@ -511,73 +512,95 @@ namespace lex
                 }
             };
 
-            template <class Child, class... Children>
+            template <class... Children>
             struct rule : operator_adl
             {
-                using pre_tokens  = lex::detail::concat<typename Child::pre_tokens,
-                                                       typename Children::pre_tokens...>;
-                using post_tokens = lex::detail::concat<typename Child::post_tokens,
-                                                        typename Children::post_tokens...>;
+                using pre_tokens  = mp::mp_append<typename Children::pre_tokens...>;
+                using post_tokens = mp::mp_append<typename Children::post_tokens...>;
 
                 static_assert(
-                    lex::detail::is_unique<pre_tokens>::value,
+                    mp::mp_is_set<pre_tokens>::value,
                     "operator choice cannot uniquely decide a path based on a prefix operator, "
                     "try extracting common operands as a separate production");
 
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_left_impl(lex::detail::type_list<>,
-                                                      tokenizer<TokenSpec>&, Func&,
-                                                      op_parse_result<TLP, Func>& lhs)
+                template <class TLP>
+                struct parse_left_impl
                 {
-                    // no left operator found
-                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
-                }
-                template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
-                static constexpr auto parse_left_impl(lex::detail::type_list<Head, Tail...>,
-                                                      tokenizer<TokenSpec>& tokenizer, Func& f,
-                                                      op_parse_result<TLP, Func>& lhs)
-                {
-                    auto old    = tokenizer.current_ptr();
-                    auto result = Head::template parse_left<TLP>(tokenizer, f, lhs);
-                    if (tokenizer.current_ptr() != old)
-                        // Head parsed something, so we're done
-                        return result;
-                    else
-                        // try the next child
-                        return parse_left_impl<TLP>(lex::detail::type_list<Tail...>{}, tokenizer, f,
-                                                    lhs);
-                }
+                    template <class... List>
+                    struct fn // empty
+                    {
+                        template <class TokenSpec, class Func>
+                        static constexpr auto parse(tokenizer<TokenSpec>&, Func&,
+                                                    op_parse_result<TLP, Func>& lhs)
+                            -> op_parse_result<TLP, Func>
+                        {
+                            // no left operator found
+                            return static_cast<op_parse_result<TLP, Func>&&>(lhs);
+                        }
+                    };
+                    template <class Head, class... Tail>
+                    struct fn<Head, Tail...> // non-empty
+                    {
+                        template <class TokenSpec, class Func>
+                        static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                    op_parse_result<TLP, Func>& lhs)
+                            -> op_parse_result<TLP, Func>
+                        {
+                            auto old    = tokenizer.current_ptr();
+                            auto result = Head::template parse_left<TLP>(tokenizer, f, lhs);
+                            if (tokenizer.current_ptr() != old)
+                                // Head parsed something, so we're done
+                                return result;
+                            else
+                                // try the next child
+                                return fn<Tail...>::parse(tokenizer, f, lhs);
+                        }
+                    };
+                };
 
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_impl(lex::detail::type_list<>,
-                                                 tokenizer<TokenSpec>& tokenizer, Func& f)
+                template <class TLP>
+                struct parse_impl
                 {
-                    // we haven't found any prefix operator, so parse an atom
-                    // then use the first child whose parse_left() function matched something
+                    template <class... List>
+                    struct fn // empty
+                    {
+                        template <class TokenSpec, class Func>
+                        static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                            -> op_parse_result<TLP, Func>
+                        {
+                            // we haven't found any prefix operator, so parse an atom
+                            // then use the first child whose parse_left() function matched
+                            // something
 
-                    // to parse an atom, we can just use the parse_null() function of any child,
-                    // as we didn't have a prefix operator that would match
-                    auto atom = Child::template parse_null<TLP>(tokenizer, f);
-                    return parse_left_impl<TLP>(lex::detail::type_list<Child, Children...>{},
-                                                tokenizer, f, atom);
-                }
-                template <class TLP, class Head, class... Tail, class TokenSpec, class Func>
-                static constexpr auto parse_impl(lex::detail::type_list<Head, Tail...>,
-                                                 tokenizer<TokenSpec>& tokenizer, Func& f)
-                {
-                    if (operator_spelling<typename Head::pre_tokens>::match(tokenizer.peek()))
-                        // we have a prefix operator that definitely narrows it down to Head
-                        return detail::parse<Head, TLP>(tokenizer, f);
-                    else
-                        // try to parse the next one instead
-                        return parse_impl<TLP>(lex::detail::type_list<Tail...>{}, tokenizer, f);
-                }
+                            // to parse an atom, we can just use the parse_null() function of any
+                            // child, as we didn't have a prefix operator that would match
+                            auto atom = mp::mp_front<rule>::template parse_null<TLP>(tokenizer, f);
+                            return mp::mp_apply_q<parse_left_impl<TLP>, rule>::parse(tokenizer, f,
+                                                                                     atom);
+                        }
+                    };
+                    template <class Head, class... Tail>
+                    struct fn<Head, Tail...> // non-empty
+                    {
+                        template <class TokenSpec, class Func>
+                        static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                            -> op_parse_result<TLP, Func>
+                        {
+                            if (mp::mp_rename<typename Head::pre_tokens, operator_spelling>::match(
+                                    tokenizer.peek()))
+                                // we have a prefix operator that definitely narrows it down to Head
+                                return detail::parse<Head, TLP>(tokenizer, f);
+                            else
+                                // try to parse the next one instead
+                                return fn<Tail...>::parse(tokenizer, f);
+                        }
+                    };
+                };
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
                 {
-                    return parse_impl<TLP>(lex::detail::type_list<Child, Children...>{}, tokenizer,
-                                           f);
+                    return mp::mp_apply_q<parse_impl<TLP>, rule>::parse(tokenizer, f);
                 }
             };
 
@@ -591,7 +614,8 @@ namespace lex
                     auto result = Rule::template parse<TLP>(tokenizer, f);
                     if (result.is_unmatched())
                         return result;
-                    else if (operator_spelling<typename Rule::post_tokens>::match(tokenizer.peek()))
+                    else if (mp::mp_rename<typename Rule::post_tokens, operator_spelling>::match(
+                                 tokenizer.peek()))
                     {
                         auto error
                             = illegal_operator_chain<typename TLP::grammar, TLP>(TLP{}, result.op);

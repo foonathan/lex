@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKEN_KIND_HPP_INCLUDED
 
+#include <boost/mp11/algorithm.hpp>
+
 #include <foonathan/lex/detail/assert.hpp>
 #include <foonathan/lex/detail/select_integer.hpp>
 #include <foonathan/lex/token_spec.hpp>
@@ -15,65 +17,18 @@ namespace lex
 {
     namespace token_kind_detail
     {
-        // id 0: invalid
-        // id 1: EOF
         template <class TokenSpec>
-        using id_type = detail::select_integer<TokenSpec::size + 2>;
-
-        template <class TokenSpec, class Token>
-        struct get_id_impl
-        {
-            static constexpr id_type<TokenSpec> get() noexcept
-            {
-                constexpr auto index = detail::index_of<TokenSpec, Token>::value;
-                static_assert(detail::contains<TokenSpec, Token>::value,
-                              "not one of the specified tokens");
-                return static_cast<id_type<TokenSpec>>(index + 2);
-            }
-        };
-
-        template <class TokenSpec>
-        struct get_id_impl<TokenSpec, error_token>
-        {
-            static constexpr id_type<TokenSpec> get() noexcept
-            {
-                return 0;
-            }
-        };
-
-        template <class TokenSpec>
-        struct get_id_impl<TokenSpec, eof_token>
-        {
-            static constexpr id_type<TokenSpec> get() noexcept
-            {
-                return 1;
-            }
-        };
+        using id_type
+            = detail::select_integer<boost::mp11::mp_size<typename TokenSpec::list>::value>;
 
         template <class TokenSpec, class Token>
         constexpr id_type<TokenSpec> get_id() noexcept
         {
-            return get_id_impl<TokenSpec, Token>::get();
+            static_assert(boost::mp11::mp_contains<typename TokenSpec::list, Token>::value,
+                          "not one of the specified tokens");
+            constexpr auto index = boost::mp11::mp_find<typename TokenSpec::list, Token>::value;
+            return static_cast<id_type<TokenSpec>>(index);
         }
-
-        template <class TokenSpec, template <typename> class Category>
-        struct category_matcher
-        {
-            id_type<TokenSpec> id;
-            bool               result = false;
-
-            template <typename T>
-            constexpr bool operator()(detail::type_list<T>)
-            {
-                if (id != get_id<TokenSpec, T>())
-                    return true;
-                else
-                {
-                    result = Category<T>::value;
-                    return false;
-                }
-            }
-        };
     } // namespace token_kind_detail
 
     template <class TokenSpec>
@@ -99,7 +54,7 @@ namespace lex
 
         explicit constexpr operator bool() const noexcept
         {
-            return id_ != 0;
+            return id_ != token_kind_detail::get_id<TokenSpec, error_token>();
         }
 
         template <class Token>
@@ -111,9 +66,7 @@ namespace lex
         template <template <typename> class Category>
         constexpr bool is_category() const noexcept
         {
-            token_kind_detail::category_matcher<TokenSpec, Category> matcher{id_, false};
-            detail::for_each(TokenSpec{}, matcher);
-            return matcher.result;
+            return is_category_impl<Category>(typename TokenSpec::list{});
         }
 
         constexpr token_kind_detail::id_type<TokenSpec> get() const noexcept
@@ -123,24 +76,7 @@ namespace lex
 
         constexpr const char* name() const noexcept
         {
-            if (!*this)
-                return "<error>";
-            else if (is(eof_token{}))
-                return "<eof>";
-            else
-            {
-                const char* result = nullptr;
-                detail::for_each(TokenSpec{}, [&](auto tag) {
-                    using type = typename decltype(tag)::type;
-                    if (!this->is(type{}))
-                        return true;
-
-                    result = type::name;
-                    return false;
-                });
-                FOONATHAN_LEX_ASSERT(result);
-                return result;
-            }
+            return name_impl(typename TokenSpec::list{});
         }
 
         friend constexpr bool operator==(token_kind lhs, token_kind rhs) noexcept
@@ -156,6 +92,25 @@ namespace lex
         explicit constexpr token_kind(int, token_kind_detail::id_type<TokenSpec> id) noexcept
         : id_(id)
         {}
+
+        template <template <typename> class Category, typename... Tokens>
+        constexpr bool is_category_impl(boost::mp11::mp_list<Tokens...>) const noexcept
+        {
+            bool result  = false;
+            bool dummy[] = {(is<Tokens>() && (result = Category<Tokens>::value, true))..., true};
+            (void)dummy;
+            return result;
+        }
+
+        template <typename... Tokens>
+        constexpr const char* name_impl(boost::mp11::mp_list<Tokens...>) const noexcept
+        {
+            const char* result  = nullptr;
+            bool        dummy[] = {(is<Tokens>() && (result = Tokens::name, true))..., true};
+            (void)dummy;
+            FOONATHAN_LEX_ASSERT(result);
+            return result;
+        }
 
         token_kind_detail::id_type<TokenSpec> id_;
     };

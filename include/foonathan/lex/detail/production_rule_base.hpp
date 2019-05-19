@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_LEX_PRODUCTION_RULE_BASE_HPP_INCLUDED
 #define FOONATHAN_LEX_PRODUCTION_RULE_BASE_HPP_INCLUDED
 
+#include <boost/mp11/algorithm.hpp>
+
 #include <foonathan/lex/grammar.hpp>
 #include <foonathan/lex/parse_error.hpp>
 #include <foonathan/lex/parse_result.hpp>
@@ -21,6 +23,8 @@ namespace lex
 
         namespace detail
         {
+            namespace mp = boost::mp11;
+
             //=== parser_for ===//
             template <class... Rules>
             struct parser_for_impl;
@@ -43,28 +47,33 @@ namespace lex
             struct any_token
             {};
 
-            template <class TokenSpec>
-            constexpr bool peek_token_is(lex::detail::type_list<>, const tokenizer<TokenSpec>&)
+            template <class... Tokens>
+            struct peek_token // empty
             {
-                return false;
-            }
-
-            template <class Head, class... Tail, class TokenSpec>
-            constexpr bool peek_token_is(lex::detail::type_list<Head, Tail...>,
-                                         const tokenizer<TokenSpec>& tokenizer)
+                template <class TokenSpec>
+                static constexpr bool is(const tokenizer<TokenSpec>&)
+                {
+                    return false;
+                }
+            };
+            template <class Head, class... Tail>
+            struct peek_token<Head, Tail...>
             {
-                if (tokenizer.peek().is(Head{}))
+                template <class TokenSpec>
+                static constexpr bool is(const tokenizer<TokenSpec>& tokenizer)
+                {
+                    return tokenizer.peek().is(Head{}) || peek_token<Tail...>::is(tokenizer);
+                }
+            };
+            template <class... Tail>
+            struct peek_token<any_token, Tail...>
+            {
+                template <class TokenSpec>
+                static constexpr bool is(const tokenizer<TokenSpec>&)
+                {
                     return true;
-                else
-                    return peek_token_is(lex::detail::type_list<Tail...>{}, tokenizer);
-            }
-
-            template <class... Tail, class TokenSpec>
-            constexpr bool peek_token_is(lex::detail::type_list<any_token, Tail...>,
-                                         const tokenizer<TokenSpec>&)
-            {
-                return true;
-            }
+                }
+            };
 
             //=== parser implementations ===//
             /// The final parser that invokes the callback.

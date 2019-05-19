@@ -13,10 +13,11 @@ namespace lex
 {
     /// A grammar that is parsed.
     template <class TokenSpec, class StartProduction, class... OtherProductions>
-    struct grammar : detail::type_list<StartProduction, OtherProductions...>
+    struct grammar
     {
-        using token_spec = TokenSpec;
-        using start      = StartProduction;
+        using token_spec  = TokenSpec;
+        using start       = StartProduction;
+        using productions = boost::mp11::mp_list<StartProduction, OtherProductions...>;
     };
 
     namespace detail

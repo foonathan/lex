@@ -5,15 +5,12 @@
 #ifndef FOONATHAN_LEX_TOKEN_SPEC_HPP_INCLUDED
 #define FOONATHAN_LEX_TOKEN_SPEC_HPP_INCLUDED
 
-#include <foonathan/lex/detail/type_list.hpp>
+#include <boost/mp11/list.hpp>
 
 namespace foonathan
 {
 namespace lex
 {
-    template <class... Tokens>
-    using token_spec = detail::type_list<Tokens...>;
-
     /// \exclude
     namespace production_rule
     {
@@ -32,10 +29,20 @@ namespace lex
     {};
 
     struct error_token : detail::base_token
-    {};
+    {
+        static constexpr const char* name = "<error>";
+    };
 
     struct eof_token : detail::base_token
-    {};
+    {
+        static constexpr const char* name = "<eof>";
+    };
+
+    template <class... Tokens>
+    struct token_spec
+    {
+        using list = boost::mp11::mp_list<error_token, Tokens..., eof_token>;
+    };
 } // namespace lex
 } // namespace foonathan
 

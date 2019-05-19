@@ -19,37 +19,54 @@ namespace lex
     namespace detail
     {
         //=== literal trie building ===//
-        template <class TokenSpec, class LiteralTokens>
-        struct build_trie_impl;
-
         template <class TokenSpec>
-        struct build_trie_impl<TokenSpec, type_list<>>
+        struct literal_trie_impl
         {
-            using type = typename trie<TokenSpec>::empty;
-        };
-
-        template <class TokenSpec, typename Head, typename... Tail>
-        struct build_trie_impl<TokenSpec, type_list<Head, Tail...>>
-        {
-            using base = typename build_trie_impl<TokenSpec, type_list<Tail...>>::type;
-            using type = typename trie<TokenSpec>::template insert_literal_str<
-                base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
+            template <class... LiteralTokens>
+            struct fn // empty
+            {
+                using type = typename trie<TokenSpec>::empty;
+            };
+            template <class Head, class... Tail>
+            struct fn<Head, Tail...> // non-empty
+            {
+                using base = typename fn<Tail...>::type;
+                using type = typename trie<TokenSpec>::template insert_literal<
+                    base, token_kind<TokenSpec>(Head{}).get(), literal_token_type<Head>>;
+            };
         };
 
         template <class TokenSpec, class LiteralTokens>
         using literal_trie =
-            typename build_trie_impl<TokenSpec, typename LiteralTokens::list>::type;
+            typename mp::mp_apply_q<literal_trie_impl<TokenSpec>, LiteralTokens>::type;
 
-        //=== keyword and identifier trie ===//
-        template <class TokenSpec, class Identifiers, class Keywords>
-        struct keyword_identifier_matcher
+        //=== rule insertion ===//
+        template <class TokenSpec, class Trie>
+        struct rule_trie_impl
         {
-            static_assert(Identifiers::size <= 1, "at most one identifier_token token is allowed");
+            template <class... Rules>
+            struct fn // empty
+            {
+                using type = Trie;
+            };
+            template <class Head, class... Tail>
+            struct fn<Head, Tail...> // non-empty
+            {
+                using base = typename fn<Tail...>::type;
+                using type = typename base::template insert_rule<Head>;
+            };
         };
 
-        template <class TokenSpec, class Identifier, class Keywords>
-        struct keyword_identifier_matcher<TokenSpec, type_list<Identifier>, Keywords>
+        template <class TokenSpec, class Trie, class RuleTokens>
+        using rule_trie =
+            typename mp::mp_apply_q<rule_trie_impl<TokenSpec, Trie>, RuleTokens>::type;
+
+        //=== keyword trie ===//
+        template <class TokenSpec, class Identifier, class... Keywords>
+        struct keyword_identifier_matcher
         {
+            using keyword_trie = literal_trie<TokenSpec, mp::mp_list<Keywords...>>;
+
             static constexpr bool is_conflicting_literal(token_kind<TokenSpec> kind) noexcept
             {
                 return Identifier::is_conflicting_literal(kind);
@@ -66,8 +83,7 @@ namespace lex
                 // try to match a keyword in the identifier
                 auto identifier_begin = str;
                 auto identifier_end   = str + identifier.bump;
-                auto keyword = literal_trie<TokenSpec, Keywords>::try_match(identifier_begin,
-                                                                            identifier_end);
+                auto keyword          = keyword_trie::try_match(identifier_begin, identifier_end);
                 if (keyword.is_success() && keyword.bump == identifier.bump)
                     // we've matched a keyword and it isn't a prefix but the whole string
                     return keyword;
@@ -77,67 +93,63 @@ namespace lex
             }
         };
 
-        template <class TokenSpec, class Keywords>
-        struct keyword_identifier_matcher<TokenSpec, type_list<>, Keywords>
+        template <class TokenSpec, class KeywordList>
+        struct keyword_trie_impl
         {
-            static_assert(Keywords::size == 0, "keyword tokens require an identifier_token token");
-
-            static constexpr bool is_conflicting_literal(token_kind<TokenSpec>) noexcept
+            // create a matcher for that identifier and some keyword list
+            template <class Identifier>
+            struct matcher
             {
-                return false;
-            }
+                template <class... Keywords>
+                using fn = keyword_identifier_matcher<TokenSpec, Identifier, Keywords...>;
+            };
 
-            static constexpr match_result<TokenSpec> try_match(const char*, const char*) noexcept
-            {
-                // no identifier rule, so will never match
-                return match_result<TokenSpec>::unmatched();
-            }
+            template <class... Identifiers>
+            // create a list of rules, one for each identifier (i.e. 0 or 1 in practice)
+            using fn = mp::mp_list<mp::mp_apply_q<matcher<Identifiers>, KeywordList>...>;
         };
 
-        //=== try_match ===//
-        template <class TokenSpec, class Root, class Rules>
-        struct insert_rules
-        {
-            using type = Root;
-        };
+        template <class TokenSpec, class Trie, class Identifiers, class Keywords>
+        using keyword_trie
+            = rule_trie<TokenSpec, Trie,
+                        // insert the list of rules
+                        mp::mp_apply_q<keyword_trie_impl<TokenSpec, Keywords>, Identifiers>>;
 
-        template <class TokenSpec, class Root, class Head, class... Tail>
-        struct insert_rules<TokenSpec, Root, type_list<Head, Tail...>>
-        {
-            using with_head = typename trie<TokenSpec>::template insert_rule<Root, Head>;
-            using type      = typename insert_rules<TokenSpec, with_head, type_list<Tail...>>::type;
-        };
-
+        //=== token_spec_trie ===//
         template <class TokenSpec>
-        struct build_trie
+        struct token_spec_trie_impl
         {
+            using list = typename TokenSpec::list;
+
             // split the tokens
-            using identifiers = keep_if<TokenSpec, is_identifier_token>;
-            using keywords    = keep_if<TokenSpec, is_keyword_token>;
-            using rule_tokens = keep_if<TokenSpec, is_non_identifier_rule_token>;
-            using literals    = keep_if<TokenSpec, is_non_keyword_literal_token>;
+            using identifiers = mp::mp_copy_if<list, is_identifier_token>;
+            using keywords    = mp::mp_copy_if<list, is_keyword_token>;
+            using rule_tokens = mp::mp_copy_if<list, is_non_identifier_rule_token>;
+            using literals    = mp::mp_copy_if<list, is_non_keyword_literal_token>;
+
+            // verify identifier conditions
+            static_assert(mp::mp_size<identifiers>::value <= 1,
+                          "at most one identifier is allowed");
+            static_assert(mp::mp_empty<keywords>::value || mp::mp_size<identifiers>::value > 0,
+                          "keywords require an identifier");
 
             // start with the literal trie
-            using trie0 = detail::literal_trie<TokenSpec, literals>;
+            using trie0 = literal_trie<TokenSpec, literals>;
             // insert all rule tokens
-            using trie1 = typename insert_rules<TokenSpec, trie0, rule_tokens>::type;
+            using trie1 = rule_trie<TokenSpec, trie0, rule_tokens>;
             // insert the keyword identifier rule
-            using keyword_identifier_matcher
-                = detail::keyword_identifier_matcher<TokenSpec, identifiers, keywords>;
-            using trie2 =
-                typename detail::trie<TokenSpec>::template insert_rule<trie1,
-                                                                       keyword_identifier_matcher>;
+            using trie2 = keyword_trie<TokenSpec, trie1, identifiers, keywords>;
         };
 
         template <class TokenSpec>
-        using token_spec_trie = typename build_trie<TokenSpec>::trie2;
+        using token_spec_trie = typename token_spec_trie_impl<TokenSpec>::trie2;
     } // namespace detail
 
     template <class TokenSpec>
     class tokenizer
     {
         using trie = detail::token_spec_trie<TokenSpec>;
-        static_assert(detail::all_of<TokenSpec, is_token>::value,
+        static_assert(detail::mp::mp_all_of<typename TokenSpec::list, is_token>::value,
                       "invalid types in token specifications");
 
     public:
@@ -184,7 +196,8 @@ namespace lex
         {
             reset_impl(position);
 
-            using any_whitespace = detail::any_of<TokenSpec, is_whitespace_token>;
+            using any_whitespace
+                = detail::mp::mp_any_of<typename TokenSpec::list, is_whitespace_token>;
             skip_whitespace(any_whitespace{});
         }
 

@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_LEX_PRODUCTION_KIND_HPP_INCLUDED
 #define FOONATHAN_LEX_PRODUCTION_KIND_HPP_INCLUDED
 
+#include <boost/mp11/algorithm.hpp>
+
 #include <foonathan/lex/detail/select_integer.hpp>
 #include <foonathan/lex/grammar.hpp>
 
@@ -15,24 +17,18 @@ namespace lex
     namespace production_kind_detail
     {
         template <class Grammar>
-        using id_type = detail::select_integer<Grammar::size>;
-
-        template <class Grammar, class Production>
-        struct get_id_impl
-        {
-            static constexpr id_type<Grammar> get() noexcept
-            {
-                constexpr auto index = detail::index_of<Grammar, Production>::value;
-                static_assert(detail::contains<Grammar, Production>::value,
-                              "not one of the specified productions");
-                return static_cast<id_type<Grammar>>(index);
-            }
-        };
+        using id_type
+            = detail::select_integer<boost::mp11::mp_size<typename Grammar::productions>::value>;
 
         template <class Grammar, class Production>
         constexpr id_type<Grammar> get_id() noexcept
         {
-            return get_id_impl<Grammar, Production>::get();
+            constexpr auto index
+                = boost::mp11::mp_find<typename Grammar::productions, Production>::value;
+            static_assert(boost::mp11::mp_contains<typename Grammar::productions,
+                                                   Production>::value,
+                          "not one of the specified productions");
+            return static_cast<id_type<Grammar>>(index);
         }
     } // namespace production_kind_detail
 

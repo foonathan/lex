@@ -16,7 +16,7 @@ set(detail_header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/select_integer.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/string.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/trie.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/detail/type_list.hpp)
+    )
 set(header_files
     ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/ascii.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/include/foonathan/lex/grammar.hpp
@@ -42,7 +42,7 @@ set(header_files
 add_library(foonathan_lex INTERFACE)
 add_library(foonathan::foonathan_lex ALIAS foonathan_lex)
 target_compile_features(foonathan_lex INTERFACE cxx_std_14)
-target_link_libraries(foonathan_lex INTERFACE debug_assert)
+target_link_libraries(foonathan_lex INTERFACE debug_assert foonathan_lex_mp11)
 target_sources(foonathan_lex INTERFACE "$<BUILD_INTERFACE:${detail_header_files};${header_files}>")
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -59,7 +59,7 @@ endif()
 if(NOT dependency_via_submodule)
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(foonathan_lex-config-version.cmake COMPATIBILITY ExactVersion)
-    install(TARGETS foonathan_lex EXPORT foonathan_lex_targets
+    install(TARGETS foonathan_lex foonathan_lex_mp11 EXPORT foonathan_lex_targets
             INCLUDES DESTINATION include)
     install(EXPORT foonathan_lex_targets
             DESTINATION lib/cmake/foonathan_lex

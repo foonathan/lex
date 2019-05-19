@@ -5,6 +5,8 @@
 #ifndef FOONATHAN_LEX_PRODUCTION_RULE_PRODUCTION_HPP_INCLUDED
 #define FOONATHAN_LEX_PRODUCTION_RULE_PRODUCTION_HPP_INCLUDED
 
+#include <boost/mp11/set.hpp>
+
 #include <foonathan/lex/detail/production_rule_base.hpp>
 #include <foonathan/lex/parse_error.hpp>
 
@@ -125,8 +127,8 @@ namespace lex
                     {
                         Head&& head;
 
-                        constexpr capture_callback(tokenizer<TokenSpec>& tokenizer, Func& f, Head&& h,
-                                         Tail&&... tail)
+                        constexpr capture_callback(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                   Head&& h, Tail&&... tail)
                         : capture_callback<TokenSpec, Func, Tail...>(tokenizer, f,
                                                                      static_cast<Tail&&>(tail)...),
                           head(static_cast<Head&&>(h))
@@ -168,9 +170,8 @@ namespace lex
             template <class... Rules>
             struct sequence : base_rule
             {
-                static_assert(
-                    lex::detail::none_of<lex::detail::type_list<Rules...>, is_choice_rule>::value,
-                    "a choice cannot be composed further");
+                static_assert(mp::mp_none_of<sequence, is_choice_rule>::value,
+                              "a choice cannot be composed further");
 
                 template <class Cont>
                 using parser = parser_for<Rules..., Cont>;
@@ -196,9 +197,7 @@ namespace lex
             template <class... Choices>
             struct choice : base_choice_rule
             {
-                static_assert(lex::detail::is_unique<
-                                  lex::detail::type_list<typename Choices::peek_rule...>>::value,
-                              "duplicate alternatives in a choice");
+                static_assert(mp::mp_is_set<choice>::value, "duplicate alternatives in a choice");
 
                 template <class Cont>
                 struct parser : Cont

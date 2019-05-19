@@ -89,7 +89,7 @@ this works as follows:
    1. Try all literal tokens using the trie, selecting the longest literal that matches.
       If this literal token is specified as being in conflict with a rule,
       try if the rule matches and return it instead.
-   2. If no literal matched, try the (non-identifier) rule tokens in specification order.
+   2. If no literal matched, try the (non-identifier) rule tokens in some unspecified order.
    3. If no rule matched, try the identifier token.
       If it matched, try all keyword literals, returning them if they matched.
       Otherwise, return the identifier token.

@@ -31,8 +31,7 @@ namespace lex
                 template <class R>
                 using predicate = has_subrule<R, SubRule>;
 
-                static constexpr auto value
-                    = lex::detail::any_of<lex::detail::type_list<Rules...>, predicate>::value;
+                static constexpr auto value = mp::mp_any_of<sequence<Rules...>, predicate>::value;
             };
 
             template <class P, class R, class SubRule>
@@ -48,8 +47,7 @@ namespace lex
                 template <class R>
                 using predicate = has_subrule<R, SubRule>;
 
-                static constexpr auto value
-                    = lex::detail::any_of<lex::detail::type_list<Rules...>, predicate>::value;
+                static constexpr auto value = mp::mp_any_of<choice<Rules...>, predicate>::value;
             };
 
             template <class C, class T, class SubRule>
@@ -123,8 +121,7 @@ namespace lex
 
             // no alternative has recursion
             template <class TLP, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<>,
-                                                 lex::detail::type_list<Alternatives...>>
+            struct eliminate_left_recursion_impl<TLP, mp::mp_list<>, mp::mp_list<Alternatives...>>
             {
                 // just a choice of the alternatives
                 using type = choice<Alternatives...>;
@@ -132,8 +129,8 @@ namespace lex
 
             // single rule has recursion
             template <class TLP, class Rule, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<Rule>,
-                                                 lex::detail::type_list<Alternatives...>>
+            struct eliminate_left_recursion_impl<TLP, mp::mp_list<Rule>,
+                                                 mp::mp_list<Alternatives...>>
             {
                 // use left_recursion_choice, passing it the tail of that rule
                 using tail = typename has_left_recursion<TLP, Rule>::tail;
@@ -144,8 +141,8 @@ namespace lex
 
             // multiple rules have recursion, not allowed
             template <class TLP, class... Rules, class... Alternatives>
-            struct eliminate_left_recursion_impl<TLP, lex::detail::type_list<Rules...>,
-                                                 lex::detail::type_list<Alternatives...>>
+            struct eliminate_left_recursion_impl<TLP, mp::mp_list<Rules...>,
+                                                 mp::mp_list<Alternatives...>>
             {
                 static_assert(sizeof...(Rules) == 1,
                               "only a single alternative may have left recursion");
@@ -163,13 +160,13 @@ namespace lex
             template <class TLP, class... Alternatives>
             struct eliminate_left_recursion<TLP, choice<Alternatives...>>
             {
-                using alternative_rules = lex::detail::type_list<Alternatives...>;
+                using alternative_rules = mp::mp_list<Alternatives...>;
 
                 template <class Rule>
                 using has_recursion = has_left_recursion<TLP, Rule>;
                 using left_recursion_alternatives
-                    = lex::detail::keep_if<alternative_rules, has_recursion>;
-                using other_alternatives = lex::detail::remove_if<alternative_rules, has_recursion>;
+                    = mp::mp_copy_if<alternative_rules, has_recursion>;
+                using other_alternatives = mp::mp_remove_if<alternative_rules, has_recursion>;
 
                 using type =
                     typename eliminate_left_recursion_impl<TLP, left_recursion_alternatives,
