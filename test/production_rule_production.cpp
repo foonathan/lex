@@ -93,44 +93,6 @@ TEST_CASE("rule_production: production")
     verify(r3, -1);
 }
 
-TEST_CASE("rule_production: inline")
-{
-    using grammar = lex::grammar<test_spec, struct P, struct Q>;
-    FOONATHAN_LEX_P(P, A{} + inline_<Q> + C{});
-    FOONATHAN_LEX_P(Q, B{} + B{});
-
-    struct visitor
-    {
-        constexpr int operator()(P, lex::static_token<A>, lex::static_token<B>,
-                                 lex::static_token<B>, lex::static_token<C>) const
-        {
-            return 0;
-        }
-
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-        constexpr void operator()(lex::unexpected_token<grammar, Q, B>,
-                                  const lex::tokenizer<test_spec>&) const
-        {}
-    };
-
-    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
-    verify(r0, -1);
-
-    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "bb");
-    verify(r1, -1);
-
-    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "abbc");
-    verify(r2, 0);
-
-    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "ab");
-    verify(r3, -1);
-}
-
 TEST_CASE("rule_production: choice")
 {
     using grammar = lex::grammar<test_spec, struct P, struct Q1, struct Q2>;

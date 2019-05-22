@@ -172,28 +172,6 @@ namespace lex
 
                 return result;
             }
-
-            /// A parsing callback that handles success of a certain production by forwarding to
-            /// another function.
-            template <class Func, class TargetProduction, class CapturedFunc>
-            struct capture_success_callback
-            {
-                Func&         f;
-                CapturedFunc& captured;
-
-                template <typename... Args>
-                constexpr auto operator()(TargetProduction, Args&&... args) const
-                {
-                    return captured(static_cast<Args&&>(args)...);
-                }
-
-                template <typename... Args>
-                constexpr auto operator()(Args&&... args) const
-                    -> decltype(f(static_cast<Args&&>(args)...))
-                {
-                    return f(static_cast<Args&&>(args)...);
-                }
-            };
         } // namespace detail
     }     // namespace production_rule
 } // namespace lex
