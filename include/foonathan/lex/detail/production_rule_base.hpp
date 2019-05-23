@@ -94,7 +94,10 @@ namespace lex
             struct ignore_callback
             {
                 template <typename... Args>
-                constexpr void operator()(Args&&...) const
+                constexpr void production(Args&&...) const
+                {}
+                template <typename... Args>
+                constexpr void error(Args&&...) const
                 {}
             };
 
@@ -135,24 +138,23 @@ namespace lex
                 Func& f;
 
                 template <typename... Args>
-                constexpr auto operator()(Args&&... args) const
-                    -> decltype(f(static_cast<Args&&>(args)...))
+                constexpr auto production(Args&&... args) const
+                    -> decltype(f.production(static_cast<Args&&>(args)...))
                 {
-                    return f(static_cast<Args&&>(args)...);
+                    return f.production(static_cast<Args&&>(args)...);
                 }
 
                 template <class Grammar, class Production, class Token>
-                constexpr void operator()(unexpected_token<Grammar, Production, Token>,
-                                          const tokenizer<typename Grammar::token_spec>&) const
+                constexpr void error(unexpected_token<Grammar, Production, Token>,
+                                     const tokenizer<typename Grammar::token_spec>&) const
                 {}
                 template <class Grammar, class Production, class... Alternatives>
-                constexpr void operator()(
-                    exhausted_token_choice<Grammar, Production, Alternatives...>,
-                    const tokenizer<typename Grammar::token_spec>&) const
+                constexpr void error(exhausted_token_choice<Grammar, Production, Alternatives...>,
+                                     const tokenizer<typename Grammar::token_spec>&) const
                 {}
                 template <class Grammar, class Production>
-                constexpr void operator()(exhausted_choice<Grammar, Production>,
-                                          const tokenizer<typename Grammar::token_spec>&) const
+                constexpr void error(exhausted_choice<Grammar, Production>,
+                                     const tokenizer<typename Grammar::token_spec>&) const
                 {}
             };
 

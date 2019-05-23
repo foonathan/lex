@@ -198,7 +198,7 @@ namespace lex
         template <class Func>
         static constexpr auto parse_impl(int, tokenizer<typename Grammar::token_spec>& tokenizer,
                                          Func&& f)
-            -> parse_result<decltype(std::declval<Func&>()(callback_result_of<Derived>{}))>
+            -> parse_result<decltype(std::declval<Func&>().result_of(std::declval<Derived>()))>
         {
             using rule_        = production_rule::detail::make_rule<decltype(Derived::rule())>;
             using rule         = production_rule::detail::postprocess<Derived, rule_>;

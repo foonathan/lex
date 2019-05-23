@@ -13,10 +13,6 @@ namespace foonathan
 {
 namespace lex
 {
-    template <class Production>
-    struct callback_result_of
-    {};
-
     namespace detail
     {
         struct unmatched_tag
@@ -230,13 +226,13 @@ namespace lex
         constexpr auto apply_parse_result_impl(Func& f, Args&&... args)
             -> std::enable_if_t<!std::is_same<void, Return>::value, parse_result<Return>>
         {
-            return parse_result<Return>::success(f(static_cast<Args&&>(args)...));
+            return parse_result<Return>::success(f.production(static_cast<Args&&>(args)...));
         }
         template <class Return, class Func, typename... Args>
         constexpr auto apply_parse_result_impl(Func& f, Args&&... args)
             -> std::enable_if_t<std::is_same<void, Return>::value, parse_result<Return>>
         {
-            f(static_cast<Args&&>(args)...);
+            f.production(static_cast<Args&&>(args)...);
             return parse_result<Return>::success();
         }
 
@@ -258,7 +254,7 @@ namespace lex
 
         template <typename Func, typename... Args>
         auto apply_return_type(int, Func& f, Args&&... args)
-            -> decltype(f(static_cast<Args&&>(args)...));
+            -> decltype(f.production(static_cast<Args&&>(args)...));
         template <typename Func, typename... Args>
         auto apply_return_type(short, Func&, Args&&...) -> missing_callback_overload<Args&&...>;
 

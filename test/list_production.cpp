@@ -57,17 +57,16 @@ TEST_CASE("list_production: no separator, non-empty")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -96,17 +95,16 @@ TEST_CASE("list_production: no separator, empty")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -134,17 +132,16 @@ TEST_CASE("list_production: non-empty, non-trailing")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -180,17 +177,16 @@ TEST_CASE("list_production: non-empty, trailing")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -226,17 +222,16 @@ TEST_CASE("list_production: empty, non-trailing")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -276,17 +271,16 @@ TEST_CASE("list_production: empty, trailing")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -324,24 +318,23 @@ TEST_CASE("bracketed_list_production: no separator, non-empty")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -374,24 +367,23 @@ TEST_CASE("bracketed_list_production: no separator, empty")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -424,24 +416,23 @@ TEST_CASE("bracketed_list_production: non-empty, non-trailing")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -481,24 +472,23 @@ TEST_CASE("bracketed_list_production: non-empty, trailing")
 
     struct visitor
     {
-        constexpr int operator()(P, a)
+        constexpr int production(P, a)
         {
             return 1;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -538,24 +528,23 @@ TEST_CASE("bracketed_list_production: empty, non-trailing")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 
@@ -599,24 +588,23 @@ TEST_CASE("bracketed_list_production: empty, trailing")
 
     struct visitor
     {
-        constexpr int operator()(P)
+        constexpr int production(P)
         {
             return 0;
         }
-        constexpr int operator()(P, int list, a)
+        constexpr int production(P, int list, a)
         {
             return list + 1;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, a>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, open>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, close>,
-                                  const lex::tokenizer<test_spec>&)
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
         {}
     };
 

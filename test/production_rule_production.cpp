@@ -59,23 +59,23 @@ TEST_CASE("rule_production: production")
 
     struct visitor
     {
-        constexpr float operator()(Q, lex::static_token<B>) const
+        constexpr float production(Q, lex::static_token<B>) const
         {
             return 3.14f;
         }
 
-        constexpr int operator()(P, lex::static_token<A>, float q, lex::static_token<C>) const
+        constexpr int production(P, lex::static_token<A>, float q, lex::static_token<C>) const
         {
             return 1 + int(q);
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+        constexpr void error(lex::unexpected_token<grammar, P, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, Q, B>,
+        constexpr void error(lex::unexpected_token<grammar, Q, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -102,31 +102,31 @@ TEST_CASE("rule_production: choice")
 
     struct visitor
     {
-        constexpr int operator()(Q1, lex::static_token<A>) const
+        constexpr int production(Q1, lex::static_token<A>) const
         {
             return 0;
         }
-        constexpr int operator()(Q2, lex::static_token<B>) const
+        constexpr int production(Q2, lex::static_token<B>) const
         {
             return 1;
         }
 
-        constexpr int operator()(P, int value, lex::static_token<C>) const
+        constexpr int production(P, int value, lex::static_token<C>) const
         {
             return 10 + value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, Q1, A>,
+        constexpr void error(lex::unexpected_token<grammar, Q1, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, Q2, B>,
+        constexpr void error(lex::unexpected_token<grammar, Q2, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+        constexpr void error(lex::unexpected_token<grammar, P, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -152,35 +152,35 @@ TEST_CASE("rule_production: choice with tokens")
 
     struct visitor
     {
-        constexpr int operator()(Q1, lex::static_token<A>) const
+        constexpr int production(Q1, lex::static_token<A>) const
         {
             return 0;
         }
 
-        constexpr int operator()(P, int value, lex::static_token<C>) const
+        constexpr int production(P, int value, lex::static_token<C>) const
         {
             return 10 + value;
         }
-        constexpr int operator()(P, lex::static_token<B>, lex::static_token<C>) const
+        constexpr int production(P, lex::static_token<B>, lex::static_token<C>) const
         {
             return 11;
         }
-        constexpr int operator()(P, lex::static_token<C>) const
+        constexpr int production(P, lex::static_token<C>) const
         {
             return 12;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, Q1, A>,
+        constexpr void error(lex::unexpected_token<grammar, Q1, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+        constexpr void error(lex::unexpected_token<grammar, P, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -206,31 +206,31 @@ TEST_CASE("rule_production: choice with complex peek")
 
     struct visitor
     {
-        constexpr int operator()(P, lex::static_token<A>, lex::static_token<B>,
+        constexpr int production(P, lex::static_token<A>, lex::static_token<B>,
                                  lex::static_token<C>) const
         {
             return 1;
         }
-        constexpr int operator()(P, lex::static_token<A>, lex::static_token<C>) const
+        constexpr int production(P, lex::static_token<A>, lex::static_token<C>) const
         {
             return 2;
         }
-        constexpr int operator()(P, lex::static_token<A>) const
+        constexpr int production(P, lex::static_token<A>) const
         {
             return 3;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, C>,
+        constexpr void error(lex::unexpected_token<grammar, P, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -255,24 +255,24 @@ TEST_CASE("rule_production: right recursion")
 
     struct visitor
     {
-        int           operator()(lex::callback_result_of<P>);
-        constexpr int operator()(P, lex::static_token<B>) const
+        int           result_of(P);
+        constexpr int production(P, lex::static_token<B>) const
         {
             return 0;
         }
-        constexpr int operator()(P, lex::static_token<A>, int value) const
+        constexpr int production(P, lex::static_token<A>, int value) const
         {
             return 1 + value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -306,24 +306,24 @@ TEST_CASE("rule_production: middle recursion")
 
     struct visitor
     {
-        int           operator()(lex::callback_result_of<P>);
-        constexpr int operator()(P, lex::static_token<B>) const
+        int           result_of(P);
+        constexpr int production(P, lex::static_token<B>) const
         {
             return 0;
         }
-        constexpr int operator()(P, lex::static_token<A>, int value, lex::static_token<A>) const
+        constexpr int production(P, lex::static_token<A>, int value, lex::static_token<A>) const
         {
             return 1 + value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -360,24 +360,24 @@ TEST_CASE("rule_production: left recursion")
 
     struct visitor
     {
-        int           operator()(lex::callback_result_of<P>);
-        constexpr int operator()(P, lex::static_token<B>) const
+        int           result_of(P);
+        constexpr int production(P, lex::static_token<B>) const
         {
             return 0;
         }
-        constexpr int operator()(P, int value, lex::static_token<A>) const
+        constexpr int production(P, int value, lex::static_token<A>) const
         {
             return 1 + value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, B>,
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, P>,
+        constexpr void error(lex::exhausted_choice<grammar, P>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };
@@ -412,32 +412,32 @@ TEST_CASE("rule_production: indirect recursion")
 
     struct visitor
     {
-        constexpr int operator()(Q, lex::static_token<B>, int value) const
+        constexpr int production(Q, lex::static_token<B>, int value) const
         {
             return 1 + value;
         }
-        constexpr int operator()(Q, lex::static_token<C>) const
+        constexpr int production(Q, lex::static_token<C>) const
         {
             return 0;
         }
 
-        int           operator()(lex::callback_result_of<P>);
-        constexpr int operator()(P, lex::static_token<A>, int value) const
+        int           result_of(P);
+        constexpr int production(P, lex::static_token<A>, int value) const
         {
             return 10 * value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, Q, B>,
+        constexpr void error(lex::unexpected_token<grammar, Q, B>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, Q, C>,
+        constexpr void error(lex::unexpected_token<grammar, Q, C>,
                                   const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::unexpected_token<grammar, P, A>,
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
                                   const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::exhausted_choice<grammar, Q>,
+        constexpr void error(lex::exhausted_choice<grammar, Q>,
                                   const lex::tokenizer<test_spec>&) const
         {}
     };

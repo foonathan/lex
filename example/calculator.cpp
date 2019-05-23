@@ -256,7 +256,7 @@ int main()
 
     // A parser visitor that will interpret the input.
     //
-    // Upon parsing a production it will call the `operator()` overload that accepts the sequence
+    // Upon parsing a production it will call the `production()` overload that accepts the sequence
     // that was parsed. The result will be used as the argument for productions that have it as
     // sub-productions. Here, the result is the value of the expression.
     struct interpreter_t
@@ -267,12 +267,12 @@ int main()
         // For tokens it is called passing it a `static_token`, which also contains the result of
         // the `::parse()` function of the token. We have either a `number` or a `var`, which means
         // two overloads.
-        int operator()(grammar::atom_expr, lex::static_token<grammar::number, int> number)
+        int production(grammar::atom_expr, lex::static_token<grammar::number, int> number)
         {
             // the value of a number is just the number itself
             return number.value();
         }
-        int operator()(grammar::atom_expr, lex::static_token<grammar::var, char> var)
+        int production(grammar::atom_expr, lex::static_token<grammar::var, char> var)
         {
             // The value of a variable is read.
             return variables[var.value()];
@@ -281,49 +281,49 @@ int main()
         // For recursive productions like `expr` we need this special overload.
         // It does not need to be defined, it is just there to designate the return type of that
         // production.
-        int operator()(lex::callback_result_of<grammar::expr>);
-        int operator()(grammar::expr, int atom) // atomic expression
+        int result_of(grammar::expr);
+        int production(grammar::expr, int atom) // atomic expression
         {
             return atom;
         }
         // Instead of `static_token<T>` we can also use `T` itself, it implicitly converts.
-        int operator()(grammar::expr, grammar::plus, int rhs) // +rhs
+        int production(grammar::expr, grammar::plus, int rhs) // +rhs
         {
             return rhs;
         }
-        int operator()(grammar::expr, grammar::minus, int rhs) // -rhs
+        int production(grammar::expr, grammar::minus, int rhs) // -rhs
         {
             return -rhs;
         }
-        int operator()(grammar::expr, grammar::tilde, int rhs) // ~rhs
+        int production(grammar::expr, grammar::tilde, int rhs) // ~rhs
         {
             return ~unsigned(rhs);
         }
-        int operator()(grammar::expr, int lhs, grammar::star_star, int rhs) // lhs ** rhs
+        int production(grammar::expr, int lhs, grammar::star_star, int rhs) // lhs ** rhs
         {
             return static_cast<int>(std::pow(lhs, rhs));
         }
-        int operator()(grammar::expr, int lhs, grammar::star, int rhs) // lhs * rhs
+        int production(grammar::expr, int lhs, grammar::star, int rhs) // lhs * rhs
         {
             return lhs * rhs;
         }
-        int operator()(grammar::expr, int lhs, grammar::slash, int rhs) // lhs / rhs
+        int production(grammar::expr, int lhs, grammar::slash, int rhs) // lhs / rhs
         {
             return lhs / rhs;
         }
-        int operator()(grammar::expr, int lhs, grammar::plus, int rhs) // lhs + rhs
+        int production(grammar::expr, int lhs, grammar::plus, int rhs) // lhs + rhs
         {
             return lhs + rhs;
         }
-        int operator()(grammar::expr, int lhs, grammar::minus, int rhs) // lhs - rhs
+        int production(grammar::expr, int lhs, grammar::minus, int rhs) // lhs - rhs
         {
             return lhs - rhs;
         }
-        int operator()(grammar::expr, int lhs, grammar::ampersand, int rhs) // lhs & rhs
+        int production(grammar::expr, int lhs, grammar::ampersand, int rhs) // lhs & rhs
         {
             return unsigned(lhs) & unsigned(rhs);
         }
-        int operator()(grammar::expr, int lhs, grammar::pipe, int rhs) // lhs | rhs
+        int production(grammar::expr, int lhs, grammar::pipe, int rhs) // lhs | rhs
         {
             return unsigned(lhs) | unsigned(rhs);
         }
@@ -331,7 +331,7 @@ int main()
         // The value of a variable declaration is the initializing value.
         // The `:=` token was `silent`, so it will not be passed to the callback.
         // The callback of an expression returns an `int`, so that is the final argument.
-        int operator()(grammar::var_decl, lex::static_token<grammar::var, char> var, int value)
+        int production(grammar::var_decl, lex::static_token<grammar::var, char> var, int value)
         {
             variables[var.value()] = value;
             return value;
@@ -339,7 +339,7 @@ int main()
 
         // A declaration is either a variable or an expression.
         // Both return an `int`, so that is the argument.
-        int operator()(grammar::decl, int value)
+        int production(grammar::decl, int value)
         {
             return value;
         }
@@ -347,13 +347,13 @@ int main()
         // Note that not all productions have to return the same type.
         // Just all overloads of a single production.
         // For a list production (that is non-empty), we need one initialing overload...
-        std::vector<int> operator()(grammar::decl_seq, int value)
+        std::vector<int> production(grammar::decl_seq, int value)
         {
             // which creates a "container" of size 1
             return {value};
         }
         // ... and one combining overload.
-        std::vector<int> operator()(grammar::decl_seq, std::vector<int>&& container, int value)
+        std::vector<int> production(grammar::decl_seq, std::vector<int>&& container, int value)
         {
             // which adds the new value to the "container"
             container.push_back(value);
@@ -370,9 +370,9 @@ int main()
         // An `exhausted_token_choice` happens when there was an `a / b` and the token was neither
         // `a` nor `b`. Here is the error handler for the `number{} / var{}` of our atomic
         // expression.
-        void operator()(lex::exhausted_token_choice<grammar::grammar, grammar::atom_expr,
-                                                    grammar::number, grammar::var>,
-                        const lex::tokenizer<grammar::token_spec>& tokenizer)
+        void error(lex::exhausted_token_choice<grammar::grammar, grammar::atom_expr,
+                                               grammar::number, grammar::var>,
+                   const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: expected number or variable, got '" << tokenizer.peek().name()
@@ -381,9 +381,8 @@ int main()
 
         // An `unexpected_token` happens when we expected an `a` but did not get an `a`.
         // Here is the error when have something like `(1 + 2;` (note the missing `)`).
-        void operator()(
-            lex::unexpected_token<grammar::grammar, grammar::expr, grammar::close_paren>,
-            const lex::tokenizer<grammar::token_spec>& tokenizer)
+        void error(lex::unexpected_token<grammar::grammar, grammar::expr, grammar::close_paren>,
+                   const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: expected ')', got '" << tokenizer.peek().name() << "'\n";
@@ -391,8 +390,8 @@ int main()
         // An `illegal_operator_chain` is the error reported by the operator rule `r::end` when
         // we've combined operators we must not combine. For example, writing `1 + 2 & 3` will
         // trigger it.
-        void operator()(lex::illegal_operator_chain<grammar::grammar, grammar::expr> error,
-                        const lex::tokenizer<grammar::token_spec>&                   tokenizer)
+        void error(lex::illegal_operator_chain<grammar::grammar, grammar::expr> error,
+                   const lex::tokenizer<grammar::token_spec>&                   tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: operator '" << tokenizer.peek().name()
@@ -403,8 +402,8 @@ int main()
         // That way in `a := 4` we can handle both a missing `a` and `:=`.
         // (Due to the way `var_decl` is used the error cannot actually happen but the overload
         // can't know that).
-        void operator()(lex::unexpected_token<grammar::grammar, grammar::var_decl> error,
-                        const lex::tokenizer<grammar::token_spec>&                 tokenizer)
+        void error(lex::unexpected_token<grammar::grammar, grammar::var_decl> error,
+                   const lex::tokenizer<grammar::token_spec>&                 tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: expected '" << error.expected.name() << "', got '"
@@ -414,8 +413,8 @@ int main()
         // Similar to an `exhausted_token_choice,` `exhausted_choice` is when we had `a | b` but
         // neither `a` nor `b` worked. For implementation reasons it cannot give the actual tokens
         // that were expected.
-        void operator()(lex::exhausted_choice<grammar::grammar, grammar::decl>,
-                        const lex::tokenizer<grammar::token_spec>& tokenizer)
+        void error(lex::exhausted_choice<grammar::grammar, grammar::decl>,
+                   const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: expected expression or variable declaration, got '"
@@ -425,8 +424,8 @@ int main()
         // This error is created because `decl_seq` is the initial production.
         // The initial production must consume all input, if that is not the case, this error is
         // triggered.
-        void operator()(lex::unexpected_token<grammar::grammar, grammar::decl_seq, lex::eof_token>,
-                        const lex::tokenizer<grammar::token_spec>& tokenizer)
+        void error(lex::unexpected_token<grammar::grammar, grammar::decl_seq, lex::eof_token>,
+                   const lex::tokenizer<grammar::token_spec>& tokenizer)
         {
             print_line(tokenizer);
             std::cout << "error: expected eof, got '" << tokenizer.peek().name() << "'\n";

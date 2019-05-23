@@ -99,25 +99,25 @@ TEST_CASE("operator_production: pre_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, minus, int value) const
+        constexpr int production(P, minus, int value) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, exclamation, int value) const
+        constexpr int production(P, exclamation, int value) const
         {
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -162,25 +162,25 @@ TEST_CASE("operator_production: pre_op_chain")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, minus, int value) const
+        constexpr int production(P, minus, int value) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, exclamation, int value) const
+        constexpr int production(P, exclamation, int value) const
         {
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -228,25 +228,25 @@ TEST_CASE("operator_production: post_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int value, minus) const
+        constexpr int production(P, int value, minus) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, int value, exclamation) const
+        constexpr int production(P, int value, exclamation) const
         {
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -291,25 +291,25 @@ TEST_CASE("operator_production: post_op_chain")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int value, minus) const
+        constexpr int production(P, int value, minus) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, int value, exclamation) const
+        constexpr int production(P, int value, exclamation) const
         {
             return !value;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -357,30 +357,30 @@ TEST_CASE("operator_production: bin_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr int operator()(P, int lhs, minus, int rhs) const
+        constexpr int production(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -450,30 +450,30 @@ TEST_CASE("operator_production: bin_op_single + pre_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, minus, int value) const
+        constexpr int production(P, minus, int value) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -518,25 +518,25 @@ TEST_CASE("operator_production: pre_op_single + bin_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, exclamation, int value) const
+        constexpr int production(P, exclamation, int value) const
         {
             return !value;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -579,30 +579,30 @@ TEST_CASE("operator_production: bin_op_single + post_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int value, minus) const
+        constexpr int production(P, int value, minus) const
         {
             return -value;
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -647,25 +647,25 @@ TEST_CASE("operator_production: post_op_single + bin_op_single")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int value, exclamation) const
+        constexpr int production(P, int value, exclamation) const
         {
             return !value;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -707,25 +707,25 @@ TEST_CASE("operator_production: bin_op_left")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, minus, int rhs) const
+        constexpr int production(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -767,25 +767,25 @@ TEST_CASE("operator_production: bin_op_right")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, minus, int rhs) const
+        constexpr int production(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -827,29 +827,29 @@ TEST_CASE("operator_production: parenthesized")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, paren_close>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, paren_close>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -899,30 +899,30 @@ TEST_CASE("operator_production: choice with single atom")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr int operator()(P, int lhs, minus, int rhs) const
+        constexpr int production(P, int lhs, minus, int rhs) const
         {
             return lhs - rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -967,30 +967,30 @@ TEST_CASE("operator_production: choice with unary")
 
     struct visitor
     {
-        int operator()(lex::callback_result_of<P>) const;
+        int result_of(P) const;
 
-        constexpr int operator()(P, lex::static_token<number> num) const
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
 
-        constexpr int operator()(P, int lhs, star, int rhs) const
+        constexpr int production(P, int lhs, star, int rhs) const
         {
             return lhs * rhs;
         }
 
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr int operator()(P, minus, int rhs) const
+        constexpr int production(P, minus, int rhs) const
         {
             return -rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -1039,26 +1039,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, op, int rhs) const
+            constexpr int production(P, op, int rhs) const
             {
                 return -rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1098,26 +1098,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, op, int rhs) const
+            constexpr int production(P, op, int rhs) const
             {
                 return -rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1157,26 +1157,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, int lhs, op) const
+            constexpr int production(P, int lhs, op) const
             {
                 return -lhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1216,26 +1216,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, int lhs, op) const
+            constexpr int production(P, int lhs, op) const
             {
                 return -lhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1275,26 +1275,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, int lhs, op, int rhs) const
+            constexpr int production(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1334,26 +1334,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, int lhs, op, int rhs) const
+            constexpr int production(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1393,26 +1393,26 @@ TEST_CASE("operator_production: production as operator")
 
         struct visitor
         {
-            constexpr void operator()(op, minus) const {}
+            constexpr void production(op, minus) const {}
 
-            int operator()(lex::callback_result_of<P>) const;
+            int result_of(P) const;
 
-            constexpr int operator()(P, lex::static_token<number> num) const
+            constexpr int production(P, lex::static_token<number> num) const
             {
                 return number::parse(num);
             }
 
-            constexpr int operator()(P, int lhs, op, int rhs) const
+            constexpr int production(P, int lhs, op, int rhs) const
             {
                 return lhs - rhs;
             }
 
-            constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, P, number>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
 
-            constexpr void operator()(lex::unexpected_token<grammar, op, minus>,
-                                      const lex::tokenizer<test_spec>&) const
+            constexpr void error(lex::unexpected_token<grammar, op, minus>,
+                                 const lex::tokenizer<test_spec>&) const
             {}
         };
 
@@ -1449,25 +1449,25 @@ TEST_CASE("operator_production: end")
 
     struct visitor
     {
-        int           operator()(lex::callback_result_of<P>) const;
-        constexpr int operator()(P, lex::static_token<number> num) const
+        int           result_of(P) const;
+        constexpr int production(P, lex::static_token<number> num) const
         {
             return number::parse(num);
         }
-        constexpr int operator()(P, int value, minus) const
+        constexpr int production(P, int value, minus) const
         {
             return -value;
         }
-        constexpr int operator()(P, int lhs, plus, int rhs) const
+        constexpr int production(P, int lhs, plus, int rhs) const
         {
             return lhs + rhs;
         }
 
-        constexpr void operator()(lex::unexpected_token<grammar, P, number>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void operator()(lex::illegal_operator_chain<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+        constexpr void error(lex::illegal_operator_chain<grammar, P>,
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 

@@ -37,7 +37,7 @@ namespace lex
 
                     template <typename Func>
                     static constexpr auto callback_return_type(int, Func& f)
-                        -> parse_result<decltype(f(callback_result_of<Production>{}))>;
+                        -> parse_result<decltype(f.result_of(std::declval<Production>()))>;
 
                     template <typename Func>
                     static constexpr auto callback_return_type(short, Func&)

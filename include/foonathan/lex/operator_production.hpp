@@ -30,7 +30,7 @@ namespace lex
             template <class TLP, class Func>
             struct op_parse_result
             {
-                using value_type = decltype(std::declval<Func>()(callback_result_of<TLP>{}));
+                using value_type = decltype(std::declval<Func>().result_of(TLP{}));
 
                 parse_result<value_type>                 result;
                 token<typename TLP::grammar::token_spec> op;

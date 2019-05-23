@@ -137,9 +137,9 @@ namespace lex
     {
         template <class Func, class Error, class Tokenizer>
         constexpr auto report_error_impl(int, Func&& f, Error e, const Tokenizer& tokenizer)
-            -> decltype(f(e, tokenizer))
+            -> decltype(f.error(e, tokenizer))
         {
-            return f(e, tokenizer);
+            return f.error(e, tokenizer);
         }
 
         template <class Error>
