@@ -1486,3 +1486,50 @@ TEST_CASE("operator_production: end")
     FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "2--");
     verify(r4, unmatched);
 }
+
+TEST_CASE("operator_production: finish")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom = r::atom<number>;
+            auto add  = r::bin_op_single<plus>(atom);
+
+            return add;
+        }
+    };
+
+    struct visitor
+    {
+        unsigned result_of(P) const;
+
+        constexpr unsigned production(P, lex::static_token<number> num) const
+        {
+            return static_cast<unsigned>(number::parse(num));
+        }
+
+        constexpr unsigned production(P, unsigned lhs, plus, unsigned rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr int finish(P, unsigned result) const
+        {
+            return -static_cast<int>(result);
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "4");
+    verify(r0, -4);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + 3");
+    verify(r1, -4);
+}

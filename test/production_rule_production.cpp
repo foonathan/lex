@@ -70,13 +70,13 @@ TEST_CASE("rule_production: production")
         }
 
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, C>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, Q, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -117,17 +117,17 @@ TEST_CASE("rule_production: choice")
         }
 
         constexpr void error(lex::unexpected_token<grammar, Q1, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, Q2, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, C>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -171,17 +171,17 @@ TEST_CASE("rule_production: choice with tokens")
         }
 
         constexpr void error(lex::unexpected_token<grammar, Q1, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, C>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -221,17 +221,17 @@ TEST_CASE("rule_production: choice with complex peek")
         }
 
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, C>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -266,14 +266,14 @@ TEST_CASE("rule_production: right recursion")
         }
 
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -317,14 +317,14 @@ TEST_CASE("rule_production: middle recursion")
         }
 
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -371,21 +371,21 @@ TEST_CASE("rule_production: left recursion")
         }
 
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, P>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
     FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
     verify(r0, -1);
 
-    auto r1 = parse<P>(visitor{}, "b");
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "b");
     verify(r1, 0);
 
     FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "ba");
@@ -428,17 +428,17 @@ TEST_CASE("rule_production: indirect recursion")
         }
 
         constexpr void error(lex::unexpected_token<grammar, Q, B>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, Q, C>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
         constexpr void error(lex::unexpected_token<grammar, P, A>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
 
         constexpr void error(lex::exhausted_choice<grammar, Q>,
-                                  const lex::tokenizer<test_spec>&) const
+                             const lex::tokenizer<test_spec>&) const
         {}
     };
 
@@ -462,4 +462,90 @@ TEST_CASE("rule_production: indirect recursion")
 
     FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "abc");
     verify(r6, -1);
+}
+
+TEST_CASE("rule_production: finish")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    FOONATHAN_LEX_P(P, A{} >> A{} + P{} | B{});
+
+    struct visitor
+    {
+        unsigned           result_of(P);
+        constexpr unsigned production(P, lex::static_token<B>) const
+        {
+            return 0;
+        }
+        constexpr unsigned production(P, lex::static_token<A>, unsigned value) const
+        {
+            return 1 + value;
+        }
+        constexpr int finish(P, unsigned value) const
+        {
+            return -static_cast<int>(value);
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+
+        constexpr void error(lex::exhausted_choice<grammar, P>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "b");
+    verify(r0, 0);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "aab");
+    verify(r1, -2);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "aaab");
+    verify(r2, -3);
+}
+
+TEST_CASE("rule_production: finish left recursion")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    FOONATHAN_LEX_P(P, B{} | else_ >> P{} + A{});
+
+    struct visitor
+    {
+        unsigned           result_of(P);
+        constexpr unsigned production(P, lex::static_token<B>) const
+        {
+            return 0;
+        }
+        constexpr unsigned production(P, unsigned value, lex::static_token<A>) const
+        {
+            return 1 + value;
+        }
+        constexpr int finish(P, unsigned value) const
+        {
+            return -static_cast<int>(value);
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, A>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void error(lex::unexpected_token<grammar, P, B>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+
+        constexpr void error(lex::exhausted_choice<grammar, P>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "b");
+    verify(r0, 0);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "baa");
+    verify(r1, -2);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "baaa");
+    verify(r2, -3);
 }

@@ -26,6 +26,40 @@ namespace lex
             {};
 
             //=== rules ===//
+            struct direct_recurse_production : base_rule
+            {
+                template <class Cont>
+                struct parser : Cont
+                {
+                    using production = typename Cont::tlp;
+
+                    template <typename Func>
+                    static constexpr auto callback_return_type(int, Func& f)
+                        -> parse_result<decltype(f.result_of(std::declval<production>()))>;
+
+                    template <typename Func>
+                    static constexpr auto callback_return_type(short, Func&)
+                    {
+                        return lex::detail::missing_callback_result_of<Func, production>{};
+                    }
+
+                    template <class TokenSpec, typename Func, typename... Args>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
+                                                Args&&... args)
+                        -> decltype(
+                            Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
+                                        callback_return_type(0, f).template forward<production>()))
+                    {
+                        auto result = production::parse_self(tokenizer, f);
+                        if (result.is_success())
+                            return Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
+                                               result.template forward<production>());
+                        else
+                            return {};
+                    }
+                };
+            };
+
             template <class Production>
             struct recurse_production : base_rule
             {
@@ -34,13 +68,16 @@ namespace lex
                 {
                     static_assert(is_production<Production>::value,
                                   "only a production can be used in this context");
+                    static_assert(!std::is_same<Production, typename Cont::tlp>::value,
+                                  "no need to use recursion for self recursion");
 
-                    template <typename Func>
-                    static constexpr auto callback_return_type(int, Func& f)
-                        -> parse_result<decltype(f.result_of(std::declval<Production>()))>;
+                    template <typename Func, class TokenSpec>
+                    static constexpr auto callback_return_type(int, Func& f,
+                                                               tokenizer<TokenSpec>& tokenizer)
+                        -> decltype(Production::parse(tokenizer, f));
 
-                    template <typename Func>
-                    static constexpr auto callback_return_type(short, Func&)
+                    template <typename Func, class TokenSpec>
+                    static constexpr auto callback_return_type(short, Func&, tokenizer<TokenSpec>&)
                     {
                         return lex::detail::missing_callback_result_of<Func, Production>{};
                     }
@@ -48,9 +85,9 @@ namespace lex
                     template <class TokenSpec, typename Func, typename... Args>
                     static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f,
                                                 Args&&... args)
-                        -> decltype(
-                            Cont::parse(tokenizer, f, static_cast<Args&&>(args)...,
-                                        callback_return_type(0, f).template forward<Production>()))
+                        -> decltype(Cont::parse(
+                            tokenizer, f, static_cast<Args&&>(args)...,
+                            callback_return_type(0, f, tokenizer).template forward<Production>()))
                     {
                         auto result = Production::parse(tokenizer, f);
                         if (result.is_success())
@@ -92,7 +129,7 @@ namespace lex
                 template <class Cont>
                 using parser
                     = std::conditional_t<std::is_same<Production, typename Cont::tlp>::value,
-                                         parser_for<recurse_production<Production>, Cont>,
+                                         parser_for<direct_recurse_production, Cont>,
                                          parser_impl<Cont>>;
             };
 
@@ -182,7 +219,7 @@ namespace lex
                             // error, didn't match at all
                             return result;
 
-                        // try to parse result as often as possible
+                        // try to parse Tail as often as possible
                         while (true)
                         {
                             auto next_result

@@ -632,3 +632,96 @@ TEST_CASE("bracketed_list_production: empty, trailing")
     FOONATHAN_LEX_TEST_CONSTEXPR auto r7 = parse<P>(visitor{}, "(,)");
     verify(r7, unmatched);
 }
+
+TEST_CASE("list_production: finish")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::list_production<P, grammar>
+    {
+        using element   = a;
+        using end_token = lex::eof_token;
+    };
+
+    struct visitor
+    {
+        constexpr unsigned production(P, a)
+        {
+            return 1;
+        }
+        constexpr unsigned production(P, unsigned list, a)
+        {
+            return list + 1;
+        }
+        constexpr int finish(P, unsigned list)
+        {
+            return -static_cast<int>(list);
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "");
+    verify(r0, unmatched);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "a");
+    verify(r1, -1);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "aa");
+    verify(r2, -2);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "aaa");
+    verify(r3, -3);
+}
+
+TEST_CASE("bracketed_list_production: finish")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::bracketed_list_production<P, grammar>
+    {
+        using element       = a;
+        using open_bracket  = open;
+        using close_bracket = close;
+    };
+
+    struct visitor
+    {
+        constexpr unsigned production(P, a)
+        {
+            return 1;
+        }
+        constexpr unsigned production(P, unsigned list, a)
+        {
+            return list + 1;
+        }
+        constexpr int finish(P, unsigned list)
+        {
+            return -static_cast<int>(list);
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, a>, const lex::tokenizer<test_spec>&)
+        {}
+
+        constexpr void error(lex::unexpected_token<grammar, P, open>,
+                             const lex::tokenizer<test_spec>&)
+        {}
+        constexpr void error(lex::unexpected_token<grammar, P, close>,
+                             const lex::tokenizer<test_spec>&)
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "()");
+    verify(r0, unmatched);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "(a)");
+    verify(r1, -1);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "(aa)");
+    verify(r2, -2);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "(aaa)");
+    verify(r3, -3);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "aa");
+    verify(r4, unmatched);
+}

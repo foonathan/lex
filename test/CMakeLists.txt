@@ -24,20 +24,21 @@ endif()
 add_library(foonathan_lex_test_base INTERFACE)
 target_sources(foonathan_lex_test_base INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
 target_include_directories(foonathan_lex_test_base INTERFACE
-                                ${CMAKE_CURRENT_SOURCE_DIR}
-                            SYSTEM INTERFACE
-                                ${CMAKE_CURRENT_BINARY_DIR})
+                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           SYSTEM INTERFACE
+                           ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(foonathan_lex_test_base INTERFACE foonathan_lex)
 target_compile_definitions(foonathan_lex_test_base INTERFACE
-                               FOONATHAN_LEX_TEST
-                               FOONATHAN_LEX_ENABLE_ASSERTIONS=1
-                               FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
+                           FOONATHAN_LEX_TEST
+                           FOONATHAN_LEX_ENABLE_ASSERTIONS=1
+                           FOONATHAN_LEX_ENABLE_PRECONDITIONS=1)
+
 target_compile_options(foonathan_lex_test_base INTERFACE
                        # clang/GCC warnings
                        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
                        -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion>
-                       # disable noexcept type warning on GCC
-                       $<$<CXX_COMPILER_ID:GNU>: -Wno-noexcept-type>
+                       # disable noexcept type warning on GCC, as well as some others due to a weird compiler bug on GCC
+                       $<$<CXX_COMPILER_ID:GNU>: -Wno-noexcept-type -Wno-format -Wno-nonnull -Wno-restrict>
                        # MSVC warnings
                        $<$<CXX_COMPILER_ID:MSVC>:
                        /WX /W4 /wd4127>)

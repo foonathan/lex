@@ -90,6 +90,34 @@ namespace lex
                 }
             };
 
+            template <class Func>
+            struct forward_callback
+            {
+                Func& f;
+
+                template <class F = Func, class P>
+                auto result_of(P) -> decltype(std::declval<F>().result_of(std::declval<P>()));
+
+                template <typename... Args>
+                constexpr auto production(Args&&... args) const
+                    -> decltype(f.production(static_cast<Args&&>(args)...))
+                {
+                    return f.production(static_cast<Args&&>(args)...);
+                }
+                template <class F = Func, typename... Args>
+                constexpr auto finish(Args&&... args) const
+                    -> decltype(std::declval<F>().finish(static_cast<Args&&>(args)...))
+                {
+                    return f.finish(static_cast<Args&&>(args)...);
+                }
+                template <typename... Args>
+                constexpr auto error(Args&&... args) const
+                    -> decltype(f.error(static_cast<Args&&>(args)...))
+                {
+                    return f.error(static_cast<Args&&>(args)...);
+                }
+            };
+
             /// A parsing callback that ignores all arguments.
             struct ignore_callback
             {
@@ -133,28 +161,12 @@ namespace lex
 
             /// A parsing callback that ignores errors, but forwards everything else.
             template <class Func>
-            struct ignore_error_callback
+            struct ignore_error_callback : forward_callback<Func>
             {
-                Func& f;
+                constexpr ignore_error_callback(Func& f) : forward_callback<Func>{f} {}
 
                 template <typename... Args>
-                constexpr auto production(Args&&... args) const
-                    -> decltype(f.production(static_cast<Args&&>(args)...))
-                {
-                    return f.production(static_cast<Args&&>(args)...);
-                }
-
-                template <class Grammar, class Production, class Token>
-                constexpr void error(unexpected_token<Grammar, Production, Token>,
-                                     const tokenizer<typename Grammar::token_spec>&) const
-                {}
-                template <class Grammar, class Production, class... Alternatives>
-                constexpr void error(exhausted_token_choice<Grammar, Production, Alternatives...>,
-                                     const tokenizer<typename Grammar::token_spec>&) const
-                {}
-                template <class Grammar, class Production>
-                constexpr void error(exhausted_choice<Grammar, Production>,
-                                     const tokenizer<typename Grammar::token_spec>&) const
+                constexpr void error(Args&&...) const
                 {}
             };
 

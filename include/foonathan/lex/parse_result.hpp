@@ -222,6 +222,7 @@ namespace lex
 
     namespace detail
     {
+        //=== apply_parse_result ===//
         template <class Return, class Func, typename... Args>
         constexpr auto apply_parse_result_impl(Func& f, Args&&... args)
             -> std::enable_if_t<!std::is_same<void, Return>::value, parse_result<Return>>
@@ -252,17 +253,57 @@ namespace lex
             static_assert(for_production<Production>, "need a callback_result_of overload");
         };
 
-        template <typename Func, typename... Args>
+        template <class Func, typename... Args>
         auto apply_return_type(int, Func& f, Args&&... args)
             -> decltype(f.production(static_cast<Args&&>(args)...));
-        template <typename Func, typename... Args>
+        template <class Func, typename... Args>
         auto apply_return_type(short, Func&, Args&&...) -> missing_callback_overload<Args&&...>;
 
-        template <typename Func, typename... Args>
+        template <class Func, typename... Args>
         constexpr auto apply_parse_result(Func& f, Args&&... args)
         {
             using type = decltype(apply_return_type(0, f, static_cast<Args&&>(args)...));
             return apply_parse_result_impl<type>(f, static_cast<Args&&>(args)...);
+        }
+
+        //=== finish_production ===//
+        template <class Func, class TLP, typename T>
+        constexpr auto finish_production_impl(int, Func& f, TLP, parse_result<T>& result)
+            -> parse_result<decltype(f.finish(TLP{}, result.template forward<TLP>()))>
+        {
+            using type = parse_result<decltype(f.finish(TLP{}, result.template forward<TLP>()))>;
+            if (result.is_success())
+                return type::success(f.finish(TLP{}, result.template forward<TLP>()));
+            else
+                return type::unmatched();
+        }
+        template <class Func, class TLP>
+        constexpr auto finish_production_impl(int, Func& f, TLP, parse_result<void> result)
+            -> parse_result<decltype(f.finish(TLP{}))>
+        {
+            using type = parse_result<decltype(f.finish(TLP{}))>;
+            if (result.is_success())
+                return type::success(f.finish(TLP{}));
+            else
+                return type::unmatched();
+        }
+        template <class Func, class TLP, typename T>
+        constexpr auto finish_production_impl(short, Func&, TLP, parse_result<T>& result)
+        {
+            return static_cast<parse_result<T>&&>(result);
+        }
+
+        template <class Func, class TLP, typename T>
+        constexpr auto finish_production(Func& f, TLP, parse_result<T>&& result)
+        {
+            return finish_production_impl(0, f, TLP{}, result);
+        }
+
+        template <class Func, class TLP, typename... Args>
+        constexpr auto apply_finish_production(Func& f, TLP, Args&&... args)
+        {
+            auto result = apply_parse_result(f, TLP{}, static_cast<Args&&>(args)...);
+            return finish_production(f, TLP{}, result);
         }
     } // namespace detail
 } // namespace lex

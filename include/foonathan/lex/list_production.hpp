@@ -190,7 +190,7 @@ namespace lex
                                          elem, separator, end, Derived::allow_trailing::value>,
                                      typename impl::template non_empty_parser<
                                          elem, separator, end, Derived::allow_trailing::value>>;
-            return parser::parse(tokenizer, f);
+            return lex::detail::finish_production(f, Derived{}, parser::parse(tokenizer, f));
         }
     };
 
@@ -223,6 +223,8 @@ namespace lex
                                          elem, separator, close, Derived::allow_trailing::value>,
                                      typename impl::template non_empty_parser<
                                          elem, separator, close, Derived::allow_trailing::value>>;
+            using return_type = decltype(
+                lex::detail::finish_production(f, Derived{}, parser::parse(tokenizer, f)));
 
             if (tokenizer.peek().is(open{}))
                 tokenizer.bump();
@@ -230,12 +232,12 @@ namespace lex
             {
                 auto error = lex::unexpected_token<Grammar, Derived, open>(Derived{}, open{});
                 lex::detail::report_error(f, error, tokenizer);
-                return decltype(parser::parse(tokenizer, f))::unmatched();
+                return return_type::unmatched();
             }
 
             auto result = parser::parse(tokenizer, f);
             if (result.is_unmatched())
-                return result;
+                return return_type::unmatched();
 
             if (tokenizer.peek().is(close{}))
                 tokenizer.bump();
@@ -243,10 +245,11 @@ namespace lex
             {
                 auto error = lex::unexpected_token<Grammar, Derived, close>(Derived{}, close{});
                 lex::detail::report_error(f, error, tokenizer);
-                return decltype(parser::parse(tokenizer, f))::unmatched();
+                return return_type::unmatched();
             }
 
-            return result;
+            return lex::detail::finish_production(f, Derived{},
+                                                  static_cast<decltype(result)&&>(result));
         }
     };
 } // namespace lex

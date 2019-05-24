@@ -811,11 +811,15 @@ namespace lex
         template <class Func>
         static constexpr auto parse_impl(int, tokenizer<typename Grammar::token_spec>& tokenizer,
                                          Func&& f)
-            -> parse_result<
-                typename operator_rule::detail::op_parse_result<Derived, Func>::value_type>
+            -> decltype(lex::detail::finish_production(
+                f, std::declval<Derived>(),
+                parse_result<typename operator_rule::detail::op_parse_result<
+                    Derived, Func>::value_type>::unmatched()))
         {
             using rule = operator_rule::detail::make_rule<decltype(Derived::rule())>;
-            return rule::template parse<Derived>(tokenizer, f).result;
+            auto result = rule::template parse<Derived>(tokenizer, f).result;
+            return lex::detail::finish_production(f, Derived{},
+                                                  static_cast<decltype(result)&&>(result));
         }
 
         template <class Func>

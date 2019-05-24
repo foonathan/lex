@@ -220,10 +220,18 @@ namespace lex
 
     public:
         template <class Func>
-        static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
-            -> decltype(parse_impl(0, tokenizer, f))
+        static constexpr auto parse_self(tokenizer<typename Grammar::token_spec>& tokenizer,
+                                         Func&& f) -> decltype(parse_impl(0, tokenizer, f))
         {
             return parse_impl(0, tokenizer, f);
+        }
+
+        template <class Func>
+        static constexpr auto parse(tokenizer<typename Grammar::token_spec>& tokenizer, Func&& f)
+            -> decltype(detail::finish_production(f, std::declval<Derived>(),
+                                                  parse_impl(0, tokenizer, f)))
+        {
+            return detail::finish_production(f, Derived{}, parse_impl(0, tokenizer, f));
         }
     };
 } // namespace lex
