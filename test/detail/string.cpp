@@ -4,7 +4,7 @@
 
 #include <foonathan/lex/detail/string.hpp>
 
-#include <catch.hpp>
+#include <doctest.h>
 
 namespace
 {

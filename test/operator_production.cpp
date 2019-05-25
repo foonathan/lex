@@ -4,7 +4,7 @@
 
 #include <foonathan/lex/operator_production.hpp>
 
-#include <catch.hpp>
+#include <doctest.h>
 
 #include <foonathan/lex/ascii.hpp>
 #include <foonathan/lex/rule_production.hpp>
@@ -1015,7 +1015,7 @@ TEST_CASE("operator_production: choice with unary")
 
 TEST_CASE("operator_production: production as operator")
 {
-    SECTION("pre_prod_single")
+    SUBCASE("pre_prod_single")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1074,7 +1074,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
-    SECTION("pre_prod_chain")
+    SUBCASE("pre_prod_chain")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1133,7 +1133,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
-    SECTION("post_prod_single")
+    SUBCASE("post_prod_single")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1192,7 +1192,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
-    SECTION("post_prod_chain")
+    SUBCASE("post_prod_chain")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1251,7 +1251,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-");
         verify(r3, unmatched);
     }
-    SECTION("bin_prod_single")
+    SUBCASE("bin_prod_single")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1310,7 +1310,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 -");
         verify(r3, unmatched);
     }
-    SECTION("bin_prod_left")
+    SUBCASE("bin_prod_left")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>
@@ -1369,7 +1369,7 @@ TEST_CASE("operator_production: production as operator")
         FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 -");
         verify(r3, unmatched);
     }
-    SECTION("bin_prod_right")
+    SUBCASE("bin_prod_right")
     {
         using grammar = lex::grammar<test_spec, struct P, struct op>;
         struct op : lex::rule_production<op, grammar>

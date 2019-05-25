@@ -4,8 +4,10 @@
 
 #include <foonathan/lex/literal_token.hpp>
 
+#include <doctest.h>
+#include <string>
+
 #include "tokenize.hpp"
-#include <catch.hpp>
 
 namespace
 {
@@ -23,7 +25,7 @@ struct token_bc : FOONATHAN_LEX_LITERAL("bc")
 
 TEST_CASE("literal_token")
 {
-    SECTION("token_a")
+    SUBCASE("token_a")
     {
         static constexpr const char       array[]   = "aaa";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -44,7 +46,7 @@ TEST_CASE("literal_token")
         REQUIRE(result[2].spelling() == "a");
         REQUIRE(result[2].offset(tokenizer) == 2);
     }
-    SECTION("mixed")
+    SUBCASE("mixed")
     {
         static constexpr const char       array[]   = "abcaabbc";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);

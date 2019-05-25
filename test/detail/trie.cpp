@@ -4,7 +4,7 @@
 
 #include <foonathan/lex/detail/trie.hpp>
 
-#include <catch.hpp>
+#include <doctest.h>
 #include <cstring>
 
 using namespace foonathan::lex;

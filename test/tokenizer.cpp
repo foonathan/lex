@@ -4,7 +4,7 @@
 
 #include <foonathan/lex/tokenizer.hpp>
 
-#include <catch.hpp>
+#include <doctest.h>
 
 namespace lex = foonathan::lex;
 

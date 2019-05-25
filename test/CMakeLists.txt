@@ -2,13 +2,15 @@
 # This file is subject to the license terms in the LICENSE file
 # found in the top-level directory of this distribution.
 
-# get Catch
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp)
+# get doctest
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/doctest_main.h)
     file(DOWNLOAD
-         https://raw.githubusercontent.com/catchorg/Catch2/master/single_include/catch2/catch.hpp
-         ${CMAKE_CURRENT_BINARY_DIR}/catch.hpp
+         https://raw.githubusercontent.com/onqtam/doctest/master/doctest/doctest.h
+         ${CMAKE_CURRENT_BINARY_DIR}/doctest.h
          STATUS status
          LOG log)
+    # need separate file for zapcc
+    configure_file(${CMAKE_CURRENT_BINARY_DIR}/doctest.h ${CMAKE_CURRENT_BINARY_DIR}/doctest_main.h COPYONLY)
 
     list(GET status 0 status_code)
     list(GET status 1 status_string)
@@ -37,8 +39,8 @@ target_compile_options(foonathan_lex_test_base INTERFACE
                        # clang/GCC warnings
                        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>:
                        -pedantic-errors -Werror -Wall -Wextra -Wconversion -Wsign-conversion>
-                       # disable noexcept type warning on GCC, as well as some others due to a weird compiler bug on GCC
-                       $<$<CXX_COMPILER_ID:GNU>: -Wno-noexcept-type -Wno-format -Wno-nonnull -Wno-restrict>
+                       # disable annoying warnings and/or some that create a weird compiler bug
+                       $<$<CXX_COMPILER_ID:GNU>: -Wno-parentheses -Wno-noexcept-type -Wno-format -Wno-nonnull -Wno-restrict>
                        # MSVC warnings
                        $<$<CXX_COMPILER_ID:MSVC>:
                        /WX /W4 /wd4127>)

@@ -4,7 +4,7 @@
 
 #include <foonathan/lex/list_production.hpp>
 
-#include <catch.hpp>
+#include <doctest.h>
 
 #include "test.hpp"
 

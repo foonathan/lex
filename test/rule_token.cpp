@@ -5,7 +5,7 @@
 #include <foonathan/lex/rule_token.hpp>
 
 #include "tokenize.hpp"
-#include <catch.hpp>
+#include <doctest.h>
 
 namespace
 {
@@ -52,7 +52,7 @@ struct token_bc : lex::basic_rule_token<token_bc, test_spec>
 
 TEST_CASE("basic_rule_token")
 {
-    SECTION("token_a")
+    SUBCASE("token_a")
     {
         static constexpr const char       array[]   = "aaaa";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -64,7 +64,7 @@ TEST_CASE("basic_rule_token")
         REQUIRE(result[0].spelling() == "aaaa");
         REQUIRE(result[0].offset(tokenizer) == 0);
     }
-    SECTION("token_a error")
+    SUBCASE("token_a error")
     {
         static constexpr const char       array[]   = "aaa";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -76,7 +76,7 @@ TEST_CASE("basic_rule_token")
         REQUIRE(result[0].spelling() == "aaa");
         REQUIRE(result[0].offset(tokenizer) == 0);
     }
-    SECTION("token_bc")
+    SUBCASE("token_bc")
     {
         static constexpr const char       array[]   = "bccbc";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -96,7 +96,7 @@ TEST_CASE("basic_rule_token")
         REQUIRE(result[2].spelling() == "bc");
         REQUIRE(result[2].offset(tokenizer) == 3);
     }
-    SECTION("token_bc error")
+    SUBCASE("token_bc error")
     {
         static constexpr const char       array[]   = "bbc";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -112,7 +112,7 @@ TEST_CASE("basic_rule_token")
         REQUIRE(result[1].spelling() == "bc");
         REQUIRE(result[1].offset(tokenizer) == 1);
     }
-    SECTION("mixed")
+    SUBCASE("mixed")
     {
         static constexpr const char       array[]   = "aabcabaa";
         constexpr auto                    tokenizer = lex::tokenizer<test_spec>(array);
@@ -184,9 +184,9 @@ bool verify(const char (&str)[N], std::size_t length)
 
 TEST_CASE("rule_token")
 {
-    SECTION("atomic rules")
+    SUBCASE("atomic rules")
     {
-        SECTION("character")
+        SUBCASE("character")
         {
             FOONATHAN_LEX_PEG('a');
 
@@ -194,7 +194,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("aa", 1));
             REQUIRE(verify<PEG>("b", 0));
         }
-        SECTION("string")
+        SUBCASE("string")
         {
             FOONATHAN_LEX_PEG("abc");
 
@@ -204,7 +204,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abd", 0));
             REQUIRE(verify<PEG>("bcd", 0));
         }
-        SECTION("predicate")
+        SUBCASE("predicate")
         {
             struct predicate
             {
@@ -219,7 +219,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("ba", 1));
             REQUIRE(verify<PEG>("c", 0));
         }
-        SECTION("callable")
+        SUBCASE("callable")
         {
             struct callable
             {
@@ -239,7 +239,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abc", 0));
             REQUIRE(verify<PEG>("ba", 0));
         }
-        SECTION("any")
+        SUBCASE("any")
         {
             FOONATHAN_LEX_PEG(any);
 
@@ -247,7 +247,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("bca", 1));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("skip")
+        SUBCASE("skip")
         {
             FOONATHAN_LEX_PEG(skip<2>);
 
@@ -255,7 +255,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abc", 2));
             REQUIRE(verify<PEG>("a", 0));
         }
-        SECTION("eof")
+        SUBCASE("eof")
         {
             // have to do a complex test
             FOONATHAN_LEX_PEG(any + eof);
@@ -264,7 +264,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abc", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("fail")
+        SUBCASE("fail")
         {
             FOONATHAN_LEX_PEG(fail);
 
@@ -272,9 +272,9 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("", 0));
         }
     }
-    SECTION("combinators")
+    SUBCASE("combinators")
     {
-        SECTION("sequence")
+        SUBCASE("sequence")
         {
             FOONATHAN_LEX_PEG(r('a') + 'b' + 'c');
 
@@ -284,7 +284,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("bcd", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("choice")
+        SUBCASE("choice")
         {
             // note: "abc" can never match as it is ordered
             FOONATHAN_LEX_PEG(r("ab") / 'a' / "abc" / 'c');
@@ -295,7 +295,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abc", 2));
             REQUIRE(verify<PEG>("bc", 0));
         }
-        SECTION("opt")
+        SUBCASE("opt")
         {
             FOONATHAN_LEX_PEG('a' + opt('b'));
 
@@ -304,7 +304,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("abb", 2));
             REQUIRE(verify<PEG>("bb", 0));
         }
-        SECTION("star")
+        SUBCASE("star")
         {
             FOONATHAN_LEX_PEG(star('a'));
 
@@ -316,7 +316,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("b", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("plus")
+        SUBCASE("plus")
         {
             FOONATHAN_LEX_PEG(plus('a'));
 
@@ -327,7 +327,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("b", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("lookahead")
+        SUBCASE("lookahead")
         {
             FOONATHAN_LEX_PEG(lookahead("ab") + 'a');
 
@@ -335,7 +335,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("a", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("negative lookahead")
+        SUBCASE("negative lookahead")
         {
             FOONATHAN_LEX_PEG(!r("ab") + 'a');
 
@@ -344,9 +344,9 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("", 0));
         }
     }
-    SECTION("convenience")
+    SUBCASE("convenience")
     {
-        SECTION("minus")
+        SUBCASE("minus")
         {
             // equivalent to 'a'
             FOONATHAN_LEX_PEG(minus(r('a') / 'b', 'b'));
@@ -356,7 +356,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("b", 0));
             REQUIRE(verify<PEG>("", 0));
         }
-        SECTION("if_then_else")
+        SUBCASE("if_then_else")
         {
             FOONATHAN_LEX_PEG(if_then_else('a', 'b', 'c'));
 
@@ -364,7 +364,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("c", 1));
             REQUIRE(verify<PEG>("bc", 0));
         }
-        SECTION("until")
+        SUBCASE("until")
         {
             FOONATHAN_LEX_PEG(until(' ', 'a'));
 
@@ -373,7 +373,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("ab b", 0));
             REQUIRE(verify<PEG>("aaaaa", 0));
         }
-        SECTION("until_excluding")
+        SUBCASE("until_excluding")
         {
             FOONATHAN_LEX_PEG(until_excluding(' ', 'a'));
 
@@ -382,7 +382,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("ab b", 0));
             REQUIRE(verify<PEG>("aaaaa", 0));
         }
-        SECTION("list")
+        SUBCASE("list")
         {
             FOONATHAN_LEX_PEG(list('a', ' '));
 
@@ -393,7 +393,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("a ", 1));
             REQUIRE(verify<PEG>("b", 0));
         }
-        SECTION("list_trailing")
+        SUBCASE("list_trailing")
         {
             FOONATHAN_LEX_PEG(list_trailing('a', ' '));
 
@@ -404,7 +404,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("a ", 2));
             REQUIRE(verify<PEG>("b", 0));
         }
-        SECTION("opt_padded")
+        SUBCASE("opt_padded")
         {
             FOONATHAN_LEX_PEG(opt_padded('l', 'a', 'r'));
 
@@ -414,7 +414,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("larr", 4));
             REQUIRE(verify<PEG>("lrr", 0));
         }
-        SECTION("padded")
+        SUBCASE("padded")
         {
             FOONATHAN_LEX_PEG(padded('l', 'a', 'r'));
 
@@ -424,7 +424,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("larr", 4));
             REQUIRE(verify<PEG>("lrr", 0));
         }
-        SECTION("repeated")
+        SUBCASE("repeated")
         {
             FOONATHAN_LEX_PEG(repeated<2, 4>('a'));
 
@@ -434,7 +434,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("aaaa", 4));
             REQUIRE(verify<PEG>("aaaaa", 0));
         }
-        SECTION("times")
+        SUBCASE("times")
         {
             FOONATHAN_LEX_PEG(times<3>('a'));
 
@@ -443,7 +443,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("aaa", 3));
             REQUIRE(verify<PEG>("aaaa", 0));
         }
-        SECTION("at_most")
+        SUBCASE("at_most")
         {
             FOONATHAN_LEX_PEG(at_most<3>('a'));
 
@@ -452,7 +452,7 @@ TEST_CASE("rule_token")
             REQUIRE(verify<PEG>("aaa", 3));
             REQUIRE(verify<PEG>("aaaa", 0));
         }
-        SECTION("at_least")
+        SUBCASE("at_least")
         {
             FOONATHAN_LEX_PEG(at_least<2>('a'));
 

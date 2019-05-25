@@ -4,9 +4,11 @@
 
 #include <foonathan/lex/identifier_token.hpp>
 
-#include "tokenize.hpp"
-#include <catch.hpp>
+#include <doctest.h>
+#include <string>
+
 #include <foonathan/lex/ascii.hpp>
+#include "tokenize.hpp"
 
 namespace
 {

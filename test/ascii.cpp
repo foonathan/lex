@@ -5,7 +5,7 @@
 #include <foonathan/lex/ascii.hpp>
 
 #include "tokenize.hpp"
-#include <catch.hpp>
+#include <doctest.h>
 #include <cctype>
 
 TEST_CASE("ascii predicates")

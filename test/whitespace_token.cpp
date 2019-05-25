@@ -5,7 +5,7 @@
 #include <foonathan/lex/whitespace_token.hpp>
 
 #include "tokenize.hpp"
-#include <catch.hpp>
+#include <doctest.h>
 
 namespace
 {

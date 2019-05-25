@@ -484,7 +484,8 @@ int main()
 
 // Unit tests for the tokenizer.
 
-#    include <catch.hpp>
+#    include <doctest.h>
+#    include <string>
 
 #    include <tokenize.hpp>
 
@@ -492,7 +493,6 @@ namespace
 {
 void check_token(lex::token<C::spec> token, lex::token_kind<C::spec> kind, const char* spelling)
 {
-    INFO(std::string(token.spelling().data(), token.spelling().size()) << ": " << token.name());
     REQUIRE(token.spelling() == spelling);
     REQUIRE(token.kind() == kind);
 }
