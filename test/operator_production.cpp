@@ -15,9 +15,9 @@ namespace lex = foonathan::lex;
 
 namespace
 {
-using test_spec
-    = lex::token_spec<struct whitespace, struct number, struct plus, struct minus, struct star,
-                      struct exclamation, struct paren_open, struct paren_close>;
+using test_spec = lex::token_spec<struct whitespace, struct number, struct plus, struct minus,
+                                  struct star, struct exclamation, struct tilde, struct ampersand,
+                                  struct equal, struct paren_open, struct paren_close>;
 
 struct whitespace : lex::rule_token<whitespace, test_spec>, lex::whitespace_token
 {
@@ -47,6 +47,12 @@ struct minus : lex::literal_token<'-'>
 struct star : lex::literal_token<'*'>
 {};
 struct exclamation : lex::literal_token<'!'>
+{};
+struct tilde : lex::literal_token<'~'>
+{};
+struct ampersand : lex::literal_token<'&'>
+{};
+struct equal : lex::literal_token<'='>
 {};
 struct paren_open : lex::literal_token<'('>
 {};
@@ -1485,6 +1491,208 @@ TEST_CASE("operator_production: end")
 
     FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "2--");
     verify(r4, unmatched);
+}
+
+TEST_CASE("operator_production: common atom")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom    = r::atom<number>;
+            auto negate  = r::pre_op_single<minus>(atom);
+            auto primary = r::expr(negate);
+
+            auto math = r::bin_op_single<plus>(primary);
+            auto bit  = r::bin_op_single<ampersand>(primary);
+
+            return bit / math;
+        }
+    };
+
+    struct visitor
+    {
+        int           result_of(P) const;
+        constexpr int production(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+
+        constexpr int production(P, minus, int number) const
+        {
+            return -number;
+        }
+
+        constexpr int production(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+        constexpr int production(P, int lhs, ampersand, int rhs) const
+        {
+            return static_cast<int>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
+    verify(r0, 1);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + -2");
+    verify(r1, -1);
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 & -1");
+    verify(r2, 1);
+}
+
+TEST_CASE("operator_production: merge alternatives")
+{
+    using grammar = lex::grammar<test_spec, struct P>;
+    struct P : lex::operator_production<P, grammar>
+    {
+        static constexpr auto rule()
+        {
+            namespace r = lex::operator_rule;
+
+            auto atom = r::atom<number> / r::parenthesized<paren_open, paren_close>;
+
+            auto math_unary = r::pre_op_single<minus>(atom);
+            auto math       = r::bin_op_single<plus>(math_unary);
+
+            auto bit_unary = r::pre_op_single<tilde>(atom);
+            auto bit       = r::bin_op_single<ampersand>(bit_unary);
+
+            auto operation = r::expr(bit / math + r::end);
+
+            auto comparison = r::bin_op_single<equal>(operation);
+
+            return comparison;
+        }
+    };
+
+    struct visitor
+    {
+        int           result_of(P) const;
+        constexpr int production(P, lex::static_token<number> num) const
+        {
+            return number::parse(num);
+        }
+
+        constexpr int production(P, minus, int number) const
+        {
+            return -number;
+        }
+        constexpr int production(P, int lhs, plus, int rhs) const
+        {
+            return lhs + rhs;
+        }
+
+        constexpr int production(P, tilde, int number) const
+        {
+            return static_cast<int>(~static_cast<unsigned>(number));
+        }
+        constexpr int production(P, int lhs, ampersand, int rhs) const
+        {
+            return static_cast<int>(static_cast<unsigned>(lhs) & static_cast<unsigned>(rhs));
+        }
+
+        constexpr int production(P, int lhs, equal, int rhs) const
+        {
+            return lhs == rhs;
+        }
+
+        constexpr void error(lex::unexpected_token<grammar, P, number>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void error(lex::unexpected_token<grammar, P, paren_close>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+        constexpr void error(lex::illegal_operator_chain<grammar, P>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
+    };
+
+    FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
+    verify(r0, 1);
+
+    SUBCASE("math")
+    {
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "-1");
+        verify(r1, -1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 + 2");
+        verify(r2, 3);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-1 + 2");
+        verify(r3, 1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "-1 +");
+        verify(r4, unmatched);
+    }
+    SUBCASE("bit")
+    {
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "~1");
+        verify(r1, ~1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "6 & 3");
+        verify(r2, 2);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "6 & ~3");
+        verify(r3, 4);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "~1 &");
+        verify(r4, unmatched);
+    }
+    SUBCASE("comparison")
+    {
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 = 1");
+        verify(r1, 1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 + 2 = 3");
+        verify(r2, 1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "-1 + 3 = 6 & 3");
+        verify(r3, 1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 = ");
+        verify(r4, unmatched);
+    }
+    SUBCASE("parenthesized")
+    {
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + (1 + 1)");
+        verify(r1, 3);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 + -(1 + 1)");
+        verify(r2, -1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 & (1 & 1)");
+        verify(r3, 1);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r4 = parse<P>(visitor{}, "1 & ~(1 & 1)");
+        verify(r4, 0);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r5 = parse<P>(visitor{}, "1 + (1 = 1)");
+        verify(r5, 2);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r6 = parse<P>(visitor{}, "1 + (1 = 1 & (1 = 0))");
+        verify(r6, 1);
+    }
+    SUBCASE("illegal chain")
+    {
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r1 = parse<P>(visitor{}, "1 + 1 + 2");
+        verify(r1, unmatched);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r2 = parse<P>(visitor{}, "1 & 1 & 1");
+        verify(r2, unmatched);
+
+        FOONATHAN_LEX_TEST_CONSTEXPR auto r3 = parse<P>(visitor{}, "1 = 1 = 1");
+        verify(r3, unmatched);
+    }
 }
 
 TEST_CASE("operator_production: finish")

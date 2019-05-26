@@ -155,53 +155,74 @@ namespace lex
             struct atom : operand_parser
             {
                 static_assert(is_production<ProductionOrToken>::value
-                                  || is_token<ProductionOrToken>::value,
+                                  || is_token<ProductionOrToken>::value
+                                  || std::is_base_of<operator_adl, ProductionOrToken>::value,
                               "atom must be a production or token");
 
                 using pre_tokens  = mp::mp_list<>;
                 using post_tokens = mp::mp_list<>;
 
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_impl(std::true_type /* is_production */,
-                                                 tokenizer<TokenSpec>& tokenizer, Func&& f)
+                template <typename T, typename Enable>
+                struct impl;
+                template <class Production>
+                struct impl<Production, std::enable_if_t<is_production<Production>::value>>
                 {
-                    return ProductionOrToken::parse(tokenizer, f);
-                }
-                template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse_impl(std::false_type /* is_production */,
-                                                 tokenizer<TokenSpec>& tokenizer, Func&& f)
+                    template <class TLP, class TokenSpec, class Func>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                        -> op_parse_result<TLP, Func>
+                    {
+                        auto result = Production::parse(tokenizer, f);
+                        if (result.is_unmatched())
+                            return {};
+                        else
+                            return {lex::detail::apply_parse_result(f, TLP{},
+                                                                    result.template forward<
+                                                                        Production>()),
+                                    {}};
+                    }
+                };
+                template <class Rule>
+                struct impl<Rule, std::enable_if_t<std::is_base_of<operator_adl, Rule>::value>>
                 {
-                    auto token        = tokenizer.peek();
-                    using result_type = lex::parse_result<decltype(
-                        lex::detail::parse_token<ProductionOrToken>(token))>;
-                    if (token.is(ProductionOrToken{}))
+                    template <class TLP, class TokenSpec, class Func>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                        -> op_parse_result<TLP, Func>
                     {
-                        tokenizer.bump();
-                        return result_type::success(
-                            lex::detail::parse_token<ProductionOrToken>(token));
+                        return Rule::template parse<TLP>(tokenizer, f);
                     }
-                    else
+                };
+                template <class Token>
+                struct impl<Token, std::enable_if_t<is_token<Token>::value>>
+                {
+                    template <class TLP, class TokenSpec, class Func>
+                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                        -> op_parse_result<TLP, Func>
                     {
-                        auto error
-                            = unexpected_token<typename TLP::grammar, TLP,
-                                               ProductionOrToken>(TLP{}, ProductionOrToken{});
-                        lex::detail::report_error(f, error, tokenizer);
-                        return result_type::unmatched();
+                        auto token = tokenizer.peek();
+                        if (token.is(Token{}))
+                        {
+                            tokenizer.bump();
+                            return {lex::detail::apply_parse_result(f, TLP{},
+                                                                    lex::detail::parse_token<Token>(
+                                                                        token)),
+                                    {}};
+                        }
+                        else
+                        {
+                            auto error
+                                = unexpected_token<typename TLP::grammar, TLP, Token>(TLP{},
+                                                                                      Token{});
+                            lex::detail::report_error(f, error, tokenizer);
+                            return {};
+                        }
                     }
-                }
+                };
 
                 template <class TLP, class TokenSpec, class Func>
                 static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> op_parse_result<TLP, Func>
                 {
-                    auto value = parse_impl<TLP>(is_production<ProductionOrToken>{}, tokenizer, f);
-                    if (value.is_unmatched())
-                        return {};
-                    else
-                        return {lex::detail::apply_parse_result(f, TLP{},
-                                                                value.template forward<
-                                                                    ProductionOrToken>()),
-                                {}};
+                    return impl<ProductionOrToken, void>::template parse<TLP>(tokenizer, f);
                 }
 
                 template <class TLP, class TokenSpec, class Func>
@@ -521,7 +542,7 @@ namespace lex
                 static_assert(
                     mp::mp_is_set<pre_tokens>::value,
                     "operator choice cannot uniquely decide a path based on a prefix operator, "
-                    "try extracting common operands as a separate production");
+                    "try extracting common operands using operator_rule::expr()");
 
                 template <class TLP>
                 struct parse_left_impl
@@ -664,6 +685,12 @@ namespace lex
 
         template <class ProductionOrToken>
         constexpr auto atom = detail::atom<ProductionOrToken>{};
+
+        template <class Rule>
+        constexpr auto expr(Rule)
+        {
+            return detail::atom<detail::make_rule<Rule>>{};
+        }
 
         /// \exclude
         template <class TokenOpen, class TokenClose>
@@ -816,7 +843,7 @@ namespace lex
                 parse_result<typename operator_rule::detail::op_parse_result<
                     Derived, Func>::value_type>::unmatched()))
         {
-            using rule = operator_rule::detail::make_rule<decltype(Derived::rule())>;
+            using rule  = operator_rule::detail::make_rule<decltype(Derived::rule())>;
             auto result = rule::template parse<Derived>(tokenizer, f).result;
             return lex::detail::finish_production(f, Derived{},
                                                   static_cast<decltype(result)&&>(result));
