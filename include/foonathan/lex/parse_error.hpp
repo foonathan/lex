@@ -108,11 +108,11 @@ namespace lex
     //=== illegal_operator_chain ===//
     /// While trying to parse `OperatorProduction`, an operator was chained even though it was not
     /// allowed to.
-    template <class Grammar, class OperatorProduction = void>
+    template <class Grammar, class OperatorProduction = void, class Tag = void>
     struct illegal_operator_chain;
 
     template <class Grammar>
-    struct illegal_operator_chain<Grammar, void>
+    struct illegal_operator_chain<Grammar, void, void>
     {
         production_kind<Grammar>                 production;
         lex::token<typename Grammar::token_spec> op;
@@ -125,11 +125,21 @@ namespace lex
     };
 
     template <class Grammar, class Production>
-    struct illegal_operator_chain : illegal_operator_chain<Grammar>
+    struct illegal_operator_chain<Grammar, Production, void>
+    : illegal_operator_chain<Grammar, void, void>
     {
         constexpr illegal_operator_chain(Production                          p,
                                          token<typename Grammar::token_spec> op) noexcept
-        : illegal_operator_chain<Grammar>(p, op)
+        : illegal_operator_chain<Grammar, void, void>(p, op)
+        {}
+    };
+
+    template <class Grammar, class Production, class Tag>
+    struct illegal_operator_chain : illegal_operator_chain<Grammar, Production, void>
+    {
+        constexpr illegal_operator_chain(Production                          p,
+                                         token<typename Grammar::token_spec> op) noexcept
+        : illegal_operator_chain<Grammar, Production, void>(p, op)
         {}
     };
 

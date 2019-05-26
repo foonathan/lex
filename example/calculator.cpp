@@ -182,10 +182,10 @@ struct expr : lex::operator_production<expr, grammar>
         // `sum` and `bit_or`, the first one is selected.
         //
         // If we had `sum / bit_or` alone, parsing `1 + 2 & 3` would read `1 + 2` and leave `& 2` in
-        // the stream, as it does not fit into a sum. The `+ r::end` turns that into an error
+        // the stream, as it does not fit into a sum. The `r::expr` turns that into an error
         // instead. To be more precise, if the next token is *any* operator of the expression, it
         // results in an error.
-        return sum / bit_or + r::end;
+        return r::expr(sum / bit_or);
     }
 };
 

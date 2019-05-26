@@ -1436,7 +1436,7 @@ TEST_CASE("operator_production: production as operator")
     }
 }
 
-TEST_CASE("operator_production: end")
+TEST_CASE("operator_production: expr")
 {
     using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
@@ -1449,7 +1449,7 @@ TEST_CASE("operator_production: end")
             auto negate   = r::post_op_single<minus>(atom);
             auto addition = r::bin_op_single<plus>(negate);
 
-            return addition + r::end;
+            return r::expr(addition);
         }
     };
 
@@ -1538,6 +1538,9 @@ TEST_CASE("operator_production: common atom")
         constexpr void error(lex::unexpected_token<grammar, P, number>,
                              const lex::tokenizer<test_spec>&) const
         {}
+        constexpr void error(lex::illegal_operator_chain<grammar, P>,
+                             const lex::tokenizer<test_spec>&) const
+        {}
     };
 
     FOONATHAN_LEX_TEST_CONSTEXPR auto r0 = parse<P>(visitor{}, "1");
@@ -1555,6 +1558,8 @@ TEST_CASE("operator_production: merge alternatives")
     using grammar = lex::grammar<test_spec, struct P>;
     struct P : lex::operator_production<P, grammar>
     {
+        struct tag;
+
         static constexpr auto rule()
         {
             namespace r = lex::operator_rule;
@@ -1567,7 +1572,7 @@ TEST_CASE("operator_production: merge alternatives")
             auto bit_unary = r::pre_op_single<tilde>(atom);
             auto bit       = r::bin_op_single<ampersand>(bit_unary);
 
-            auto operation = r::expr(bit / math + r::end);
+            auto operation = r::expr<tag>(bit / math);
 
             auto comparison = r::bin_op_single<equal>(operation);
 
@@ -1612,7 +1617,7 @@ TEST_CASE("operator_production: merge alternatives")
         constexpr void error(lex::unexpected_token<grammar, P, paren_close>,
                              const lex::tokenizer<test_spec>&) const
         {}
-        constexpr void error(lex::illegal_operator_chain<grammar, P>,
+        constexpr void error(lex::illegal_operator_chain<grammar, P, P::tag>,
                              const lex::tokenizer<test_spec>&) const
         {}
     };

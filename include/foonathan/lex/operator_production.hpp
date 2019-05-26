@@ -155,8 +155,7 @@ namespace lex
             struct atom : operand_parser
             {
                 static_assert(is_production<ProductionOrToken>::value
-                                  || is_token<ProductionOrToken>::value
-                                  || std::is_base_of<operator_adl, ProductionOrToken>::value,
+                                  || is_token<ProductionOrToken>::value,
                               "atom must be a production or token");
 
                 using pre_tokens  = mp::mp_list<>;
@@ -179,16 +178,6 @@ namespace lex
                                                                     result.template forward<
                                                                         Production>()),
                                     {}};
-                    }
-                };
-                template <class Rule>
-                struct impl<Rule, std::enable_if_t<std::is_base_of<operator_adl, Rule>::value>>
-                {
-                    template <class TLP, class TokenSpec, class Func>
-                    static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
-                        -> op_parse_result<TLP, Func>
-                    {
-                        return Rule::template parse<TLP>(tokenizer, f);
                     }
                 };
                 template <class Token>
@@ -619,32 +608,50 @@ namespace lex
                 };
 
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                 {
                     return mp::mp_apply_q<parse_impl<TLP>, rule>::parse(tokenizer, f);
                 }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
+                                                 op_parse_result<TLP, Func>& lhs)
+                {
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
+                }
             };
 
-            template <class Rule>
-            struct end : operator_adl
+            template <class Rule, class Tag>
+            struct expr : operand_parser
             {
+                using pre_tokens  = mp::mp_list<>;
+                using post_tokens = mp::mp_list<>;
+
                 template <class TLP, class TokenSpec, class Func>
-                static constexpr auto parse(tokenizer<TokenSpec>& tokenizer, Func& f)
+                static constexpr auto parse_null(tokenizer<TokenSpec>& tokenizer, Func& f)
                     -> op_parse_result<TLP, Func>
                 {
-                    auto result = Rule::template parse<TLP>(tokenizer, f);
+                    auto result = Rule::template parse_null<TLP>(tokenizer, f);
                     if (result.is_unmatched())
                         return result;
                     else if (mp::mp_rename<typename Rule::post_tokens, operator_spelling>::match(
                                  tokenizer.peek()))
                     {
                         auto error
-                            = illegal_operator_chain<typename TLP::grammar, TLP>(TLP{}, result.op);
+                            = illegal_operator_chain<typename TLP::grammar, TLP, Tag>(TLP{},
+                                                                                      result.op);
                         lex::detail::report_error(f, error, tokenizer);
                         return {};
                     }
                     else
                         return result;
+                }
+
+                template <class TLP, class TokenSpec, class Func>
+                static constexpr auto parse_left(tokenizer<TokenSpec>&, Func&,
+                                                 op_parse_result<TLP, Func>& lhs)
+                {
+                    return static_cast<op_parse_result<TLP, Func>&&>(lhs);
                 }
             };
 
@@ -658,10 +665,10 @@ namespace lex
             {
                 using type = rule<Children...>;
             };
-            template <class Rule>
-            struct make_rule_impl<end<Rule>>
+            template <class Rule, class Tag>
+            struct make_rule_impl<expr<Rule, Tag>>
             {
-                using type = end<Rule>;
+                using type = expr<Rule, Tag>;
             };
             template <class Rule>
             using make_rule = typename make_rule_impl<Rule>::type;
@@ -685,12 +692,6 @@ namespace lex
 
         template <class ProductionOrToken>
         constexpr auto atom = detail::atom<ProductionOrToken>{};
-
-        template <class Rule>
-        constexpr auto expr(Rule)
-        {
-            return detail::atom<detail::make_rule<Rule>>{};
-        }
 
         /// \exclude
         template <class TokenOpen, class TokenClose>
@@ -817,18 +818,12 @@ namespace lex
             return detail::make_choice<Operand1, Operand2>{};
         }
 
-        /// \exclude
-        struct end_t
-        {};
-
-        constexpr end_t end = {};
-
-        template <class Operand>
-        constexpr auto operator+(Operand, end_t)
+        template <class Tag = void, class Rule>
+        constexpr auto expr(Rule)
         {
-            static_assert(std::is_base_of<operator_adl, Operand>::value,
+            static_assert(std::is_base_of<operator_adl, Rule>::value,
                           "illegal type in operator DSL");
-            return detail::end<detail::make_rule<Operand>>{};
+            return detail::expr<detail::make_rule<Rule>, Tag>{};
         }
     } // namespace operator_rule
 
@@ -844,7 +839,7 @@ namespace lex
                     Derived, Func>::value_type>::unmatched()))
         {
             using rule  = operator_rule::detail::make_rule<decltype(Derived::rule())>;
-            auto result = rule::template parse<Derived>(tokenizer, f).result;
+            auto result = rule::template parse_null<Derived>(tokenizer, f).result;
             return lex::detail::finish_production(f, Derived{},
                                                   static_cast<decltype(result)&&>(result));
         }
