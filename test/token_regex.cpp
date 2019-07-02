@@ -24,10 +24,22 @@ struct c : lex::literal_token<'c'>
 {};
 
 template <class Regex>
-constexpr bool match_impl(const char* str, std::size_t n, Regex regex)
+constexpr bool match(const char* str, std::size_t n, Regex regex)
 {
     lex::tokenizer<spec> tokenizer(str, str + n);
     return lex::regex_match(tokenizer, regex);
+}
+
+template <class Regex>
+std::size_t partial_match(const char* str, std::size_t n, Regex regex)
+{
+    lex::tokenizer<spec> tokenizer(str, str + n);
+
+    auto old_pos = tokenizer.current_ptr();
+    auto result  = lex::regex_partial_match(tokenizer, regex);
+    if (!result)
+        REQUIRE(tokenizer.current_ptr() == old_pos);
+    return static_cast<std::size_t>(tokenizer.current_ptr() - old_pos);
 }
 
 template <class Regex, class... Matches>
@@ -40,7 +52,7 @@ void verify(const char* desc, Regex regex, Matches... matches_)
         CHECK(std::string(actual_desc) == std::string(desc));
     INFO("description: " << actual_desc);
 
-    constexpr auto empty = match_impl("", 0, Regex{});
+    constexpr auto empty = match("", 0, Regex{});
     CHECK(empty == matches.count("") > 0);
 
     for (auto str : {"a",   "b",   "c",   "aa",  "ab",  "ac",  "ba",  "bb",  "bc",  "ca",
@@ -49,7 +61,7 @@ void verify(const char* desc, Regex regex, Matches... matches_)
                      "caa", "cab", "cac", "cba", "cbb", "cbc", "cca", "ccb", "ccc"})
     {
         INFO("input: " << str);
-        CHECK(match_impl(str, std::strlen(str), regex) == matches.count(str) > 0);
+        CHECK(match(str, std::strlen(str), regex) == matches.count(str) > 0);
         matches.erase(str);
     }
 
@@ -57,7 +69,7 @@ void verify(const char* desc, Regex regex, Matches... matches_)
     for (auto m : matches)
     {
         INFO("input: " << m);
-        CHECK(match_impl(m.c_str(), m.size(), regex));
+        CHECK(match(m.c_str(), m.size(), regex));
     }
 }
 template <class Regex, class... Matches>
@@ -68,7 +80,7 @@ void verify_all(const char* desc, Regex regex)
         CHECK(std::string(actual_desc) == std::string(desc));
     INFO("description: " << actual_desc);
 
-    constexpr auto empty = match_impl("", 0, Regex{});
+    constexpr auto empty = match("", 0, Regex{});
     CHECK(empty);
 
     for (auto str : {"a",   "b",   "c",   "aa",  "ab",  "ac",  "ba",  "bb",  "bc",  "ca",
@@ -77,7 +89,7 @@ void verify_all(const char* desc, Regex regex)
                      "caa", "cab", "cac", "cba", "cbb", "cbc", "cca", "ccb", "ccc"})
     {
         INFO("input: " << str);
-        CHECK(match_impl(str, std::strlen(str), regex));
+        CHECK(match(str, std::strlen(str), regex));
     }
 }
 
@@ -170,3 +182,12 @@ TEST_CASE("token_regex")
     verify("a(a|b)*|b(a|b)*", plus(a{} / b{}), "a", "b", "aa", "ab", "ba", "bb", "aab", "aaa",
            "aba", "abb", "baa", "bab", "bba", "bbb");
 }
+
+TEST_CASE("regex_partial_match")
+{
+    // no need for exhaustive checks, most logic is in regex
+    CHECK(partial_match("bbc", 3, a{}) == 0);
+    CHECK(partial_match("abc", 3, a{}) == 1);
+    CHECK(partial_match("abc", 3, a{} + b{}) == 2);
+}
+

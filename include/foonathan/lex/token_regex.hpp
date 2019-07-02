@@ -783,15 +783,27 @@ namespace lex
     }
 
     template <class Tokenizer, class Regex>
-    constexpr bool regex_match(Tokenizer tokenizer, Regex)
+    constexpr bool regex_partial_match(Tokenizer& tokenizer, Regex)
     {
         using regex = token_regex::detail::make_atom<Regex>;
         static_assert(std::is_base_of<token_regex::regex, regex>::value, "not a regex");
 
+        auto cur = tokenizer.current_ptr();
         if (token_regex::detail::match<regex>(tokenizer))
-            return tokenizer.is_done();
+            return true;
         else
+        {
+            tokenizer.reset(cur);
             return false;
+        }
+    }
+
+    template <class Tokenizer, class Regex>
+    constexpr bool regex_match(Tokenizer tokenizer, Regex)
+    {
+        using regex = token_regex::detail::make_atom<Regex>;
+        static_assert(std::is_base_of<token_regex::regex, regex>::value, "not a regex");
+        return token_regex::detail::match<regex>(tokenizer) && tokenizer.is_done();
     }
 } // namespace lex
 } // namespace foonathan
