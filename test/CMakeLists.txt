@@ -57,6 +57,7 @@ set(tests
     production_rule_production.cpp
     production_rule_token.cpp
     rule_token.cpp
+    token_regex.cpp
     tokenizer.cpp
     whitespace_token.cpp)
 

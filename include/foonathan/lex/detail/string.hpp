@@ -7,6 +7,71 @@
 
 #include <type_traits>
 
+namespace foonathan
+{
+namespace lex
+{
+    namespace detail
+    {
+        template <std::size_t N>
+        struct string
+        {
+            char array[N + 1];
+
+            const char* c_str() const noexcept
+            {
+                return array;
+            }
+        };
+
+        constexpr std::size_t string_length(const char* str)
+        {
+            auto result = 0u;
+            while (*str)
+            {
+                ++str;
+                ++result;
+            }
+            return result;
+        }
+
+        template <const char* const* Str>
+        constexpr string<string_length(*Str)> make_string()
+        {
+            constexpr auto length = string_length(*Str);
+
+            string<length> result{};
+            for (auto i = 0u; i != length; ++i)
+                result.array[i] = (*Str)[i];
+            result.array[length] = '\0';
+
+            return result;
+        }
+        template <std::size_t N>
+        constexpr string<N - 1> make_string(const char (&str)[N])
+        {
+            string<N - 1> result{};
+            for (auto i = 0u; i != N - 1; ++i)
+                result.array[i] = str[i];
+            result.array[N - 1] = '\0';
+            return result;
+        }
+
+        template <std::size_t N1, std::size_t N2>
+        constexpr string<N1 + N2> operator+(const string<N1>& lhs, const string<N2>& rhs)
+        {
+            string<N1 + N2> result{};
+            for (auto i = 0u; i != N1; ++i)
+                result.array[i] = lhs.array[i];
+            for (auto i = 0u; i != N2; ++i)
+                result.array[N1 + i] = rhs.array[i];
+            result.array[N1 + N2] = '\0';
+            return result;
+        }
+    } // namespace detail
+} // namespace lex
+} // namespace foonathan
+
 #if defined(__GNUC__)
 namespace foonathan
 {

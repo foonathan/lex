@@ -11,16 +11,20 @@ namespace foonathan
 {
 namespace lex
 {
-    /// \exclude
     namespace production_rule
     {
         struct production_adl
         {};
     } // namespace production_rule
+    namespace token_regex
+    {
+        struct regex_adl
+        {};
+    } // namespace token_regex
 
     namespace detail
     {
-        struct base_token : production_rule::production_adl
+        struct base_token : production_rule::production_adl, token_regex::regex_adl
         {};
     } // namespace detail
 
