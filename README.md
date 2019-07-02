@@ -2,7 +2,8 @@
 
 [![Build Status](https://dev.azure.com/foonathan/lex/_apis/build/status/foonathan.lex)](https://dev.azure.com/foonathan/lex/_build/latest?definitionId=2)
 
-> Note: This project is currently WIP, no guarantees are made until an 0.1 release.
+> Note: I have a partial parsing implementation already but realized I should switch to a token-less parser instead.
+> As such, I am currently working on a major rewrite of the project.
 
 This library is a C++14 `constexpr` tokenization and (in the future) parsing library.
 The tokens are specified in the type system so they are available at compile-time.
